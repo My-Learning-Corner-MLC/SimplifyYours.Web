@@ -20,4 +20,11 @@ describe('DashboardPage', () => {
     expect(heading).not.toBeNull();
     expect(heading?.textContent).toContain('Dashboard Page');
   });
+
+  it('should render a PrimeNG check icon', async () => {
+    const fixture = TestBed.createComponent(DashboardPage);
+    await fixture.whenStable();
+    const icon = fixture.nativeElement.querySelector('i.pi-check') as HTMLElement | null;
+    expect(icon).not.toBeNull();
+  });
 });
