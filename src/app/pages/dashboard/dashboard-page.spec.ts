@@ -15,6 +15,7 @@ describe('DashboardPage', () => {
 
   it('should render the literal text "Dashboard Page" in an h1', async () => {
     const fixture = TestBed.createComponent(DashboardPage);
+    fixture.detectChanges();
     await fixture.whenStable();
     const heading = fixture.nativeElement.querySelector('h1') as HTMLElement | null;
     expect(heading).not.toBeNull();
@@ -23,8 +24,9 @@ describe('DashboardPage', () => {
 
   it('should render a PrimeNG check icon', async () => {
     const fixture = TestBed.createComponent(DashboardPage);
+    fixture.detectChanges();
     await fixture.whenStable();
-    const icon = fixture.nativeElement.querySelector('i.pi-check') as HTMLElement | null;
+    const icon = fixture.nativeElement.querySelector('i.pi.pi-check') as HTMLElement | null;
     expect(icon).not.toBeNull();
   });
 });
