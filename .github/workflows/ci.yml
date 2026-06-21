@@ -1,4 +1,4 @@
-name: ci
+name: Web App CI
 
 on:
   push:
@@ -16,7 +16,11 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
-      - run: npx ng lint
-      - run: npx ng build --configuration production
-      - run: npx ng test --watch=false --coverage
+      - name: Install dependencies, lint, build, and test
+        run: npm ci
+      - name: Lint
+        run: npx ng lint
+      - name: Build
+        run: npx ng build --configuration production
+      - name: Test
+        run: npx ng test --watch=false --coverage
