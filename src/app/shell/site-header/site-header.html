@@ -1,0 +1,26 @@
+<header class="site-header" aria-label="Primary">
+  <div class="site-header__bar">
+    <div class="site-header__left">
+      <a class="site-header__brand" routerLink="/" aria-label="SimplifyYours home">
+        <span class="site-header__brand-mark" aria-hidden="true"></span>
+        <span class="site-header__brand-wordmark">
+          <span class="site-header__brand-prefix">Simplify</span>
+          <span class="site-header__brand-suffix">Yours</span>
+        </span>
+      </a>
+      <nav class="site-header__nav" aria-label="Main navigation">
+        @for (link of navLinks; track link.path) {
+          <a class="site-header__nav-link" [routerLink]="link.path">{{ link.label }}</a>
+        }
+      </nav>
+    </div>
+
+    <div class="site-header__actions">
+      <a class="site-header__sign-in" [href]="signInUrl" rel="noopener">Sign in</a>
+      <a class="site-header__sign-up" routerLink="/signup">
+        <span>Sign up</span>
+        <span class="site-header__sign-up-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </div>
+</header>

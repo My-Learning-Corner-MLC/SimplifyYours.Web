@@ -1,2 +1,10 @@
 @import 'tailwindcss';
 @plugin 'tailwindcss-primeui';
+
+html,
+body {
+  margin: 0;
+  background: #e7e5df;
+  color: #2a1f2d;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
