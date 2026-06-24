@@ -95,7 +95,11 @@
         <div class="sign-up-page__title-divider"></div>
       </div>
 
-      @if (backendErrorCount() >= 2) {
+      @if (pageError()) {
+        <div class="sign-up-page__banner" role="alert" data-testid="page-error-banner">
+          {{ pageError() }}
+        </div>
+      } @else if (backendErrorCount() >= 2) {
         <div class="sign-up-page__banner" role="alert" data-testid="multi-error-banner">
           A few small things &mdash; we&rsquo;ll walk you through them. Focused on the first.
         </div>

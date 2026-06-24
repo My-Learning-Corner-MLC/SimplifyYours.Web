@@ -439,6 +439,78 @@ describe('SignUpPage', () => {
       expect(el(fixture, '[data-testid="error-email"]')).toBeNull();
     });
 
+    it('on 500, renders the page-level banner with role="alert"', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({ traceId: 'abc' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      const banner = el<HTMLElement>(fixture, '[data-testid="page-error-banner"]');
+      expect(banner).not.toBeNull();
+      expect(banner?.getAttribute('role')).toBe('alert');
+      expect(banner?.textContent).toContain('Something went wrong on our end');
+      expect(banner?.textContent).not.toContain('traceId');
+    });
+
+    it('on network error, renders the same page-level banner', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.error(new ProgressEvent('error'), { status: 0, statusText: 'Network error' });
+      fixture.detectChanges();
+
+      expect(el(fixture, '[data-testid="page-error-banner"]')).not.toBeNull();
+    });
+
+    it('preserves field values after a 5xx failure', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({}, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.form.get('email')?.value).toBe('eleanor@whitmore.studio');
+      expect(fixture.componentInstance.form.get('fullName')?.value).toBe('Eleanor Whitmore');
+    });
+
+    it('clears the page-level banner on a fresh submit', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up')).flush(
+        {},
+        { status: 500, statusText: 'Server Error' },
+      );
+      fixture.detectChanges();
+      expect(el(fixture, '[data-testid="page-error-banner"]')).not.toBeNull();
+
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      fixture.detectChanges();
+      expect(fixture.componentInstance.pageError()).toBeNull();
+
+      httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up')).flush({
+        userId: '1',
+        email: 'eleanor@whitmore.studio',
+        fullName: 'Eleanor Whitmore',
+        role: 'Organizer',
+        status: 'Active',
+      });
+    });
+
     it('clears previous backend errors on a fresh submit', () => {
       const fixture = create();
       submitAndFlush400(fixture, { errors: { Email: ['Old error.'] } });
