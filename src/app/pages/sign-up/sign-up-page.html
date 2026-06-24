@@ -1,0 +1,176 @@
+<section class="sign-up-page" data-testid="sign-up-page">
+  <div class="sign-up-page__card">
+    <aside class="sign-up-page__brand" data-testid="brand-panel">
+      <div class="sign-up-page__brand-glow sign-up-page__brand-glow--top"></div>
+      <div class="sign-up-page__brand-glow sign-up-page__brand-glow--mid"></div>
+      <div class="sign-up-page__brand-glow sign-up-page__brand-glow--bottom"></div>
+
+      <div class="sign-up-page__brand-mark">
+        <span class="sign-up-page__brand-orb" aria-hidden="true"></span>
+        <span class="sign-up-page__brand-wordmark">
+          <span>Simplify</span><span class="sign-up-page__brand-wordmark--italic">Yours</span>
+        </span>
+      </div>
+
+      <div class="sign-up-page__brand-spacer"></div>
+
+      <div class="sign-up-page__brand-headline-block">
+        <p class="sign-up-page__brand-eyebrow">SOMETHING GOOD IS ABOUT TO HAPPEN</p>
+        <h1 class="sign-up-page__brand-headline">
+          Let&rsquo;s plan something
+          <span class="sign-up-page__brand-headline--italic">memorable.</span>
+        </h1>
+        <div class="sign-up-page__brand-divider"></div>
+        <p class="sign-up-page__brand-lede">
+          Create your account in under a minute. Invitations, RSVPs, seating, vendors, and the day-of
+          timeline &mdash; kept together, calmly, on one warm page.
+        </p>
+      </div>
+
+      <div class="sign-up-page__brand-spacer"></div>
+
+      <ul class="sign-up-page__reassurance" data-testid="reassurance-row">
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Free to start.</span>
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>No card required.</span>
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Cancel anytime.</span>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="sign-up-page__form-pane" data-testid="form-pane">
+      <header class="sign-up-page__form-header">
+        <p class="sign-up-page__eyebrow">CREATE ACCOUNT</p>
+        <p class="sign-up-page__sign-in">
+          Already have an account?
+          <a [attr.href]="identityWebUrl" data-testid="sign-in-link">Sign in</a>
+        </p>
+      </header>
+
+      <div class="sign-up-page__title-block">
+        <h2 class="sign-up-page__title">
+          Create your <span class="sign-up-page__title--italic">account.</span>
+        </h2>
+        <div class="sign-up-page__title-divider"></div>
+      </div>
+
+      <form class="sign-up-page__form" data-testid="sign-up-form">
+        <div class="sign-up-page__field" data-testid="field-full-name">
+          <label class="sign-up-page__label" for="sy-full-name">Full name</label>
+          <div class="sign-up-page__input sign-up-page__input--focused">
+            <input
+              id="sy-full-name"
+              type="text"
+              class="sign-up-page__control"
+              placeholder="e.g. Eleanor Whitmore"
+              autocomplete="name"
+              disabled
+            />
+            <span class="sign-up-page__caret" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="sign-up-page__field" data-testid="field-email">
+          <label class="sign-up-page__label" for="sy-email">Email</label>
+          <div class="sign-up-page__input">
+            <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M4 6h16v12H4z"></path>
+              <path d="M4 7l8 6 8-6"></path>
+            </svg>
+            <input
+              id="sy-email"
+              type="email"
+              class="sign-up-page__control"
+              placeholder="name&#64;yourplace.com"
+              autocomplete="email"
+              disabled
+            />
+          </div>
+        </div>
+
+        <div class="sign-up-page__field" data-testid="field-password">
+          <label class="sign-up-page__label" for="sy-password">Password</label>
+          <div class="sign-up-page__input">
+            <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+            </svg>
+            <input
+              id="sy-password"
+              type="password"
+              class="sign-up-page__control"
+              placeholder="At least 8 characters"
+              autocomplete="new-password"
+              disabled
+            />
+            <svg class="sign-up-page__input-icon sign-up-page__input-icon--trailing" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </div>
+          <div class="sign-up-page__strength" data-testid="strength-meter">
+            <div class="sign-up-page__strength-pills">
+              <span class="sign-up-page__strength-pill"></span>
+              <span class="sign-up-page__strength-pill"></span>
+              <span class="sign-up-page__strength-pill"></span>
+            </div>
+            <div class="sign-up-page__strength-caption">
+              <span>Weak &middot; Okay &middot; Strong</span>
+              <span class="sign-up-page__strength-aside">A line from a song works.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sign-up-page__field" data-testid="field-confirm-password">
+          <label class="sign-up-page__label" for="sy-confirm-password">Confirm password</label>
+          <div class="sign-up-page__input">
+            <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+            </svg>
+            <input
+              id="sy-confirm-password"
+              type="password"
+              class="sign-up-page__control"
+              placeholder="Once more"
+              autocomplete="new-password"
+              disabled
+            />
+          </div>
+        </div>
+
+        <div class="sign-up-page__terms" data-testid="terms-row">
+          <input id="sy-terms" type="checkbox" class="sign-up-page__checkbox" disabled />
+          <label for="sy-terms" class="sign-up-page__terms-copy">
+            I agree to the
+            <a href="#" class="sign-up-page__terms-link">Terms of Service</a>
+            and
+            <a href="#" class="sign-up-page__terms-link">Privacy Policy</a>.
+          </label>
+        </div>
+
+        <button type="button" class="sign-up-page__submit" data-testid="submit-button">
+          <span>Create account</span>
+          <span class="sign-up-page__submit-arrow" aria-hidden="true">&rarr;</span>
+        </button>
+
+        <p class="sign-up-page__fine-print" data-testid="fine-print">
+          By signing in you agree to our terms and privacy policy.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
