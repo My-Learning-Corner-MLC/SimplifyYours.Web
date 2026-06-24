@@ -95,6 +95,12 @@
         <div class="sign-up-page__title-divider"></div>
       </div>
 
+      @if (backendErrorCount() >= 2) {
+        <div class="sign-up-page__banner" role="alert" data-testid="multi-error-banner">
+          A few small things &mdash; we&rsquo;ll walk you through them. Focused on the first.
+        </div>
+      }
+
       <form
         class="sign-up-page__form"
         [class.sign-up-page__form--submitting]="submitting()"
@@ -108,7 +114,7 @@
           <div
             class="sign-up-page__input"
             [class.sign-up-page__input--focused]="form.get('fullName')?.touched && form.get('fullName')?.valid"
-            [class.sign-up-page__input--error]="shouldShowError('fullName')"
+            [class.sign-up-page__input--error]="shouldShowError('fullName') || hasBackendError('fullName')"
           >
             <input
               #fullNameInput
@@ -130,6 +136,8 @@
                 Name is too long.
               }
             </p>
+          } @else if (hasBackendError('fullName')) {
+            <p class="sign-up-page__error" data-testid="error-full-name">{{ backendErrorMessage('fullName') }}</p>
           }
         </div>
 
@@ -137,7 +145,7 @@
           <label class="sign-up-page__label" for="sy-email">Email</label>
           <div
             class="sign-up-page__input"
-            [class.sign-up-page__input--error]="shouldShowError('email')"
+            [class.sign-up-page__input--error]="shouldShowError('email') || hasBackendError('email')"
           >
             <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <path d="M4 6h16v12H4z"></path>
@@ -162,6 +170,19 @@
                 Email is too long.
               }
             </p>
+          } @else if (hasBackendError('email')) {
+            @if (isEmailTakenError()) {
+              <p class="sign-up-page__error" data-testid="error-email">
+                This email is already in use.
+                <a
+                  [attr.href]="identityWebUrl"
+                  class="sign-up-page__error-link"
+                  data-testid="error-email-signin-link"
+                >Try signing in instead.</a>
+              </p>
+            } @else {
+              <p class="sign-up-page__error" data-testid="error-email">{{ backendErrorMessage('email') }}</p>
+            }
           }
         </div>
 
@@ -169,7 +190,7 @@
           <label class="sign-up-page__label" for="sy-password">Password</label>
           <div
             class="sign-up-page__input"
-            [class.sign-up-page__input--error]="shouldShowError('password')"
+            [class.sign-up-page__input--error]="shouldShowError('password') || hasBackendError('password')"
           >
             <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <rect x="4" y="11" width="16" height="10" rx="2"></rect>
@@ -233,6 +254,8 @@
                 Password is too long.
               }
             </p>
+          } @else if (hasBackendError('password')) {
+            <p class="sign-up-page__error" data-testid="error-password">{{ backendErrorMessage('password') }}</p>
           }
         </div>
 
@@ -240,7 +263,7 @@
           <label class="sign-up-page__label" for="sy-confirm-password">Confirm password</label>
           <div
             class="sign-up-page__input"
-            [class.sign-up-page__input--error]="shouldShowError('confirmPassword') || shouldShowMismatchError()"
+            [class.sign-up-page__input--error]="shouldShowError('confirmPassword') || shouldShowMismatchError() || hasBackendError('confirmPassword')"
           >
             <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <rect x="4" y="11" width="16" height="10" rx="2"></rect>
@@ -263,6 +286,8 @@
             <p class="sign-up-page__error" data-testid="error-confirm-password">
               Passwords don&rsquo;t match yet.
             </p>
+          } @else if (hasBackendError('confirmPassword')) {
+            <p class="sign-up-page__error" data-testid="error-confirm-password">{{ backendErrorMessage('confirmPassword') }}</p>
           }
         </div>
 

@@ -288,6 +288,26 @@ $sage: #7a8f5a;
     line-height: 1.5;
   }
 
+  &__error-link {
+    color: $plum;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    border-bottom: 1px solid $champagne;
+    text-decoration: none;
+    margin-left: 4px;
+  }
+
+  &__banner {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    background: rgba(176, 85, 64, 0.08);
+    border: 1px solid rgba(176, 85, 64, 0.4);
+    border-radius: 10px;
+    color: $coral-ink;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
   &__visibility-toggle {
     background: transparent;
     border: none;

@@ -16,8 +16,18 @@ import {
   Validators,
 } from '@angular/forms';
 import { AuthApiClient } from '../../core/auth/auth-api-client';
+import { SignUpError } from '../../core/auth/sign-up-error.model';
 import { SignUpResponse } from '../../core/auth/sign-up-response.model';
 import { evaluatePasswordStrength, PasswordStrength } from './password-strength';
+
+const EMAIL_TAKEN_PATTERN = /already\s+(in\s+use|exists)/i;
+const CONTROL_ORDER = [
+  'fullName',
+  'email',
+  'password',
+  'confirmPassword',
+  'acceptTermsAndPrivacy',
+] as const;
 
 function trimmedMinLength(min: number) {
   return (ctl: AbstractControl): ValidationErrors | null => {
@@ -71,6 +81,9 @@ export class SignUpPage implements AfterViewInit {
   readonly passwordStrength = computed<PasswordStrength>(() =>
     evaluatePasswordStrength(this.passwordValue()),
   );
+  readonly backendErrors = signal<Record<string, string[]>>({});
+  readonly pageError = signal<string | null>(null);
+  readonly backendErrorCount = computed(() => Object.keys(this.backendErrors()).length);
 
   @ViewChild('fullNameInput', { static: false })
   private fullNameInput?: ElementRef<HTMLInputElement>;
@@ -79,6 +92,9 @@ export class SignUpPage implements AfterViewInit {
     this.form.get('password')?.valueChanges.subscribe((value: string) => {
       this.passwordValue.set(value ?? '');
     });
+    for (const name of CONTROL_ORDER) {
+      this.form.get(name)?.valueChanges.subscribe(() => this.clearBackendErrorFor(name));
+    }
   }
 
   ngAfterViewInit(): void {
@@ -116,6 +132,8 @@ export class SignUpPage implements AfterViewInit {
       return;
     }
 
+    this.backendErrors.set({});
+    this.pageError.set(null);
     this.submitting.set(true);
     this.form.disable({ emitEvent: false });
     const value = this.form.getRawValue() as {
@@ -132,11 +150,57 @@ export class SignUpPage implements AfterViewInit {
         this.successFirstName.set(this.firstNameFrom(value.fullName, response.fullName));
         this.succeeded.set(true);
       },
-      error: () => {
+      error: (error: SignUpError) => {
         this.submitting.set(false);
         this.form.enable({ emitEvent: false });
+        this.applyBackendError(error);
       },
     });
+  }
+
+  hasBackendError(controlName: string): boolean {
+    return !this.shouldShowError(controlName) && !!this.backendErrors()[controlName]?.length;
+  }
+
+  backendErrorMessage(controlName: string): string {
+    return this.backendErrors()[controlName]?.[0] ?? '';
+  }
+
+  isEmailTakenError(): boolean {
+    const msg = this.backendErrors()['email']?.[0];
+    return !!msg && EMAIL_TAKEN_PATTERN.test(msg);
+  }
+
+  private applyBackendError(error: SignUpError): void {
+    if (error.pageError) {
+      this.pageError.set(error.pageError);
+      return;
+    }
+    const fields = error.fieldErrors ?? {};
+    this.backendErrors.set({ ...fields });
+    if (Object.keys(fields).length >= 1) {
+      this.focusFirstBackendOffender();
+    }
+  }
+
+  private focusFirstBackendOffender(): void {
+    const errors = this.backendErrors();
+    for (const name of CONTROL_ORDER) {
+      if (errors[name]?.length) {
+        queueMicrotask(() => document.getElementById(this.idFor(name))?.focus());
+        return;
+      }
+    }
+  }
+
+  private clearBackendErrorFor(controlName: string): void {
+    const current = this.backendErrors();
+    if (!current[controlName]) {
+      return;
+    }
+    const next = { ...current };
+    delete next[controlName];
+    this.backendErrors.set(next);
   }
 
   private firstNameFrom(submittedFullName: string, responseFullName?: string): string {

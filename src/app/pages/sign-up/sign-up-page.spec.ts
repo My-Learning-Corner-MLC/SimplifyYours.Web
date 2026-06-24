@@ -380,6 +380,86 @@ describe('SignUpPage', () => {
       expect(fixture.componentInstance.form.get('email')?.value).toBe('eleanor@whitmore.studio');
     });
 
+    function submitAndFlush400(
+      fixture: ComponentFixture<SignUpPage>,
+      body: object,
+    ): void {
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush(body, { status: 400, statusText: 'Bad Request' });
+      fixture.detectChanges();
+    }
+
+    it('renders state 3C: single-field 400 sets per-field error', () => {
+      const fixture = create();
+      submitAndFlush400(fixture, { errors: { Email: ['That email is bad.'] } });
+
+      const err = el<HTMLElement>(fixture, '[data-testid="error-email"]');
+      expect(err?.textContent?.trim()).toContain('That email is bad.');
+      expect(el(fixture, '[data-testid="multi-error-banner"]')).toBeNull();
+    });
+
+    it('renders state 3D: 2+ field errors show the banner with role="alert" and per-field errors', () => {
+      const fixture = create();
+      submitAndFlush400(fixture, {
+        errors: {
+          FullName: ['Name looks suspicious.'],
+          Email: ['Email looks suspicious.'],
+        },
+      });
+
+      const banner = el<HTMLElement>(fixture, '[data-testid="multi-error-banner"]');
+      expect(banner).not.toBeNull();
+      expect(banner?.getAttribute('role')).toBe('alert');
+      expect(el(fixture, '[data-testid="error-full-name"]')?.textContent).toContain('Name looks suspicious.');
+      expect(el(fixture, '[data-testid="error-email"]')?.textContent).toContain('Email looks suspicious.');
+    });
+
+    it('renders the email-taken variant with an italic "Try signing in instead." link', () => {
+      const fixture = create();
+      submitAndFlush400(fixture, { errors: { Email: ['Email already in use.'] } });
+
+      const err = el<HTMLElement>(fixture, '[data-testid="error-email"]');
+      expect(err?.textContent).toContain('This email is already in use.');
+      const link = el<HTMLAnchorElement>(fixture, '[data-testid="error-email-signin-link"]');
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
+    });
+
+    it('clears a per-field backend error live when the user edits that field', () => {
+      const fixture = create();
+      submitAndFlush400(fixture, { errors: { Email: ['That email is bad.'] } });
+      expect(el(fixture, '[data-testid="error-email"]')).not.toBeNull();
+
+      fixture.componentInstance.form.get('email')?.setValue('eleanor2@whitmore.studio');
+      fixture.detectChanges();
+      expect(el(fixture, '[data-testid="error-email"]')).toBeNull();
+    });
+
+    it('clears previous backend errors on a fresh submit', () => {
+      const fixture = create();
+      submitAndFlush400(fixture, { errors: { Email: ['Old error.'] } });
+      expect(el(fixture, '[data-testid="error-email"]')).not.toBeNull();
+
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      fixture.detectChanges();
+      expect(fixture.componentInstance.backendErrorCount()).toBe(0);
+
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({
+        userId: '1',
+        email: 'eleanor@whitmore.studio',
+        fullName: 'Eleanor Whitmore',
+        role: 'Organizer',
+        status: 'Active',
+      });
+    });
+
     it('does not log password or email to the console on submit', () => {
       const fixture = create();
       const logSpy = vi.spyOn(console, 'log');
