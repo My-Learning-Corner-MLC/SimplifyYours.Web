@@ -277,9 +277,7 @@ $sage: #7a8f5a;
     }
 
     &:focus-within {
-      background: $cream;
-      border: 1.5px solid $plum;
-      box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
+      @extend .sign-up-page__input--focused;
     }
   }
 
@@ -442,4 +440,91 @@ $sage: #7a8f5a;
     color: $muted;
     text-align: center;
   }
+
+  &__form--submitting {
+    .sign-up-page__input,
+    .sign-up-page__checkbox,
+    .sign-up-page__terms-copy,
+    .sign-up-page__strength {
+      opacity: 0.55;
+    }
+  }
+
+  &__spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 252, 245, 0.35);
+    border-top-color: $cream;
+    animation: sign-up-spinner 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  &__submit--link {
+    text-decoration: none;
+  }
+
+  &__success {
+    position: relative;
+    padding: 24px 0;
+  }
+
+  &__confetti {
+    position: relative;
+    height: 64px;
+    pointer-events: none;
+
+    span {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    span:nth-child(1) { left: 8%; top: 12px; background: $champagne; transform: rotate(12deg); }
+    span:nth-child(2) { left: 26%; top: 36px; background: $plum; transform: rotate(-18deg); }
+    span:nth-child(3) { left: 44%; top: 6px; background: $coral; transform: rotate(28deg); }
+    span:nth-child(4) { left: 62%; top: 30px; background: $sage; transform: rotate(-10deg); }
+    span:nth-child(5) { left: 78%; top: 14px; background: $champagne; transform: rotate(20deg); }
+    span:nth-child(6) { left: 90%; top: 36px; background: $plum; transform: rotate(-24deg); }
+  }
+
+  &__success-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: $sage;
+    color: $cream;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 24px;
+  }
+
+  &__success-headline {
+    font-family: 'Instrument Serif', serif;
+    font-size: 38px;
+    line-height: 1.05;
+    letter-spacing: -0.012em;
+    margin: 0 0 12px;
+    font-weight: 400;
+    color: $ink;
+  }
+
+  &__success-name {
+    font-style: italic;
+    color: $plum;
+  }
+
+  &__success-copy {
+    font-size: 15px;
+    line-height: 1.6;
+    color: $ink-soft;
+    margin: 0 0 28px;
+    max-width: 460px;
+  }
+}
+
+@keyframes sign-up-spinner {
+  to { transform: rotate(360deg); }
 }

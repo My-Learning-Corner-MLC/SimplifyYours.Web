@@ -52,6 +52,34 @@
     </aside>
 
     <div class="sign-up-page__form-pane" data-testid="form-pane">
+      @if (succeeded()) {
+        <div class="sign-up-page__success" data-testid="success-pane">
+          <div class="sign-up-page__confetti" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="sign-up-page__success-badge" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h2 class="sign-up-page__success-headline" data-testid="success-headline">
+            Welcome to SimplifyYours,
+            <span class="sign-up-page__success-name">{{ successFirstName() }}.</span>
+          </h2>
+          <p class="sign-up-page__success-copy">
+            Your account is ready. Sign in to start planning something memorable.
+          </p>
+          <a
+            [attr.href]="identityWebUrl"
+            target="_self"
+            class="sign-up-page__submit sign-up-page__submit--link"
+            data-testid="success-cta"
+          >
+            <span>Sign in</span>
+            <span class="sign-up-page__submit-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+      } @else {
       <header class="sign-up-page__form-header">
         <p class="sign-up-page__eyebrow">CREATE ACCOUNT</p>
         <p class="sign-up-page__sign-in">
@@ -69,6 +97,7 @@
 
       <form
         class="sign-up-page__form"
+        [class.sign-up-page__form--submitting]="submitting()"
         data-testid="sign-up-form"
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
@@ -257,15 +286,26 @@
           </p>
         }
 
-        <button type="submit" class="sign-up-page__submit" data-testid="submit-button">
-          <span>Create account</span>
-          <span class="sign-up-page__submit-arrow" aria-hidden="true">&rarr;</span>
+        <button
+          type="submit"
+          class="sign-up-page__submit"
+          data-testid="submit-button"
+          [attr.aria-busy]="submitting() ? 'true' : null"
+        >
+          @if (submitting()) {
+            <span class="sign-up-page__spinner" aria-hidden="true"></span>
+            <span>Creating your account&hellip;</span>
+          } @else {
+            <span>Create account</span>
+            <span class="sign-up-page__submit-arrow" aria-hidden="true">&rarr;</span>
+          }
         </button>
 
         <p class="sign-up-page__fine-print" data-testid="fine-print">
           By signing in you agree to our terms and privacy policy.
         </p>
       </form>
+      }
     </div>
   </div>
 </section>

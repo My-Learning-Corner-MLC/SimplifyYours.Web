@@ -1,12 +1,34 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { vi } from 'vitest';
 import { SignUpPage } from './sign-up-page';
 
 describe('SignUpPage', () => {
+  let httpMock: HttpTestingController;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SignUpPage],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
   });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  function fillValid(fixture: ComponentFixture<SignUpPage>): void {
+    fixture.componentInstance.form.patchValue({
+      fullName: 'Eleanor Whitmore',
+      email: 'eleanor@whitmore.studio',
+      password: 'Abcdefg12$',
+      confirmPassword: 'Abcdefg12$',
+      acceptTermsAndPrivacy: true,
+    });
+    fixture.detectChanges();
+  }
 
   function create(): ComponentFixture<SignUpPage> {
     const fixture = TestBed.createComponent(SignUpPage);
@@ -244,6 +266,142 @@ describe('SignUpPage', () => {
       form.dispatchEvent(new Event('submit'));
       fixture.detectChanges();
       expect(document.activeElement?.id).toBe('sy-full-name');
+    });
+  });
+
+  describe('submit + loading + success', () => {
+    it('on valid submit, POSTs the full request body to /auth/sign-up', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        fullName: 'Eleanor Whitmore',
+        email: 'eleanor@whitmore.studio',
+        password: 'Abcdefg12$',
+        confirmPassword: 'Abcdefg12$',
+        acceptTermsAndPrivacy: true,
+      });
+      req.flush({
+        userId: '00000000-0000-0000-0000-000000000001',
+        email: 'eleanor@whitmore.studio',
+        fullName: 'Eleanor Whitmore',
+        role: 'Organizer',
+        status: 'Active',
+      });
+    });
+
+    it('shows the loading state during the request (aria-busy + spinner copy)', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.submitting()).toBe(true);
+      const btn = el<HTMLButtonElement>(fixture, '[data-testid="submit-button"]')!;
+      expect(btn.getAttribute('aria-busy')).toBe('true');
+      expect(btn.textContent).toContain('Creating your account');
+      expect(fixture.componentInstance.form.disabled).toBe(true);
+
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({
+        userId: 'x',
+        email: 'eleanor@whitmore.studio',
+        fullName: 'Eleanor Whitmore',
+        role: 'Organizer',
+        status: 'Active',
+      });
+    });
+
+    it('on 201, renders the success state with the first-name interpolation', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({
+        userId: '1',
+        email: 'eleanor@whitmore.studio',
+        fullName: 'Eleanor Whitmore',
+        role: 'Organizer',
+        status: 'Active',
+      });
+      fixture.detectChanges();
+
+      const headline = el<HTMLElement>(fixture, '[data-testid="success-headline"]');
+      expect(headline).not.toBeNull();
+      expect(headline?.textContent).toContain('Welcome to SimplifyYours');
+      expect(headline?.textContent).toContain('Eleanor');
+      expect(el(fixture, '[data-testid="sign-up-form"]')).toBeNull();
+    });
+
+    it('success CTA links to the identity sign-in URL', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({
+        userId: '1',
+        email: 'eleanor@whitmore.studio',
+        fullName: 'Eleanor Whitmore',
+        role: 'Organizer',
+        status: 'Active',
+      });
+      fixture.detectChanges();
+
+      const cta = el<HTMLAnchorElement>(fixture, '[data-testid="success-cta"]');
+      expect(cta?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
+    });
+
+    it('on error, returns to interactive state with field values preserved', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({ errors: { Email: ['already in use'] } }, { status: 400, statusText: 'Bad Request' });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.submitting()).toBe(false);
+      expect(fixture.componentInstance.succeeded()).toBe(false);
+      expect(fixture.componentInstance.form.disabled).toBe(false);
+      expect(fixture.componentInstance.form.get('email')?.value).toBe('eleanor@whitmore.studio');
+    });
+
+    it('does not log password or email to the console on submit', () => {
+      const fixture = create();
+      const logSpy = vi.spyOn(console, 'log');
+      const errorSpy = vi.spyOn(console, 'error');
+      const warnSpy = vi.spyOn(console, 'warn');
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush({
+        userId: '1',
+        email: 'eleanor@whitmore.studio',
+        fullName: 'Eleanor Whitmore',
+        role: 'Organizer',
+        status: 'Active',
+      });
+
+      const allCalls = [...logSpy.mock.calls, ...errorSpy.mock.calls, ...warnSpy.mock.calls];
+      const flat = allCalls.flat().map((a) => (typeof a === 'string' ? a : JSON.stringify(a)));
+      expect(flat.some((m) => m.includes('Abcdefg12$'))).toBe(false);
+      expect(flat.some((m) => m.includes('eleanor@whitmore.studio'))).toBe(false);
     });
   });
 });

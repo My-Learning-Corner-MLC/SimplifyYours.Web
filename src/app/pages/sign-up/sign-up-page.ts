@@ -15,6 +15,8 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { AuthApiClient } from '../../core/auth/auth-api-client';
+import { SignUpResponse } from '../../core/auth/sign-up-response.model';
 import { evaluatePasswordStrength, PasswordStrength } from './password-strength';
 
 function trimmedMinLength(min: number) {
@@ -45,6 +47,7 @@ function matchPasswordsValidator(group: AbstractControl): ValidationErrors | nul
 })
 export class SignUpPage implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
+  private readonly authApi = inject(AuthApiClient);
 
   readonly identityWebUrl = 'https://identity.simplifyyours.com';
 
@@ -60,14 +63,17 @@ export class SignUpPage implements AfterViewInit {
   );
 
   readonly submitted = signal(false);
+  readonly submitting = signal(false);
+  readonly succeeded = signal(false);
+  readonly successFirstName = signal('');
   readonly showPassword = signal(false);
   readonly passwordValue = signal('');
   readonly passwordStrength = computed<PasswordStrength>(() =>
     evaluatePasswordStrength(this.passwordValue()),
   );
 
-  @ViewChild('fullNameInput', { static: true })
-  private fullNameInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('fullNameInput', { static: false })
+  private fullNameInput?: ElementRef<HTMLInputElement>;
 
   constructor() {
     this.form.get('password')?.valueChanges.subscribe((value: string) => {
@@ -101,11 +107,44 @@ export class SignUpPage implements AfterViewInit {
   }
 
   onSubmit(): void {
+    if (this.submitting() || this.succeeded()) {
+      return;
+    }
     this.submitted.set(true);
     if (this.form.invalid) {
       this.focusFirstInvalid();
       return;
     }
+
+    this.submitting.set(true);
+    this.form.disable({ emitEvent: false });
+    const value = this.form.getRawValue() as {
+      fullName: string;
+      email: string;
+      password: string;
+      confirmPassword: string;
+      acceptTermsAndPrivacy: boolean;
+    };
+
+    this.authApi.signUp(value).subscribe({
+      next: (response: SignUpResponse) => {
+        this.submitting.set(false);
+        this.successFirstName.set(this.firstNameFrom(value.fullName, response.fullName));
+        this.succeeded.set(true);
+      },
+      error: () => {
+        this.submitting.set(false);
+        this.form.enable({ emitEvent: false });
+      },
+    });
+  }
+
+  private firstNameFrom(submittedFullName: string, responseFullName?: string): string {
+    const source = (responseFullName ?? submittedFullName ?? '').trim();
+    if (!source) {
+      return '';
+    }
+    return source.split(/\s+/)[0];
   }
 
   private focusFirstInvalid(): void {
@@ -113,10 +152,7 @@ export class SignUpPage implements AfterViewInit {
     for (const name of order) {
       const ctl = this.form.get(name);
       if (ctl && ctl.invalid) {
-        const el = document.getElementById(this.idFor(name));
-        if (el instanceof HTMLElement) {
-          el.focus();
-        }
+        document.getElementById(this.idFor(name))?.focus();
         return;
       }
     }
