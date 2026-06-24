@@ -532,6 +532,69 @@ describe('SignUpPage', () => {
       });
     });
 
+    it('focuses the multi-error banner when 2+ field errors come back', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      req.flush(
+        {
+          errors: {
+            FullName: ['Name looks suspicious.'],
+            Email: ['Email looks suspicious.'],
+          },
+        },
+        { status: 400, statusText: 'Bad Request' },
+      );
+      fixture.detectChanges();
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(
+        el<HTMLElement>(fixture, '[data-testid="multi-error-banner"]'),
+      );
+    });
+
+    it('focuses the page-error banner on a 5xx', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      httpMock
+        .expectOne((r) => r.url.endsWith('/auth/sign-up'))
+        .flush({}, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(
+        el<HTMLElement>(fixture, '[data-testid="page-error-banner"]'),
+      );
+    });
+
+    it('sets aria-describedby on the email input when a backend error is showing', () => {
+      const fixture = create();
+      fillValid(fixture);
+      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
+        new Event('submit'),
+      );
+      httpMock
+        .expectOne((r) => r.url.endsWith('/auth/sign-up'))
+        .flush({ errors: { Email: ['Bad.'] } }, { status: 400, statusText: 'Bad Request' });
+      fixture.detectChanges();
+
+      const input = el<HTMLInputElement>(fixture, '#sy-email');
+      expect(input?.getAttribute('aria-describedby')).toBe('sy-email-error');
+      expect(input?.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('marks the form region with aria-live="polite"', () => {
+      const fixture = create();
+      const form = el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]');
+      expect(form?.getAttribute('aria-live')).toBe('polite');
+    });
+
     it('does not log password or email to the console on submit', () => {
       const fixture = create();
       const logSpy = vi.spyOn(console, 'log');

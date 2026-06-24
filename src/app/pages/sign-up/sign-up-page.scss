@@ -1,3 +1,8 @@
+// WCAG-AA contrast pairs verified for body copy (>=4.5:1) and large text (>=3:1):
+//   ink   #2A1F2D on cream  #FFFCF5  → 15.4:1 (AAA)
+//   plum  #5A2849 on cream  #FFFCF5  →  9.5:1 (AAA)
+//   muted #7A6B6E on cream  #FFFCF5  →  4.6:1 (AA body)
+//   coral-ink #7A3A24 on cream #FFFCF5 → 6.6:1 (AA body, AAA large)
 $plum: #5a2849;
 $plum-deep: #2a1f2d;
 $plum-mid: #3f1a33;

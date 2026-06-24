@@ -1,4 +1,5 @@
 import {
+  AfterViewChecked,
   AfterViewInit,
   Component,
   ElementRef,
@@ -55,7 +56,7 @@ function matchPasswordsValidator(group: AbstractControl): ValidationErrors | nul
   templateUrl: './sign-up-page.html',
   styleUrl: './sign-up-page.scss',
 })
-export class SignUpPage implements AfterViewInit {
+export class SignUpPage implements AfterViewInit, AfterViewChecked {
   private readonly fb = inject(FormBuilder);
   private readonly authApi = inject(AuthApiClient);
 
@@ -88,6 +89,14 @@ export class SignUpPage implements AfterViewInit {
   @ViewChild('fullNameInput', { static: false })
   private fullNameInput?: ElementRef<HTMLInputElement>;
 
+  @ViewChild('pageErrorBanner', { static: false })
+  private pageErrorBanner?: ElementRef<HTMLElement>;
+
+  @ViewChild('multiErrorBanner', { static: false })
+  private multiErrorBanner?: ElementRef<HTMLElement>;
+
+  private pendingBannerFocus: 'page' | 'multi' | null = null;
+
   constructor() {
     this.form.get('password')?.valueChanges.subscribe((value: string) => {
       this.passwordValue.set(value ?? '');
@@ -99,6 +108,20 @@ export class SignUpPage implements AfterViewInit {
 
   ngAfterViewInit(): void {
     queueMicrotask(() => this.fullNameInput?.nativeElement?.focus());
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.pendingBannerFocus) {
+      return;
+    }
+    const target =
+      this.pendingBannerFocus === 'page'
+        ? this.pageErrorBanner?.nativeElement
+        : this.multiErrorBanner?.nativeElement;
+    if (target) {
+      this.pendingBannerFocus = null;
+      target.focus();
+    }
   }
 
   togglePasswordVisibility(): void {
@@ -174,11 +197,14 @@ export class SignUpPage implements AfterViewInit {
   private applyBackendError(error: SignUpError): void {
     if (error.pageError) {
       this.pageError.set(error.pageError);
+      this.pendingBannerFocus = 'page';
       return;
     }
     const fields = error.fieldErrors ?? {};
     this.backendErrors.set({ ...fields });
-    if (Object.keys(fields).length >= 1) {
+    if (Object.keys(fields).length >= 2) {
+      this.pendingBannerFocus = 'multi';
+    } else if (Object.keys(fields).length === 1) {
       this.focusFirstBackendOffender();
     }
   }
