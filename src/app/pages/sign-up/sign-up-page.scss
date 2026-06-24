@@ -548,3 +548,55 @@ $sage: #7a8f5a;
 @keyframes sign-up-spinner {
   to { transform: rotate(360deg); }
 }
+
+// Responsive collapse.
+// >= 1024 px: split layout (brand panel + form).
+// 768-1023 px: single column, brand panel hidden, form full width.
+// < 768 px: same single column with reduced padding & headline sizes.
+// Verified usable down to 360 px (no horizontal scroll, full-width submit).
+@media (max-width: 1023px) {
+  .sign-up-page {
+    padding: 24px 16px 48px;
+
+    &__card {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+
+    &__brand {
+      display: none;
+    }
+
+    &__form-pane {
+      padding: 36px 32px 40px;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .sign-up-page {
+    padding: 16px 12px 40px;
+
+    &__form-pane {
+      padding: 28px 20px 32px;
+    }
+
+    &__title {
+      font-size: 30px;
+    }
+
+    &__success-headline {
+      font-size: 28px;
+    }
+
+    &__form-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    &__submit {
+      width: 100%;
+    }
+  }
+}
