@@ -67,25 +67,49 @@
         <div class="sign-up-page__title-divider"></div>
       </div>
 
-      <form class="sign-up-page__form" data-testid="sign-up-form">
+      <form
+        class="sign-up-page__form"
+        data-testid="sign-up-form"
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        novalidate
+      >
         <div class="sign-up-page__field" data-testid="field-full-name">
           <label class="sign-up-page__label" for="sy-full-name">Full name</label>
-          <div class="sign-up-page__input sign-up-page__input--focused">
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--focused]="form.get('fullName')?.touched && form.get('fullName')?.valid"
+            [class.sign-up-page__input--error]="shouldShowError('fullName')"
+          >
             <input
+              #fullNameInput
               id="sy-full-name"
               type="text"
               class="sign-up-page__control"
               placeholder="e.g. Eleanor Whitmore"
               autocomplete="name"
-              disabled
+              formControlName="fullName"
             />
-            <span class="sign-up-page__caret" aria-hidden="true"></span>
           </div>
+          @if (shouldShowError('fullName')) {
+            <p class="sign-up-page__error" data-testid="error-full-name">
+              @if (form.get('fullName')?.hasError('required')) {
+                Please tell us your name.
+              } @else if (form.get('fullName')?.hasError('trimmedMinLength')) {
+                Name needs at least 2 characters.
+              } @else if (form.get('fullName')?.hasError('maxlength')) {
+                Name is too long.
+              }
+            </p>
+          }
         </div>
 
         <div class="sign-up-page__field" data-testid="field-email">
           <label class="sign-up-page__label" for="sy-email">Email</label>
-          <div class="sign-up-page__input">
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--error]="shouldShowError('email')"
+          >
             <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <path d="M4 6h16v12H4z"></path>
               <path d="M4 7l8 6 8-6"></path>
@@ -96,64 +120,130 @@
               class="sign-up-page__control"
               placeholder="name&#64;yourplace.com"
               autocomplete="email"
-              disabled
+              formControlName="email"
             />
           </div>
+          @if (shouldShowError('email')) {
+            <p class="sign-up-page__error" data-testid="error-email">
+              @if (form.get('email')?.hasError('required')) {
+                We need an email to send you in.
+              } @else if (form.get('email')?.hasError('email')) {
+                That doesn&rsquo;t look like a valid email.
+              } @else if (form.get('email')?.hasError('maxlength')) {
+                Email is too long.
+              }
+            </p>
+          }
         </div>
 
         <div class="sign-up-page__field" data-testid="field-password">
           <label class="sign-up-page__label" for="sy-password">Password</label>
-          <div class="sign-up-page__input">
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--error]="shouldShowError('password')"
+          >
             <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <rect x="4" y="11" width="16" height="10" rx="2"></rect>
               <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
             </svg>
             <input
               id="sy-password"
-              type="password"
+              [type]="showPassword() ? 'text' : 'password'"
               class="sign-up-page__control"
               placeholder="At least 8 characters"
               autocomplete="new-password"
-              disabled
+              formControlName="password"
             />
-            <svg class="sign-up-page__input-icon sign-up-page__input-icon--trailing" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
+            <button
+              type="button"
+              class="sign-up-page__visibility-toggle"
+              data-testid="toggle-password"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showPassword()"
+            >
+              {{ showPassword() ? 'HIDE' : 'SHOW' }}
+            </button>
           </div>
           <div class="sign-up-page__strength" data-testid="strength-meter">
             <div class="sign-up-page__strength-pills">
-              <span class="sign-up-page__strength-pill"></span>
-              <span class="sign-up-page__strength-pill"></span>
-              <span class="sign-up-page__strength-pill"></span>
+              <span
+                class="sign-up-page__strength-pill"
+                [class.sign-up-page__strength-pill--weak]="passwordStrength().score >= 1 && passwordStrength().score === 1"
+                [class.sign-up-page__strength-pill--okay]="passwordStrength().score === 2"
+                [class.sign-up-page__strength-pill--strong]="passwordStrength().score === 3"
+              ></span>
+              <span
+                class="sign-up-page__strength-pill"
+                [class.sign-up-page__strength-pill--okay]="passwordStrength().score === 2"
+                [class.sign-up-page__strength-pill--strong]="passwordStrength().score === 3"
+              ></span>
+              <span
+                class="sign-up-page__strength-pill"
+                [class.sign-up-page__strength-pill--strong]="passwordStrength().score === 3"
+              ></span>
             </div>
             <div class="sign-up-page__strength-caption">
-              <span>Weak &middot; Okay &middot; Strong</span>
+              <span data-testid="strength-label">
+                @if (passwordStrength().label) {
+                  {{ passwordStrength().label }}
+                } @else {
+                  Weak &middot; Okay &middot; Strong
+                }
+              </span>
               <span class="sign-up-page__strength-aside">A line from a song works.</span>
             </div>
           </div>
+          @if (shouldShowError('password')) {
+            <p class="sign-up-page__error" data-testid="error-password">
+              @if (form.get('password')?.hasError('required')) {
+                Pick a password to keep your plans private.
+              } @else if (form.get('password')?.hasError('minlength')) {
+                Password needs at least 8 characters.
+              } @else if (form.get('password')?.hasError('maxlength')) {
+                Password is too long.
+              }
+            </p>
+          }
         </div>
 
         <div class="sign-up-page__field" data-testid="field-confirm-password">
           <label class="sign-up-page__label" for="sy-confirm-password">Confirm password</label>
-          <div class="sign-up-page__input">
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--error]="shouldShowError('confirmPassword') || shouldShowMismatchError()"
+          >
             <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <rect x="4" y="11" width="16" height="10" rx="2"></rect>
               <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
             </svg>
             <input
               id="sy-confirm-password"
-              type="password"
+              [type]="showPassword() ? 'text' : 'password'"
               class="sign-up-page__control"
               placeholder="Once more"
               autocomplete="new-password"
-              disabled
+              formControlName="confirmPassword"
             />
           </div>
+          @if (shouldShowError('confirmPassword')) {
+            <p class="sign-up-page__error" data-testid="error-confirm-password">
+              Please re-enter your password.
+            </p>
+          } @else if (shouldShowMismatchError()) {
+            <p class="sign-up-page__error" data-testid="error-confirm-password">
+              Passwords don&rsquo;t match yet.
+            </p>
+          }
         </div>
 
         <div class="sign-up-page__terms" data-testid="terms-row">
-          <input id="sy-terms" type="checkbox" class="sign-up-page__checkbox" disabled />
+          <input
+            id="sy-terms"
+            type="checkbox"
+            class="sign-up-page__checkbox"
+            formControlName="acceptTermsAndPrivacy"
+          />
           <label for="sy-terms" class="sign-up-page__terms-copy">
             I agree to the
             <a href="#" class="sign-up-page__terms-link">Terms of Service</a>
@@ -161,8 +251,13 @@
             <a href="#" class="sign-up-page__terms-link">Privacy Policy</a>.
           </label>
         </div>
+        @if (shouldShowError('acceptTermsAndPrivacy')) {
+          <p class="sign-up-page__error" data-testid="error-terms">
+            Please agree to the Terms and Privacy Policy.
+          </p>
+        }
 
-        <button type="button" class="sign-up-page__submit" data-testid="submit-button">
+        <button type="submit" class="sign-up-page__submit" data-testid="submit-button">
           <span>Create account</span>
           <span class="sign-up-page__submit-arrow" aria-hidden="true">&rarr;</span>
         </button>

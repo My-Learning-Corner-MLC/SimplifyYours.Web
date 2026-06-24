@@ -11,6 +11,9 @@ $linen-border: #ece2d2;
 $ink: #2a1f2d;
 $ink-soft: #4a4045;
 $muted: #7a6b6e;
+$coral: #b05540;
+$coral-ink: #7a3a24;
+$sage: #7a8f5a;
 
 :host {
   display: block;
@@ -266,6 +269,37 @@ $muted: #7a6b6e;
       border: 1.5px solid $plum;
       box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
     }
+
+    &--error {
+      background: $cream;
+      border: 1.5px solid $coral;
+      box-shadow: 0 0 0 3px rgba(176, 85, 64, 0.1);
+    }
+
+    &:focus-within {
+      background: $cream;
+      border: 1.5px solid $plum;
+      box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
+    }
+  }
+
+  &__error {
+    margin: 8px 0 0;
+    font-size: 12.5px;
+    color: $coral-ink;
+    line-height: 1.5;
+  }
+
+  &__visibility-toggle {
+    background: transparent;
+    border: none;
+    color: $muted;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    padding: 0;
+    margin-left: auto;
   }
 
   &__control {
@@ -317,6 +351,19 @@ $muted: #7a6b6e;
     height: 4px;
     border-radius: 99px;
     background: $linen-border;
+    transition: background-color 120ms ease;
+
+    &--weak {
+      background: $coral;
+    }
+
+    &--okay {
+      background: $champagne;
+    }
+
+    &--strong {
+      background: $sage;
+    }
   }
 
   &__strength-caption {
