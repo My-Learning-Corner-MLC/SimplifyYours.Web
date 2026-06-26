@@ -75,6 +75,79 @@
   &:focus-visible {
     color: #2a1f2d;
   }
+
+  &.site-header__nav-link--active {
+    color: #2a1f2d;
+    font-weight: 500;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #c8a876;
+  }
+}
+
+.site-header__notif {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #f5efe6;
+  color: #5a2849;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #ece2d2;
+  }
+}
+
+.site-header__notif-dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e07b5a;
+  border: 1.5px solid #f5efe6;
+}
+
+.site-header__avatar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  background: #f5efe6;
+  border-radius: 99px;
+}
+
+.site-header__avatar-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c8a876, #9b7e4f);
+  color: #2a1f2d;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.site-header__avatar-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2a1f2d;
+}
+
+.site-header__avatar-chevron {
+  color: #5a2849;
 }
 
 .site-header__actions {
@@ -292,6 +365,29 @@
 
   .site-header__hamburger {
     display: inline-flex;
+  }
+
+  .site-header__notif {
+    width: 32px;
+    height: 32px;
+  }
+
+  .site-header__avatar-pill {
+    padding: 0;
+    background: transparent;
+    border-radius: 50%;
+    gap: 0;
+  }
+
+  .site-header__avatar-initial {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+
+  .site-header__avatar-name,
+  .site-header__avatar-chevron {
+    display: none;
   }
 }
 
