@@ -44,4 +44,17 @@ describe('SiteHeader', () => {
     expect(signIn?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
     expect(signUp?.getAttribute('href')).toBe('/signup');
   });
+
+  it('should render the mobile hamburger button with correct aria attributes', async () => {
+    const fixture = TestBed.createComponent(SiteHeader);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const hamburger = fixture.nativeElement.querySelector('.site-header__hamburger') as HTMLButtonElement | null;
+    expect(hamburger).not.toBeNull();
+    expect(hamburger?.tagName).toBe('BUTTON');
+    expect(hamburger?.getAttribute('type')).toBe('button');
+    expect(hamburger?.getAttribute('aria-label')).toBe('Open menu');
+    expect(hamburger?.getAttribute('aria-expanded')).toBe('false');
+    expect(hamburger?.getAttribute('aria-controls')).toBe('site-header-menu');
+  });
 });

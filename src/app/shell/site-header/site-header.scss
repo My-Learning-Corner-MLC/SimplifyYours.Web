@@ -124,3 +124,73 @@
   font-size: 16px;
   opacity: 0.9;
 }
+
+.site-header__hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #f5efe6;
+  color: #2a1f2d;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #ece2d2;
+  }
+}
+
+// 767.98px (not 768px) so this media query and the >=768px desktop
+// breakpoint never both match on subpixel widths.
+@media (max-width: 767.98px) {
+  .site-header__bar {
+    height: 60px;
+    padding: 0 18px;
+  }
+
+  .site-header__left {
+    gap: 8px;
+  }
+
+  .site-header__brand {
+    gap: 8px;
+  }
+
+  .site-header__brand-mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .site-header__brand-wordmark {
+    font-size: 18px;
+  }
+
+  .site-header__nav,
+  .site-header__sign-in {
+    display: none;
+  }
+
+  .site-header__actions {
+    gap: 8px;
+  }
+
+  .site-header__sign-up {
+    padding: 8px 14px;
+    font-size: 12.5px;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .site-header__sign-up-arrow {
+    display: none;
+  }
+
+  .site-header__hamburger {
+    display: inline-flex;
+  }
+}
