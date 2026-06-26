@@ -1,6 +1,10 @@
 import { Signal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+
+function flushMicrotasks(): Promise<void> {
+  return new Promise((resolve) => queueMicrotask(resolve));
+}
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { UserSession } from '../../core/auth/user-session.model';
 import { SiteHeader } from './site-header';
@@ -57,7 +61,10 @@ describe('SiteHeader', () => {
       const fixture = await setup();
       const signIn = fixture.nativeElement.querySelector('.site-header__sign-in') as HTMLAnchorElement | null;
       const signUp = fixture.nativeElement.querySelector('.site-header__sign-up') as HTMLAnchorElement | null;
+      expect(signIn?.tagName).toBe('A');
       expect(signIn?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
+      expect(signIn?.getAttribute('rel')).toBe('noopener');
+      expect(signUp?.tagName).toBe('A');
       expect(signUp?.getAttribute('href')).toBe('/signup');
     });
 
@@ -212,9 +219,19 @@ describe('SiteHeader', () => {
       const hamburger = fixture.nativeElement.querySelector('.site-header__hamburger') as HTMLButtonElement;
       hamburger.click();
       fixture.detectChanges();
-      await Promise.resolve();
+      await flushMicrotasks();
       const firstLink = fixture.nativeElement.querySelector('.site-header__menu-link') as HTMLAnchorElement;
       expect(document.activeElement).toBe(firstLink);
+    });
+
+    it('should mark the brand mark, hamburger icon, and sign-up arrow as aria-hidden', async () => {
+      const fixture = await setup();
+      const brandMark = fixture.nativeElement.querySelector('.site-header__brand-mark') as HTMLElement;
+      const hamburgerIcon = fixture.nativeElement.querySelector('.site-header__hamburger-icon') as SVGElement;
+      const signUpArrow = fixture.nativeElement.querySelector('.site-header__sign-up-arrow') as HTMLElement;
+      expect(brandMark.getAttribute('aria-hidden')).toBe('true');
+      expect(hamburgerIcon.getAttribute('aria-hidden')).toBe('true');
+      expect(signUpArrow.getAttribute('aria-hidden')).toBe('true');
     });
   });
 
@@ -281,6 +298,32 @@ describe('SiteHeader', () => {
 
       expect(fixture.nativeElement.querySelector('.site-header__menu-sign-in')).toBeNull();
       expect(fixture.nativeElement.querySelector('.site-header__menu-cta')).toBeNull();
+    });
+
+    it('should mark the avatar initial, chevron, and notification dot as aria-hidden', async () => {
+      const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
+      const initial = fixture.nativeElement.querySelector('.site-header__avatar-initial') as HTMLElement;
+      const chevron = fixture.nativeElement.querySelector('.site-header__avatar-chevron') as SVGElement;
+      const dot = fixture.nativeElement.querySelector('.site-header__notif-dot') as HTMLElement;
+      expect(initial.getAttribute('aria-hidden')).toBe('true');
+      expect(chevron.getAttribute('aria-hidden')).toBe('true');
+      expect(dot.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('should render an empty avatar name and initial when fullName is empty', async () => {
+      const fixture = await setup({ fullName: '', hasUnreadNotifications: false });
+      const name = fixture.nativeElement.querySelector('.site-header__avatar-name') as HTMLElement;
+      const initial = fixture.nativeElement.querySelector('.site-header__avatar-initial') as HTMLElement;
+      expect(name.textContent?.trim()).toBe('');
+      expect(initial.textContent?.trim()).toBe('');
+    });
+
+    it('should handle a single-token fullName without crashing', async () => {
+      const fixture = await setup({ fullName: 'Madonna', hasUnreadNotifications: false });
+      const name = fixture.nativeElement.querySelector('.site-header__avatar-name') as HTMLElement;
+      const initial = fixture.nativeElement.querySelector('.site-header__avatar-initial') as HTMLElement;
+      expect(name.textContent?.trim()).toBe('Madonna');
+      expect(initial.textContent?.trim()).toBe('M');
     });
   });
 });

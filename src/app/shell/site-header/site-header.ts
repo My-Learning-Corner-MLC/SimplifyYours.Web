@@ -1,4 +1,13 @@
-import { Component, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 
@@ -14,6 +23,7 @@ interface NavLink {
   imports: [RouterLink],
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SiteHeader {
   private readonly auth = inject(AuthSessionService);
@@ -59,6 +69,26 @@ export class SiteHeader {
 
   readonly hasUnreadNotifications = computed(() => this.auth.session()?.hasUnreadNotifications ?? false);
 
+  constructor() {
+    effect((onCleanup) => {
+      if (!this.menuOpen()) {
+        return;
+      }
+      const onDocClick = (event: MouseEvent) => this.handleDocumentClick(event);
+      const onDocKey = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          this.handleEscape();
+        }
+      };
+      document.addEventListener('click', onDocClick);
+      document.addEventListener('keydown', onDocKey);
+      onCleanup(() => {
+        document.removeEventListener('click', onDocClick);
+        document.removeEventListener('keydown', onDocKey);
+      });
+    });
+  }
+
   toggleMenu(): void {
     const next = !this.menuOpen();
     this.menuOpen.set(next);
@@ -78,22 +108,14 @@ export class SiteHeader {
     });
   }
 
-  @HostListener('document:click', ['$event'])
   handleDocumentClick(event: MouseEvent): void {
-    if (!this.menuOpen()) {
-      return;
-    }
     const target = event.target as Node | null;
     if (target && !this.hostRef.nativeElement.contains(target)) {
       this.closeMenu();
     }
   }
 
-  @HostListener('document:keydown.escape')
   handleEscape(): void {
-    if (!this.menuOpen()) {
-      return;
-    }
     this.closeMenu();
     this.hamburgerRef()?.nativeElement.focus();
   }
