@@ -161,4 +161,59 @@ describe('SiteHeader', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.menuOpen()).toBe(false);
   });
+
+  it('should close the menu when a click lands outside the header element', async () => {
+    const fixture = TestBed.createComponent(SiteHeader);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.componentInstance.toggleMenu();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.menuOpen()).toBe(true);
+
+    const outside = document.createElement('div');
+    document.body.appendChild(outside);
+    outside.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.menuOpen()).toBe(false);
+    outside.remove();
+  });
+
+  it('should not close the menu when a click lands inside the header but not on a link', async () => {
+    const fixture = TestBed.createComponent(SiteHeader);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.componentInstance.toggleMenu();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.menuOpen()).toBe(true);
+
+    const bar = fixture.nativeElement.querySelector('.site-header__bar') as HTMLElement;
+    bar.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.menuOpen()).toBe(true);
+  });
+
+  it('should close the menu and refocus the hamburger when Escape is pressed', async () => {
+    const fixture = TestBed.createComponent(SiteHeader);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.componentInstance.toggleMenu();
+    fixture.detectChanges();
+    const hamburger = fixture.nativeElement.querySelector('.site-header__hamburger') as HTMLButtonElement;
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.menuOpen()).toBe(false);
+    expect(document.activeElement).toBe(hamburger);
+  });
+
+  it('should ignore Escape when the menu is closed', async () => {
+    const fixture = TestBed.createComponent(SiteHeader);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.menuOpen()).toBe(false);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.menuOpen()).toBe(false);
+  });
 });
