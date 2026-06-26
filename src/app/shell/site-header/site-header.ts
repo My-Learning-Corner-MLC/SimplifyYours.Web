@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthSessionService } from '../../core/auth/auth-session.service';
 
 @Component({
   standalone: true,
@@ -9,6 +10,8 @@ import { RouterLink } from '@angular/router';
   styleUrl: './site-header.scss',
 })
 export class SiteHeader {
+  private readonly auth = inject(AuthSessionService);
+
   readonly signInUrl = 'https://identity.simplifyyours.com';
   readonly navLinks = [
     { label: 'How it works', path: '/how-it-works' },
@@ -16,4 +19,6 @@ export class SiteHeader {
     { label: 'Pricing', path: '/pricing' },
     { label: 'Stories', path: '/stories' },
   ];
+
+  readonly isSignedIn = computed(() => this.auth.session() !== null);
 }
