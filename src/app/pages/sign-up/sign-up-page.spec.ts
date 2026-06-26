@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { vi } from 'vitest';
+import { environment } from '../../../environments/environment';
 import { SignUpPage } from './sign-up-page';
 
 describe('SignUpPage', () => {
@@ -78,7 +79,7 @@ describe('SignUpPage', () => {
     it('renders an external sign-in link to identity.simplifyyours.com', () => {
       const fixture = create();
       const link = el<HTMLAnchorElement>(fixture, '[data-testid="sign-in-link"]');
-      expect(link?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
+      expect(link?.getAttribute('href')).toBe(environment.identityWebUrl);
     });
 
     it('renders all five form rows', () => {
@@ -360,7 +361,7 @@ describe('SignUpPage', () => {
       fixture.detectChanges();
 
       const cta = el<HTMLAnchorElement>(fixture, '[data-testid="success-cta"]');
-      expect(cta?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
+      expect(cta?.getAttribute('href')).toBe(environment.identityWebUrl);
     });
 
     it('on error, returns to interactive state with field values preserved', () => {
@@ -426,7 +427,7 @@ describe('SignUpPage', () => {
       expect(err?.textContent).toContain('This email is already in use.');
       const link = el<HTMLAnchorElement>(fixture, '[data-testid="error-email-signin-link"]');
       expect(link).not.toBeNull();
-      expect(link?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
+      expect(link?.getAttribute('href')).toBe(environment.identityWebUrl);
     });
 
     it('clears a per-field backend error live when the user edits that field', () => {

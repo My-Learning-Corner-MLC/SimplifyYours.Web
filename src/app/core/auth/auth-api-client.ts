@@ -7,8 +7,15 @@ import { SignUpError } from './sign-up-error.model';
 import { SignUpRequest } from './sign-up-request.model';
 import { SignUpResponse } from './sign-up-response.model';
 
-const GENERIC_PAGE_ERROR =
-  'Something went wrong on our end. Please try again in a moment.';
+const GENERIC_PAGE_ERROR = 'Something went wrong on our end. Please try again in a moment.';
+
+const ALLOWED_FIELD_KEYS = new Set([
+  'fullName',
+  'email',
+  'password',
+  'confirmPassword',
+  'acceptTermsAndPrivacy',
+]);
 
 @Injectable({ providedIn: 'root' })
 export class AuthApiClient {
@@ -19,9 +26,7 @@ export class AuthApiClient {
     return this.http
       .post<SignUpResponse>(url, request, { withCredentials: false })
       .pipe(
-        catchError((response: HttpErrorResponse) =>
-          throwError(() => this.toSignUpError(response)),
-        ),
+        catchError((response: HttpErrorResponse) => throwError(() => this.toSignUpError(response))),
       );
   }
 
@@ -32,6 +37,7 @@ export class AuthApiClient {
         return { fieldErrors };
       }
     }
+
     return { fieldErrors: {}, pageError: GENERIC_PAGE_ERROR };
   }
 
@@ -50,6 +56,9 @@ export class AuthApiClient {
         continue;
       }
       const controlName = key.charAt(0).toLowerCase() + key.slice(1);
+      if (!ALLOWED_FIELD_KEYS.has(controlName)) {
+        continue;
+      }
       result[controlName] = messages;
     }
     return result;

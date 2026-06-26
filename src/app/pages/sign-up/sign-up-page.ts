@@ -1,13 +1,16 @@
 import {
   AfterViewChecked,
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   ViewChild,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -16,6 +19,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { environment } from '../../../environments/environment';
 import { AuthApiClient } from '../../core/auth/auth-api-client';
 import { SignUpError } from '../../core/auth/sign-up-error.model';
 import { SignUpResponse } from '../../core/auth/sign-up-response.model';
@@ -55,12 +59,14 @@ function matchPasswordsValidator(group: AbstractControl): ValidationErrors | nul
   selector: 'app-sign-up-page',
   templateUrl: './sign-up-page.html',
   styleUrl: './sign-up-page.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignUpPage implements AfterViewInit, AfterViewChecked {
   private readonly fb = inject(FormBuilder);
   private readonly authApi = inject(AuthApiClient);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly identityWebUrl = 'https://identity.simplifyyours.com';
+  readonly identityWebUrl = environment.identityWebUrl;
 
   readonly form: FormGroup = this.fb.group(
     {
@@ -98,11 +104,17 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
   private pendingBannerFocus: 'page' | 'multi' | null = null;
 
   constructor() {
-    this.form.get('password')?.valueChanges.subscribe((value: string) => {
-      this.passwordValue.set(value ?? '');
-    });
+    this.form
+      .get('password')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value: string) => {
+        this.passwordValue.set(value ?? '');
+      });
     for (const name of CONTROL_ORDER) {
-      this.form.get(name)?.valueChanges.subscribe(() => this.clearBackendErrorFor(name));
+      this.form
+        .get(name)
+        ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.clearBackendErrorFor(name));
     }
   }
 
