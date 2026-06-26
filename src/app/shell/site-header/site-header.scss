@@ -143,6 +143,106 @@
   &:focus-visible {
     background: #ece2d2;
   }
+
+  &.site-header__hamburger--open {
+    background: #5a2849;
+    color: #fffcf5;
+
+    &:hover,
+    &:focus-visible {
+      background: #4a1f3b;
+    }
+  }
+}
+
+.site-header__menu {
+  display: none;
+  flex-direction: column;
+  padding: 16px 18px 22px;
+  border-top: 1px solid #ece2d2;
+  background: #fffcf5;
+
+  &.site-header__menu--open {
+    display: flex;
+  }
+}
+
+.site-header__menu-links {
+  display: flex;
+  flex-direction: column;
+}
+
+.site-header__menu-link {
+  padding: 12px 4px;
+  font-size: 15px;
+  color: #2a1f2d;
+  text-decoration: none;
+  border-bottom: 1px solid #f4ecdd;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #5a2849;
+  }
+}
+
+.site-header__menu-sign-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 13px 16px;
+  border: 1px solid #c8a876;
+  border-radius: 10px;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    background: #fbf6ec;
+  }
+}
+
+.site-header__menu-sign-in-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5a2849;
+}
+
+.site-header__menu-sign-in-caption {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #7a6b6e;
+}
+
+.site-header__menu-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 13px 16px;
+  background: #5a2849;
+  color: #fffcf5;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 140ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #4a1f3b;
+  }
+}
+
+.site-header__menu-cta-arrow {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 16px;
 }
 
 // 767.98px (not 768px) so this media query and the >=768px desktop
@@ -192,5 +292,12 @@
 
   .site-header__hamburger {
     display: inline-flex;
+  }
+}
+
+@media (min-width: 768px) {
+  .site-header__menu,
+  .site-header__menu.site-header__menu--open {
+    display: none;
   }
 }

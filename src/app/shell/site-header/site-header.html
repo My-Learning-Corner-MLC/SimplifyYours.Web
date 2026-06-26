@@ -1,7 +1,7 @@
 <header class="site-header" aria-label="Primary">
   <div class="site-header__bar">
     <div class="site-header__left">
-      <a class="site-header__brand" routerLink="/" aria-label="SimplifyYours home">
+      <a class="site-header__brand" routerLink="/" aria-label="SimplifyYours home" (click)="closeMenu()">
         <span class="site-header__brand-mark" aria-hidden="true"></span>
         <span class="site-header__brand-wordmark">
           <span class="site-header__brand-prefix">Simplify</span>
@@ -17,34 +17,81 @@
 
     <div class="site-header__actions">
       <a class="site-header__sign-in" [href]="signInUrl" rel="noopener">Sign in</a>
-      <a class="site-header__sign-up" routerLink="/signup">
+      <a class="site-header__sign-up" routerLink="/signup" (click)="closeMenu()">
         <span>Sign up</span>
         <span class="site-header__sign-up-arrow" aria-hidden="true">&rarr;</span>
       </a>
       <button
         type="button"
         class="site-header__hamburger"
-        aria-label="Open menu"
-        aria-expanded="false"
+        [class.site-header__hamburger--open]="menuOpen()"
+        [attr.aria-label]="menuOpen() ? 'Close menu' : 'Open menu'"
+        [attr.aria-expanded]="menuOpen()"
         aria-controls="site-header-menu"
+        (click)="toggleMenu()"
       >
-        <svg
-          class="site-header__hamburger-icon"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
+        @if (menuOpen()) {
+          <svg
+            class="site-header__hamburger-icon"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        } @else {
+          <svg
+            class="site-header__hamburger-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        }
       </button>
     </div>
   </div>
+
+  <nav
+    id="site-header-menu"
+    class="site-header__menu"
+    [class.site-header__menu--open]="menuOpen()"
+    role="navigation"
+    aria-label="Mobile menu"
+  >
+    <div class="site-header__menu-links">
+      @for (link of navLinks; track link.path) {
+        <a class="site-header__menu-link" [routerLink]="link.path" (click)="closeMenu()">{{ link.label }}</a>
+      }
+    </div>
+    <a
+      class="site-header__menu-sign-in"
+      [href]="signInUrl"
+      rel="noopener"
+      (click)="closeMenu()"
+    >
+      <span class="site-header__menu-sign-in-label">Sign in</span>
+      <span class="site-header__menu-sign-in-caption">EXTERNAL</span>
+    </a>
+    <a class="site-header__menu-cta" routerLink="/signup" (click)="closeMenu()">
+      <span>Create an account</span>
+      <span class="site-header__menu-cta-arrow" aria-hidden="true">&rarr;</span>
+    </a>
+  </nav>
 </header>

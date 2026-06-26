@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 
@@ -21,4 +21,13 @@ export class SiteHeader {
   ];
 
   readonly isSignedIn = computed(() => this.auth.session() !== null);
+  readonly menuOpen = signal(false);
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
 }
