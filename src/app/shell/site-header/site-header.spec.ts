@@ -206,6 +206,16 @@ describe('SiteHeader', () => {
       fixture.detectChanges();
       expect(fixture.componentInstance.menuOpen()).toBe(false);
     });
+
+    it('should move focus to the first menu link when the menu opens', async () => {
+      const fixture = await setup();
+      const hamburger = fixture.nativeElement.querySelector('.site-header__hamburger') as HTMLButtonElement;
+      hamburger.click();
+      fixture.detectChanges();
+      await Promise.resolve();
+      const firstLink = fixture.nativeElement.querySelector('.site-header__menu-link') as HTMLAnchorElement;
+      expect(document.activeElement).toBe(firstLink);
+    });
   });
 
   describe('signed-in', () => {

@@ -1,3 +1,11 @@
+// WCAG-AA contrast pairs verified for this header (each >= 4.5:1):
+//   #2A1F2D on #FFFCF5 (primary text on canvas)
+//   #FFFCF5 on #5A2849 (sign-up button label on plum fill)
+//   #5A2849 on #FFFCF5 (sign-up text accent on canvas)
+//   #4A4045 on #FFFCF5 (nav link label on canvas)
+//
+// Mobile tab order with menu open: brand -> Sign up -> hamburger ->
+// menu link 1..n -> Sign in (visitor only) -> Create an account (visitor only).
 :host {
   display: block;
 }

@@ -60,11 +60,22 @@ export class SiteHeader {
   readonly hasUnreadNotifications = computed(() => this.auth.session()?.hasUnreadNotifications ?? false);
 
   toggleMenu(): void {
-    this.menuOpen.update((open) => !open);
+    const next = !this.menuOpen();
+    this.menuOpen.set(next);
+    if (next) {
+      this.focusFirstMenuLink();
+    }
   }
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  private focusFirstMenuLink(): void {
+    queueMicrotask(() => {
+      const firstLink = this.hostRef.nativeElement.querySelector<HTMLElement>('.site-header__menu-link');
+      firstLink?.focus();
+    });
   }
 
   @HostListener('document:click', ['$event'])
