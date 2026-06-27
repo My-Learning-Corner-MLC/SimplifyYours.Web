@@ -22,6 +22,8 @@ $sage: #7a8f5a;
 
 :host {
   display: block;
+  height: 100dvh;
+  overflow: hidden;
   background: $canvas;
   font-family: 'DM Sans', system-ui, sans-serif;
   color: $ink;
@@ -30,18 +32,22 @@ $sage: #7a8f5a;
 .sign-up-page {
   display: flex;
   justify-content: center;
-  padding: 32px 24px 64px;
+  align-items: center;
+  height: 100%;
+  padding: 20px 24px;
+  box-sizing: border-box;
 
   &__card {
     width: 100%;
     max-width: 1400px;
+    height: 100%;
+    max-height: 100%;
     background: $linen;
     border-radius: 14px;
     box-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     overflow: hidden;
     display: grid;
     grid-template-columns: 1.1fr 1fr;
-    min-height: 880px;
   }
 
   &__brand {
@@ -49,7 +55,7 @@ $sage: #7a8f5a;
     background: linear-gradient(160deg, $plum 0%, $plum-mid 60%, $plum-deep 100%);
     color: $cream;
     padding: 48px 56px;
-    overflow: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
   }
@@ -113,7 +119,7 @@ $sage: #7a8f5a;
 
   &__brand-spacer {
     flex: 1;
-    min-height: 36px;
+    min-height: 16px;
   }
 
   &__brand-headline-block {
@@ -186,6 +192,7 @@ $sage: #7a8f5a;
     padding: 48px 64px 52px;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
   }
 
   &__form-header {
@@ -579,11 +586,10 @@ $sage: #7a8f5a;
 // Verified usable down to 360 px (no horizontal scroll, full-width submit).
 @media (max-width: 1023px) {
   .sign-up-page {
-    padding: 24px 16px 48px;
+    padding: 16px;
 
     &__card {
       grid-template-columns: 1fr;
-      min-height: 0;
     }
 
     &__brand {
@@ -598,7 +604,11 @@ $sage: #7a8f5a;
 
 @media (max-width: 767px) {
   .sign-up-page {
-    padding: 16px 12px 40px;
+    padding: 0;
+
+    &__card {
+      border-radius: 0;
+    }
 
     &__form-pane {
       padding: 28px 20px 32px;
