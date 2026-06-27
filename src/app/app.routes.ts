@@ -7,5 +7,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/dashboard/dashboard-page').then((m) => m.DashboardPage),
   },
+  {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('./pages/auth-callback/auth-callback-page').then((m) => m.AuthCallbackPage),
+  },
   { path: '**', redirectTo: 'dashboard' },
 ];

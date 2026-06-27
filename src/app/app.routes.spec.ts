@@ -23,4 +23,11 @@ describe('app routes', () => {
     await router.navigate(['/unknown-route']);
     expect(location.path()).toBe('/dashboard');
   });
+
+  it('declares an /auth/callback route before the wildcard', () => {
+    const callbackIndex = routes.findIndex((r) => r.path === 'auth/callback');
+    const wildcardIndex = routes.findIndex((r) => r.path === '**');
+    expect(callbackIndex).toBeGreaterThanOrEqual(0);
+    expect(wildcardIndex).toBeGreaterThan(callbackIndex);
+  });
 });

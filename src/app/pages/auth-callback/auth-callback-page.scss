@@ -1,0 +1,11 @@
+.auth-callback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.auth-callback__message {
+  font-size: 1.125rem;
+  color: var(--text-color, #1f2937);
+}
