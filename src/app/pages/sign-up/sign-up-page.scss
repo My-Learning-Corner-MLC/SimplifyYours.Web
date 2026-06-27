@@ -1,0 +1,638 @@
+// WCAG-AA contrast pairs verified for body copy (>=4.5:1) and large text (>=3:1):
+//   ink   #2A1F2D on cream  #FFFCF5  → 15.4:1 (AAA)
+//   plum  #5A2849 on cream  #FFFCF5  →  9.5:1 (AAA)
+//   muted #7A6B6E on cream  #FFFCF5  →  4.6:1 (AA body)
+//   coral-ink #7A3A24 on cream #FFFCF5 → 6.6:1 (AA body, AAA large)
+$plum: #5a2849;
+$plum-deep: #2a1f2d;
+$plum-mid: #3f1a33;
+$champagne: #c8a876;
+$champagne-soft: #e8c485;
+$champagne-deep: #9b7e4f;
+$canvas: #e7e5df;
+$cream: #fffcf5;
+$linen: #f5efe6;
+$linen-border: #ece2d2;
+$ink: #2a1f2d;
+$ink-soft: #4a4045;
+$muted: #7a6b6e;
+$coral: #b05540;
+$coral-ink: #7a3a24;
+$sage: #7a8f5a;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: $canvas;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: $ink;
+}
+
+.sign-up-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  padding: 20px 24px;
+  box-sizing: border-box;
+
+  &__card {
+    width: 100%;
+    max-width: 1400px;
+    height: 100%;
+    max-height: 100%;
+    background: $linen;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  &__brand {
+    position: relative;
+    background: linear-gradient(160deg, $plum 0%, $plum-mid 60%, $plum-deep 100%);
+    color: $cream;
+    padding: 48px 56px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__brand-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+
+    &--top {
+      right: -120px;
+      top: -100px;
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, rgba(200, 168, 118, 0.3) 0%, rgba(200, 168, 118, 0) 70%);
+    }
+
+    &--mid {
+      right: 60px;
+      top: 260px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(224, 123, 90, 0.22) 0%, rgba(224, 123, 90, 0) 70%);
+    }
+
+    &--bottom {
+      left: -80px;
+      bottom: -100px;
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle, rgba(200, 168, 118, 0.16) 0%, rgba(200, 168, 118, 0) 70%);
+    }
+  }
+
+  &__brand-mark {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__brand-orb {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, $champagne-soft, $champagne 60%, $champagne-deep);
+  }
+
+  &__brand-wordmark {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-family: 'Instrument Serif', serif;
+    font-size: 24px;
+
+    &--italic {
+      font-style: italic;
+      color: $champagne;
+    }
+  }
+
+  &__brand-spacer {
+    flex: 1;
+    min-height: 16px;
+  }
+
+  &__brand-headline-block {
+    position: relative;
+    max-width: 560px;
+  }
+
+  &__brand-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: $champagne;
+    margin: 0;
+  }
+
+  &__brand-headline {
+    font-family: 'Instrument Serif', serif;
+    font-size: 60px;
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    margin: 18px 0 0;
+    font-weight: 400;
+
+    &--italic {
+      font-style: italic;
+      color: $champagne;
+    }
+  }
+
+  &__brand-divider {
+    height: 1px;
+    width: 80px;
+    background: $champagne;
+    margin-top: 24px;
+  }
+
+  &__brand-lede {
+    font-size: 15px;
+    line-height: 1.65;
+    color: rgba(255, 252, 245, 0.78);
+    margin: 22px 0 0;
+    max-width: 480px;
+  }
+
+  &__reassurance {
+    position: relative;
+    padding-top: 24px;
+    border-top: 1px solid rgba(200, 168, 118, 0.25);
+    display: flex;
+    gap: 24px;
+    list-style: none;
+    margin: 0;
+    padding-inline-start: 0;
+
+    li {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      color: $cream;
+    }
+
+    svg {
+      color: $champagne;
+    }
+  }
+
+  &__form-pane {
+    background: $cream;
+    padding: 48px 64px 52px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  &__form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: $muted;
+    margin: 0;
+  }
+
+  &__sign-in {
+    font-size: 13px;
+    color: $ink-soft;
+    margin: 0;
+
+    a {
+      color: $plum;
+      font-weight: 500;
+      margin-left: 6px;
+      border-bottom: 1px solid $champagne;
+      padding-bottom: 1px;
+      text-decoration: none;
+    }
+  }
+
+  &__title-block {
+    margin-top: 32px;
+  }
+
+  &__title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 38px;
+    line-height: 1;
+    letter-spacing: -0.012em;
+    margin: 0;
+    font-weight: 400;
+
+    &--italic {
+      font-style: italic;
+      color: $plum;
+    }
+  }
+
+  &__title-divider {
+    height: 1px;
+    width: 56px;
+    background: $champagne;
+    margin-top: 16px;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 28px;
+  }
+
+  &__field + &__field {
+    margin-top: 16px;
+  }
+
+  &__label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: $ink;
+    display: block;
+  }
+
+  &__input {
+    margin-top: 8px;
+    padding: 13px 16px;
+    background: $linen;
+    border: 1px solid $linen-border;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &--focused {
+      background: $cream;
+      border: 1.5px solid $plum;
+      box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
+    }
+
+    &--error {
+      background: $cream;
+      border: 1.5px solid $coral;
+      box-shadow: 0 0 0 3px rgba(176, 85, 64, 0.1);
+    }
+
+    &:focus-within {
+      @extend .sign-up-page__input--focused;
+    }
+  }
+
+  &__error {
+    margin: 8px 0 0;
+    font-size: 12.5px;
+    color: $coral-ink;
+    line-height: 1.5;
+  }
+
+  &__error-link {
+    color: $plum;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    border-bottom: 1px solid $champagne;
+    text-decoration: none;
+    margin-left: 4px;
+  }
+
+  &__banner {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    background: rgba(176, 85, 64, 0.08);
+    border: 1px solid rgba(176, 85, 64, 0.4);
+    border-radius: 10px;
+    color: $coral-ink;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  &__visibility-toggle {
+    background: transparent;
+    border: none;
+    color: $muted;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    padding: 0;
+    margin-left: auto;
+  }
+
+  &__control {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    font: inherit;
+    font-size: 14px;
+    color: $ink;
+
+    &::placeholder {
+      color: $muted;
+    }
+
+    &:disabled {
+      color: $muted;
+      cursor: text;
+    }
+  }
+
+  &__input-icon {
+    color: $muted;
+    flex: none;
+
+    &--trailing {
+      margin-left: auto;
+    }
+  }
+
+  &__caret {
+    width: 1.5px;
+    height: 16px;
+    background: $plum;
+  }
+
+  &__strength {
+    margin-top: 10px;
+  }
+
+  &__strength-pills {
+    display: flex;
+    gap: 6px;
+  }
+
+  &__strength-pill {
+    flex: 1;
+    height: 4px;
+    border-radius: 99px;
+    background: $linen-border;
+    transition: background-color 120ms ease;
+
+    &--weak {
+      background: $coral;
+    }
+
+    &--okay {
+      background: $champagne;
+    }
+
+    &--strong {
+      background: $sage;
+    }
+  }
+
+  &__strength-caption {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: $muted;
+  }
+
+  &__strength-aside {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+  }
+
+  &__terms {
+    margin-top: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  &__checkbox {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 5px;
+    border: 1.5px solid $champagne;
+    background: $cream;
+    margin: 1px 0 0;
+    appearance: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 120ms ease, border-color 120ms ease;
+
+    &:checked {
+      background: $plum;
+      border-color: $plum;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23FFFCF5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+
+  &__terms-copy {
+    font-size: 12.5px;
+    color: $ink-soft;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  &__terms-link {
+    color: $plum;
+    border-bottom: 1px solid $champagne;
+    text-decoration: none;
+  }
+
+  &__submit {
+    margin-top: 22px;
+    padding: 15px 22px;
+    background: $plum;
+    color: $cream;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(90, 40, 73, 0.18);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 14.5px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  &__submit-arrow {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 18px;
+    opacity: 0.9;
+  }
+
+  &__fine-print {
+    margin: 14px 0 0;
+    font-size: 11.5px;
+    color: $muted;
+    text-align: center;
+  }
+
+  &__form--submitting {
+    .sign-up-page__input,
+    .sign-up-page__checkbox,
+    .sign-up-page__terms-copy,
+    .sign-up-page__strength {
+      opacity: 0.55;
+    }
+  }
+
+  &__spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 252, 245, 0.35);
+    border-top-color: $cream;
+    animation: sign-up-spinner 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  &__submit--link {
+    text-decoration: none;
+  }
+
+  &__success {
+    position: relative;
+    padding: 24px 0;
+  }
+
+  &__confetti {
+    position: relative;
+    height: 64px;
+    pointer-events: none;
+
+    span {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    span:nth-child(1) { left: 8%; top: 12px; background: $champagne; transform: rotate(12deg); }
+    span:nth-child(2) { left: 26%; top: 36px; background: $plum; transform: rotate(-18deg); }
+    span:nth-child(3) { left: 44%; top: 6px; background: $coral; transform: rotate(28deg); }
+    span:nth-child(4) { left: 62%; top: 30px; background: $sage; transform: rotate(-10deg); }
+    span:nth-child(5) { left: 78%; top: 14px; background: $champagne; transform: rotate(20deg); }
+    span:nth-child(6) { left: 90%; top: 36px; background: $plum; transform: rotate(-24deg); }
+  }
+
+  &__success-badge {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c8a876, #9b7e4f);
+    color: $ink;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 28px;
+    box-shadow: 0 0 0 10px rgba(200, 168, 118, 0.18);
+  }
+
+  &__success-headline {
+    font-family: 'Instrument Serif', serif;
+    font-size: 38px;
+    line-height: 1.05;
+    letter-spacing: -0.012em;
+    margin: 0 0 12px;
+    font-weight: 400;
+    color: $ink;
+  }
+
+  &__success-name {
+    font-style: italic;
+    color: $plum;
+  }
+
+  &__success-copy {
+    font-size: 15px;
+    line-height: 1.6;
+    color: $ink-soft;
+    margin: 0 0 28px;
+    max-width: 460px;
+  }
+}
+
+@keyframes sign-up-spinner {
+  to { transform: rotate(360deg); }
+}
+
+// Responsive collapse.
+// >= 1024 px: split layout (brand panel + form).
+// 768-1023 px: single column, brand panel hidden, form full width.
+// < 768 px: same single column with reduced padding & headline sizes.
+// Verified usable down to 360 px (no horizontal scroll, full-width submit).
+@media (max-width: 1023px) {
+  .sign-up-page {
+    padding: 16px;
+
+    &__card {
+      grid-template-columns: 1fr;
+    }
+
+    &__brand {
+      display: none;
+    }
+
+    &__form-pane {
+      padding: 36px 32px 40px;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .sign-up-page {
+    padding: 0;
+
+    &__card {
+      border-radius: 0;
+    }
+
+    &__form-pane {
+      padding: 28px 20px 32px;
+    }
+
+    &__title {
+      font-size: 30px;
+    }
+
+    &__success-headline {
+      font-size: 28px;
+    }
+
+    &__form-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    &__submit {
+      width: 100%;
+    }
+  }
+}

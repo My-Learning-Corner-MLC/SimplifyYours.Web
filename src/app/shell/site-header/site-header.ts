@@ -8,20 +8,19 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
 
 interface NavLink {
   label: string;
   path: string;
-  active?: boolean;
 }
 
 @Component({
   standalone: true,
   selector: 'app-site-header',
-  imports: [RouterLink],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,7 +39,7 @@ export class SiteHeader {
   ];
 
   readonly signedInNavLinks: NavLink[] = [
-    { label: 'My occasions', path: '/my-occasions', active: true },
+    { label: 'My occasions', path: '/my-occasions' },
     { label: 'Guests', path: '/guests' },
     { label: 'Themes', path: '/themes' },
     { label: 'Vendors', path: '/vendors' },

@@ -12,8 +12,8 @@
         @for (link of currentNavLinks(); track link.path) {
           <a
             class="site-header__nav-link"
-            [class.site-header__nav-link--active]="link.active"
             [routerLink]="link.path"
+            routerLinkActive="site-header__nav-link--active"
           >{{ link.label }}</a>
         }
       </nav>
@@ -127,7 +127,12 @@
   >
     <div class="site-header__menu-links">
       @for (link of currentNavLinks(); track link.path) {
-        <a class="site-header__menu-link" [routerLink]="link.path" (click)="closeMenu()">{{ link.label }}</a>
+        <a
+          class="site-header__menu-link"
+          [routerLink]="link.path"
+          routerLinkActive="site-header__menu-link--active"
+          (click)="closeMenu()"
+        >{{ link.label }}</a>
       }
     </div>
     @if (!isSignedIn()) {
