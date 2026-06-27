@@ -1,3 +1,11 @@
+// WCAG-AA contrast pairs verified for this header (each >= 4.5:1):
+//   #2A1F2D on #FFFCF5 (primary text on canvas)
+//   #FFFCF5 on #5A2849 (sign-up button label on plum fill)
+//   #5A2849 on #FFFCF5 (sign-up text accent on canvas)
+//   #4A4045 on #FFFCF5 (nav link label on canvas)
+//
+// Mobile tab order with menu open: brand -> Sign up -> hamburger ->
+// menu link 1..n -> Sign in (visitor only) -> Create an account (visitor only).
 :host {
   display: block;
 }
@@ -75,6 +83,79 @@
   &:focus-visible {
     color: #2a1f2d;
   }
+
+  &.site-header__nav-link--active {
+    color: #2a1f2d;
+    font-weight: 500;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #c8a876;
+  }
+}
+
+.site-header__notif {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #f5efe6;
+  color: #5a2849;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #ece2d2;
+  }
+}
+
+.site-header__notif-dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e07b5a;
+  border: 1.5px solid #f5efe6;
+}
+
+.site-header__avatar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  background: #f5efe6;
+  border-radius: 99px;
+}
+
+.site-header__avatar-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c8a876, #9b7e4f);
+  color: #2a1f2d;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.site-header__avatar-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2a1f2d;
+}
+
+.site-header__avatar-chevron {
+  color: #5a2849;
 }
 
 .site-header__actions {
@@ -123,4 +204,204 @@
   font-style: italic;
   font-size: 16px;
   opacity: 0.9;
+}
+
+.site-header__hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #f5efe6;
+  color: #2a1f2d;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #ece2d2;
+  }
+
+  &.site-header__hamburger--open {
+    background: #5a2849;
+    color: #fffcf5;
+
+    &:hover,
+    &:focus-visible {
+      background: #4a1f3b;
+    }
+  }
+}
+
+.site-header__menu {
+  display: none;
+  flex-direction: column;
+  padding: 16px 18px 22px;
+  border-top: 1px solid #ece2d2;
+  background: #fffcf5;
+
+  &.site-header__menu--open {
+    display: flex;
+  }
+}
+
+.site-header__menu-links {
+  display: flex;
+  flex-direction: column;
+}
+
+.site-header__menu-link {
+  padding: 12px 4px;
+  font-size: 15px;
+  color: #2a1f2d;
+  text-decoration: none;
+  border-bottom: 1px solid #f4ecdd;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #5a2849;
+  }
+}
+
+.site-header__menu-sign-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 13px 16px;
+  border: 1px solid #c8a876;
+  border-radius: 10px;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    background: #fbf6ec;
+  }
+}
+
+.site-header__menu-sign-in-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5a2849;
+}
+
+.site-header__menu-sign-in-caption {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #7a6b6e;
+}
+
+.site-header__menu-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 13px 16px;
+  background: #5a2849;
+  color: #fffcf5;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 140ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #4a1f3b;
+  }
+}
+
+.site-header__menu-cta-arrow {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 16px;
+}
+
+// 767.98px (not 768px) so this media query and the >=768px desktop
+// breakpoint never both match on subpixel widths.
+@media (max-width: 767.98px) {
+  .site-header__bar {
+    height: 60px;
+    padding: 0 18px;
+  }
+
+  .site-header__left {
+    gap: 8px;
+  }
+
+  .site-header__brand {
+    gap: 8px;
+  }
+
+  .site-header__brand-mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .site-header__brand-wordmark {
+    font-size: 18px;
+  }
+
+  .site-header__nav,
+  .site-header__sign-in {
+    display: none;
+  }
+
+  .site-header__actions {
+    gap: 8px;
+  }
+
+  .site-header__sign-up {
+    padding: 8px 14px;
+    font-size: 12.5px;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .site-header__sign-up-arrow {
+    display: none;
+  }
+
+  .site-header__hamburger {
+    display: inline-flex;
+  }
+
+  .site-header__notif {
+    width: 32px;
+    height: 32px;
+  }
+
+  .site-header__avatar-pill {
+    padding: 0;
+    background: transparent;
+    border-radius: 50%;
+    gap: 0;
+  }
+
+  .site-header__avatar-initial {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+
+  .site-header__avatar-name,
+  .site-header__avatar-chevron {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .site-header__menu,
+  .site-header__menu.site-header__menu--open {
+    display: none;
+  }
 }
