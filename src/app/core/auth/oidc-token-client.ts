@@ -6,7 +6,7 @@ export interface TokenResponse {
 }
 
 export interface AuthorizationCodeRequest {
-  identityServerOrigin: string;
+  identityBaseUrl: string;
   clientId: string;
   redirectUri: string;
   code: string;
@@ -14,7 +14,7 @@ export interface AuthorizationCodeRequest {
 }
 
 export interface RefreshTokenRequest {
-  identityServerOrigin: string;
+  identityBaseUrl: string;
   clientId: string;
   refreshToken: string;
 }
@@ -30,7 +30,7 @@ export async function exchangeAuthorizationCode(
     client_id: request.clientId,
     code_verifier: request.codeVerifier,
   });
-  return postToken(request.identityServerOrigin, body, fetchImpl);
+  return postToken(request.identityBaseUrl, body, fetchImpl);
 }
 
 export async function exchangeRefreshToken(
@@ -42,7 +42,7 @@ export async function exchangeRefreshToken(
     refresh_token: request.refreshToken,
     client_id: request.clientId,
   });
-  return postToken(request.identityServerOrigin, body, fetchImpl);
+  return postToken(request.identityBaseUrl, body, fetchImpl);
 }
 
 async function postToken(

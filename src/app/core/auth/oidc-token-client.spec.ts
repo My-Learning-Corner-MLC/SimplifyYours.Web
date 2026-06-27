@@ -23,7 +23,7 @@ describe('oidc-token-client', () => {
 
       const result = await exchangeAuthorizationCode(
         {
-          identityServerOrigin: 'http://localhost:15201',
+          identityBaseUrl: 'http://localhost:15201',
           clientId: 'simplify-yours-web',
           redirectUri: 'http://localhost:4200/auth/callback',
           code: 'ABC',
@@ -51,7 +51,7 @@ describe('oidc-token-client', () => {
       await expect(
         exchangeAuthorizationCode(
           {
-            identityServerOrigin: 'http://localhost:15201',
+            identityBaseUrl: 'http://localhost:15201',
             clientId: 'c',
             redirectUri: 'r',
             code: 'x',
@@ -67,7 +67,7 @@ describe('oidc-token-client', () => {
       await expect(
         exchangeAuthorizationCode(
           {
-            identityServerOrigin: 'http://localhost:15201',
+            identityBaseUrl: 'http://localhost:15201',
             clientId: 'c',
             redirectUri: 'r',
             code: 'x',
@@ -87,7 +87,7 @@ describe('oidc-token-client', () => {
 
       await exchangeRefreshToken(
         {
-          identityServerOrigin: 'http://localhost:15201',
+          identityBaseUrl: 'http://localhost:15201',
           clientId: 'simplify-yours-web',
           refreshToken: 'r-old',
         },

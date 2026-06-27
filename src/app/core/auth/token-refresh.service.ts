@@ -41,7 +41,7 @@ export class TokenRefreshService {
     this.timer = null;
     try {
       const tokens = await exchangeRefreshToken({
-        identityServerOrigin: environment.identityServerOrigin,
+        identityBaseUrl: environment.identityBaseUrl,
         clientId: environment.oidcClientId,
         refreshToken,
       });

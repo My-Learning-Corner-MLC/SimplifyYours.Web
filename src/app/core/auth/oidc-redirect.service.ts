@@ -35,7 +35,7 @@ export class OidcRedirectService {
       code_challenge_method: 'S256',
     });
 
-    const url = `${environment.identityServerOrigin}/auth/sign-in?${params.toString()}`;
+    const url = `${environment.identityBaseUrl}/auth/sign-in?${params.toString()}`;
     this.window.location.assign(url);
   }
 }
