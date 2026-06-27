@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import {
   PENDING_AUTHORIZATION_STORAGE_KEY,
@@ -9,8 +9,6 @@ import {
 } from '../../core/auth/oidc-redirect.service';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { AuthCallbackPage } from './auth-callback-page';
-
-const TOKEN_STORAGE_KEY = 'simplifyyours.tokens.v1';
 
 function base64Url(input: string): string {
   return btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
