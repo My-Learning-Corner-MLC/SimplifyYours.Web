@@ -1,0 +1,364 @@
+<section class="sign-up-page" data-testid="sign-up-page">
+  <div class="sign-up-page__card">
+    <aside class="sign-up-page__brand" data-testid="brand-panel">
+      <div class="sign-up-page__brand-glow sign-up-page__brand-glow--top"></div>
+      <div class="sign-up-page__brand-glow sign-up-page__brand-glow--mid"></div>
+      <div class="sign-up-page__brand-glow sign-up-page__brand-glow--bottom"></div>
+
+      <div class="sign-up-page__brand-mark">
+        <span class="sign-up-page__brand-orb" aria-hidden="true"></span>
+        <span class="sign-up-page__brand-wordmark">
+          <span>Simplify</span><span class="sign-up-page__brand-wordmark--italic">Yours</span>
+        </span>
+      </div>
+
+      <div class="sign-up-page__brand-spacer"></div>
+
+      <div class="sign-up-page__brand-headline-block">
+        <p class="sign-up-page__brand-eyebrow">SOMETHING GOOD IS ABOUT TO HAPPEN</p>
+        <h1 class="sign-up-page__brand-headline">
+          Let&rsquo;s plan something
+          <span class="sign-up-page__brand-headline--italic">memorable.</span>
+        </h1>
+        <div class="sign-up-page__brand-divider"></div>
+        <p class="sign-up-page__brand-lede">
+          Create your account in under a minute. Invitations, RSVPs, seating, vendors, and the day-of
+          timeline &mdash; kept together, calmly, on one warm page.
+        </p>
+      </div>
+
+      <div class="sign-up-page__brand-spacer"></div>
+
+      <ul class="sign-up-page__reassurance" data-testid="reassurance-row">
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Free to start.</span>
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>No card required.</span>
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Cancel anytime.</span>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="sign-up-page__form-pane" data-testid="form-pane">
+      @if (succeeded()) {
+        <div class="sign-up-page__success" data-testid="success-pane">
+          <div class="sign-up-page__confetti" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="sign-up-page__success-badge" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h2 class="sign-up-page__success-headline" data-testid="success-headline">
+            Welcome to SimplifyYours,
+            <span class="sign-up-page__success-name">{{ successFirstName() }}.</span>
+          </h2>
+          <p class="sign-up-page__success-copy">
+            Your account is ready. Sign in to start planning something memorable.
+          </p>
+          <a
+            [attr.href]="identityWebUrl"
+            target="_self"
+            class="sign-up-page__submit sign-up-page__submit--link"
+            data-testid="success-cta"
+          >
+            <span>Sign in</span>
+            <span class="sign-up-page__submit-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+      } @else {
+      <header class="sign-up-page__form-header">
+        <p class="sign-up-page__eyebrow">CREATE ACCOUNT</p>
+        <p class="sign-up-page__sign-in">
+          Already have an account?
+          <a [attr.href]="identityWebUrl" data-testid="sign-in-link">Sign in</a>
+        </p>
+      </header>
+
+      <div class="sign-up-page__title-block">
+        <h2 class="sign-up-page__title">
+          Create your <span class="sign-up-page__title--italic">account.</span>
+        </h2>
+        <div class="sign-up-page__title-divider"></div>
+      </div>
+
+      @if (pageError()) {
+        <div
+          #pageErrorBanner
+          class="sign-up-page__banner"
+          role="alert"
+          tabindex="-1"
+          data-testid="page-error-banner"
+        >
+          {{ pageError() }}
+        </div>
+      } @else if (backendErrorCount() >= 2) {
+        <div
+          #multiErrorBanner
+          class="sign-up-page__banner"
+          role="alert"
+          tabindex="-1"
+          data-testid="multi-error-banner"
+        >
+          A few small things &mdash; we&rsquo;ll walk you through them. Focused on the first.
+        </div>
+      }
+
+      <!-- Tab order: full name → email → password → show/hide → confirm password → terms checkbox → submit. -->
+      <form
+        class="sign-up-page__form"
+        [class.sign-up-page__form--submitting]="submitting()"
+        data-testid="sign-up-form"
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        aria-live="polite"
+        novalidate
+      >
+        <div class="sign-up-page__field" data-testid="field-full-name">
+          <label class="sign-up-page__label" for="sy-full-name">Full name</label>
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--focused]="form.get('fullName')?.touched && form.get('fullName')?.valid"
+            [class.sign-up-page__input--error]="shouldShowError('fullName') || hasBackendError('fullName')"
+          >
+            <input
+              #fullNameInput
+              id="sy-full-name"
+              type="text"
+              class="sign-up-page__control"
+              placeholder="e.g. Eleanor Whitmore"
+              autocomplete="name"
+              formControlName="fullName"
+              [attr.aria-invalid]="(shouldShowError('fullName') || hasBackendError('fullName')) ? 'true' : null"
+              [attr.aria-describedby]="(shouldShowError('fullName') || hasBackendError('fullName')) ? 'sy-full-name-error' : null"
+            />
+          </div>
+          @if (shouldShowError('fullName')) {
+            <p id="sy-full-name-error" class="sign-up-page__error" data-testid="error-full-name">
+              @if (form.get('fullName')?.hasError('required')) {
+                Please tell us your name.
+              } @else if (form.get('fullName')?.hasError('trimmedMinLength')) {
+                Name needs at least 2 characters.
+              } @else if (form.get('fullName')?.hasError('maxlength')) {
+                Name is too long.
+              }
+            </p>
+          } @else if (hasBackendError('fullName')) {
+            <p id="sy-full-name-error" class="sign-up-page__error" data-testid="error-full-name">{{ backendErrorMessage('fullName') }}</p>
+          }
+        </div>
+
+        <div class="sign-up-page__field" data-testid="field-email">
+          <label class="sign-up-page__label" for="sy-email">Email</label>
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--error]="shouldShowError('email') || hasBackendError('email')"
+          >
+            <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M4 6h16v12H4z"></path>
+              <path d="M4 7l8 6 8-6"></path>
+            </svg>
+            <input
+              id="sy-email"
+              type="email"
+              class="sign-up-page__control"
+              placeholder="name&#64;yourplace.com"
+              autocomplete="email"
+              formControlName="email"
+              [attr.aria-invalid]="(shouldShowError('email') || hasBackendError('email')) ? 'true' : null"
+              [attr.aria-describedby]="(shouldShowError('email') || hasBackendError('email')) ? 'sy-email-error' : null"
+            />
+          </div>
+          @if (shouldShowError('email')) {
+            <p class="sign-up-page__error" data-testid="error-email">
+              @if (form.get('email')?.hasError('required')) {
+                We need an email to send you in.
+              } @else if (form.get('email')?.hasError('email')) {
+                That doesn&rsquo;t look like a valid email.
+              } @else if (form.get('email')?.hasError('maxlength')) {
+                Email is too long.
+              }
+            </p>
+          } @else if (hasBackendError('email')) {
+            @if (isEmailTakenError()) {
+              <p id="sy-email-error" class="sign-up-page__error" data-testid="error-email">
+                This email is already in use.
+                <a
+                  [attr.href]="identityWebUrl"
+                  class="sign-up-page__error-link"
+                  data-testid="error-email-signin-link"
+                >Try signing in instead.</a>
+              </p>
+            } @else {
+              <p id="sy-email-error" class="sign-up-page__error" data-testid="error-email">{{ backendErrorMessage('email') }}</p>
+            }
+          }
+        </div>
+
+        <div class="sign-up-page__field" data-testid="field-password">
+          <label class="sign-up-page__label" for="sy-password">Password</label>
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--error]="shouldShowError('password') || hasBackendError('password')"
+          >
+            <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+            </svg>
+            <input
+              id="sy-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              class="sign-up-page__control"
+              placeholder="At least 8 characters"
+              autocomplete="new-password"
+              formControlName="password"
+              [attr.aria-invalid]="(shouldShowError('password') || hasBackendError('password')) ? 'true' : null"
+              [attr.aria-describedby]="(shouldShowError('password') || hasBackendError('password')) ? 'sy-password-error' : null"
+            />
+            <button
+              type="button"
+              class="sign-up-page__visibility-toggle"
+              data-testid="toggle-password"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showPassword()"
+            >
+              {{ showPassword() ? 'HIDE' : 'SHOW' }}
+            </button>
+          </div>
+          <div class="sign-up-page__strength" data-testid="strength-meter">
+            <div class="sign-up-page__strength-pills">
+              <span
+                class="sign-up-page__strength-pill"
+                [class.sign-up-page__strength-pill--weak]="passwordStrength().score >= 1 && passwordStrength().score === 1"
+                [class.sign-up-page__strength-pill--okay]="passwordStrength().score === 2"
+                [class.sign-up-page__strength-pill--strong]="passwordStrength().score === 3"
+              ></span>
+              <span
+                class="sign-up-page__strength-pill"
+                [class.sign-up-page__strength-pill--okay]="passwordStrength().score === 2"
+                [class.sign-up-page__strength-pill--strong]="passwordStrength().score === 3"
+              ></span>
+              <span
+                class="sign-up-page__strength-pill"
+                [class.sign-up-page__strength-pill--strong]="passwordStrength().score === 3"
+              ></span>
+            </div>
+            <div class="sign-up-page__strength-caption">
+              <span data-testid="strength-label">
+                @if (passwordStrength().label) {
+                  {{ passwordStrength().label }}
+                } @else {
+                  Weak &middot; Okay &middot; Strong
+                }
+              </span>
+              <span class="sign-up-page__strength-aside">A line from a song works.</span>
+            </div>
+          </div>
+          @if (shouldShowError('password')) {
+            <p id="sy-password-error" class="sign-up-page__error" data-testid="error-password">
+              @if (form.get('password')?.hasError('required')) {
+                Pick a password to keep your plans private.
+              } @else if (form.get('password')?.hasError('minlength')) {
+                Password needs at least 8 characters.
+              } @else if (form.get('password')?.hasError('maxlength')) {
+                Password is too long.
+              }
+            </p>
+          } @else if (hasBackendError('password')) {
+            <p id="sy-password-error" class="sign-up-page__error" data-testid="error-password">{{ backendErrorMessage('password') }}</p>
+          }
+        </div>
+
+        <div class="sign-up-page__field" data-testid="field-confirm-password">
+          <label class="sign-up-page__label" for="sy-confirm-password">Confirm password</label>
+          <div
+            class="sign-up-page__input"
+            [class.sign-up-page__input--error]="shouldShowError('confirmPassword') || shouldShowMismatchError() || hasBackendError('confirmPassword')"
+          >
+            <svg class="sign-up-page__input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+            </svg>
+            <input
+              id="sy-confirm-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              class="sign-up-page__control"
+              placeholder="Once more"
+              autocomplete="new-password"
+              formControlName="confirmPassword"
+              [attr.aria-invalid]="(shouldShowError('confirmPassword') || shouldShowMismatchError() || hasBackendError('confirmPassword')) ? 'true' : null"
+              [attr.aria-describedby]="(shouldShowError('confirmPassword') || shouldShowMismatchError() || hasBackendError('confirmPassword')) ? 'sy-confirm-password-error' : null"
+            />
+          </div>
+          @if (shouldShowError('confirmPassword')) {
+            <p id="sy-confirm-password-error" class="sign-up-page__error" data-testid="error-confirm-password">
+              Please re-enter your password.
+            </p>
+          } @else if (shouldShowMismatchError()) {
+            <p id="sy-confirm-password-error" class="sign-up-page__error" data-testid="error-confirm-password">
+              Passwords don&rsquo;t match yet.
+            </p>
+          } @else if (hasBackendError('confirmPassword')) {
+            <p id="sy-confirm-password-error" class="sign-up-page__error" data-testid="error-confirm-password">{{ backendErrorMessage('confirmPassword') }}</p>
+          }
+        </div>
+
+        <div class="sign-up-page__terms" data-testid="terms-row">
+          <input
+            id="sy-terms"
+            type="checkbox"
+            class="sign-up-page__checkbox"
+            formControlName="acceptTermsAndPrivacy"
+            [attr.aria-invalid]="shouldShowError('acceptTermsAndPrivacy') ? 'true' : null"
+            [attr.aria-describedby]="shouldShowError('acceptTermsAndPrivacy') ? 'sy-terms-error' : null"
+          />
+          <label for="sy-terms" class="sign-up-page__terms-copy">
+            I agree to the
+            <a href="#" class="sign-up-page__terms-link">Terms of Service</a>
+            and
+            <a href="#" class="sign-up-page__terms-link">Privacy Policy</a>.
+          </label>
+        </div>
+        @if (shouldShowError('acceptTermsAndPrivacy')) {
+          <p id="sy-terms-error" class="sign-up-page__error" data-testid="error-terms">
+            Please agree to the Terms and Privacy Policy.
+          </p>
+        }
+
+        <button
+          type="submit"
+          class="sign-up-page__submit"
+          data-testid="submit-button"
+          [attr.aria-busy]="submitting() ? 'true' : null"
+        >
+          @if (submitting()) {
+            <span class="sign-up-page__spinner" aria-hidden="true"></span>
+            <span>Creating your account&hellip;</span>
+          } @else {
+            <span>Create account</span>
+            <span class="sign-up-page__submit-arrow" aria-hidden="true">&rarr;</span>
+          }
+        </button>
+
+        <p class="sign-up-page__fine-print" data-testid="fine-print">
+          By signing in you agree to our terms and privacy policy.
+        </p>
+      </form>
+      }
+    </div>
+  </div>
+</section>
