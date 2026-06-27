@@ -51,18 +51,22 @@ export class AuthCallbackPage implements OnInit {
         return await this.fail();
       }
 
-      this.tokenStorage.write({
+      const bundle = {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
         idToken: tokens.id_token,
         expiresAt: Date.now() + tokens.expires_in * 1_000,
-      });
-      this.authSession.setSession({
-        userId: claims.sub,
-        fullName: claims.name,
-        email: claims.email,
-        hasUnreadNotifications: false,
-      });
+      };
+      this.tokenStorage.write(bundle);
+      this.authSession.setSession(
+        {
+          userId: claims.sub,
+          fullName: claims.name,
+          email: claims.email,
+          hasUnreadNotifications: false,
+        },
+        bundle,
+      );
       this.clearPending();
       await this.router.navigateByUrl(pending.returnTo ?? '/dashboard', { replaceUrl: true });
     } catch {
