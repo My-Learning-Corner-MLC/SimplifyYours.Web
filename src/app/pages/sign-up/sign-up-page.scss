@@ -419,6 +419,23 @@ $sage: #7a8f5a;
     margin: 1px 0 0;
     appearance: none;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 120ms ease, border-color 120ms ease;
+
+    &:checked {
+      background: $plum;
+      border-color: $plum;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23FFFCF5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
   }
 
   &__terms-copy {
@@ -515,15 +532,16 @@ $sage: #7a8f5a;
   }
 
   &__success-badge {
-    width: 56px;
-    height: 56px;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
-    background: $sage;
-    color: $cream;
+    background: linear-gradient(135deg, #c8a876, #9b7e4f);
+    color: $ink;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 0 24px;
+    margin: 0 0 28px;
+    box-shadow: 0 0 0 10px rgba(200, 168, 118, 0.18);
   }
 
   &__success-headline {
