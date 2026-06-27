@@ -6,6 +6,7 @@ import {
   WINDOW,
 } from './oidc-redirect.service';
 import { PendingAuthorization } from './pending-authorization.model';
+import { environment } from '../../../environments/environment';
 
 describe('OidcRedirectService', () => {
   let assignSpy: ReturnType<typeof vi.fn>;
@@ -51,7 +52,7 @@ describe('OidcRedirectService', () => {
 
     expect(assignSpy).toHaveBeenCalledTimes(1);
     const target = assignSpy.mock.calls[0][0] as string;
-    expect(target.startsWith('http://localhost:15201/auth/sign-in?')).toBe(true);
+    expect(target.startsWith(`${environment.identityBaseUrl}/auth/sign-in?`)).toBe(true);
 
     const url = new URL(target);
     expect(url.searchParams.get('client_id')).toBe('simplify-yours-web');
