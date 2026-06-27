@@ -1,6 +1,6 @@
 import { Signal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 function flushMicrotasks(): Promise<void> {
   return new Promise((resolve) => queueMicrotask(resolve));
@@ -242,6 +242,12 @@ describe('SiteHeader', () => {
 
     it('should render the four signed-in nav links in design order with My occasions active', async () => {
       const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl('/my-occasions');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
       const links = fixture.nativeElement.querySelectorAll('.site-header__nav-link');
       expect(links.length).toBe(4);
       const labels = Array.from(links).map((el) => (el as HTMLElement).textContent?.trim());
