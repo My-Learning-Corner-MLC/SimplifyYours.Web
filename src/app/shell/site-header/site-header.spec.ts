@@ -24,7 +24,15 @@ class FakeOidcRedirectService {
 
 let fakeOidc: FakeOidcRedirectService;
 
-async function setup(session: UserSession | null = null) {
+async function setup(partial: Partial<UserSession> | null = null) {
+  const session: UserSession | null = partial
+    ? {
+        userId: partial.userId ?? 'user-1',
+        fullName: partial.fullName ?? '',
+        email: partial.email ?? 'visitor@example.com',
+        hasUnreadNotifications: partial.hasUnreadNotifications ?? false,
+      }
+    : null;
   fakeOidc = new FakeOidcRedirectService();
   await TestBed.configureTestingModule({
     imports: [SiteHeader],
