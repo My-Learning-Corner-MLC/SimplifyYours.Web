@@ -5,7 +5,9 @@ import { provideRouter } from '@angular/router';
 function flushMicrotasks(): Promise<void> {
   return new Promise((resolve) => queueMicrotask(resolve));
 }
+import { vi } from 'vitest';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
+import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
 import { UserSession } from '../../core/auth/user-session.model';
 import { SiteHeader } from './site-header';
 
@@ -16,12 +18,20 @@ class FakeAuthSessionService {
   }
 }
 
+class FakeOidcRedirectService {
+  readonly startAuthorization = vi.fn().mockResolvedValue(undefined);
+}
+
+let fakeOidc: FakeOidcRedirectService;
+
 async function setup(session: UserSession | null = null) {
+  fakeOidc = new FakeOidcRedirectService();
   await TestBed.configureTestingModule({
     imports: [SiteHeader],
     providers: [
       provideRouter([{ path: '**', children: [] }]),
       { provide: AuthSessionService, useValue: new FakeAuthSessionService(session) },
+      { provide: OidcRedirectService, useValue: fakeOidc },
     ],
   }).compileComponents();
   const fixture = TestBed.createComponent(SiteHeader);
@@ -57,15 +67,17 @@ describe('SiteHeader', () => {
       expect(labels).toEqual(['How it works', 'Themes', 'Pricing', 'Stories']);
     });
 
-    it('should link sign-in to the external identity server and sign-up to /signup', async () => {
+    it('should render sign-in as a button that calls OidcRedirectService.startAuthorization, and sign-up as a routerLink to /signup', async () => {
       const fixture = await setup();
-      const signIn = fixture.nativeElement.querySelector('.site-header__sign-in') as HTMLAnchorElement | null;
+      const signIn = fixture.nativeElement.querySelector('.site-header__sign-in') as HTMLButtonElement | null;
       const signUp = fixture.nativeElement.querySelector('.site-header__sign-up') as HTMLAnchorElement | null;
-      expect(signIn?.tagName).toBe('A');
-      expect(signIn?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
-      expect(signIn?.getAttribute('rel')).toBe('noopener');
+      expect(signIn?.tagName).toBe('BUTTON');
+      expect(signIn?.getAttribute('type')).toBe('button');
       expect(signUp?.tagName).toBe('A');
       expect(signUp?.getAttribute('href')).toBe('/signup');
+
+      signIn!.click();
+      expect(fakeOidc.startAuthorization).toHaveBeenCalledTimes(1);
     });
 
     it('should render the mobile hamburger button with correct aria attributes', async () => {
@@ -116,13 +128,16 @@ describe('SiteHeader', () => {
       expect(menu.classList).toContain('site-header__menu--open');
     });
 
-    it('should render menu sign-in as an external link and menu CTA as routerLink to /signup', async () => {
+    it('should render menu sign-in as a button that calls OidcRedirectService.startAuthorization, and menu CTA as routerLink to /signup', async () => {
       const fixture = await setup();
-      const menuSignIn = fixture.nativeElement.querySelector('.site-header__menu-sign-in') as HTMLAnchorElement | null;
+      const menuSignIn = fixture.nativeElement.querySelector('.site-header__menu-sign-in') as HTMLButtonElement | null;
       const menuCta = fixture.nativeElement.querySelector('.site-header__menu-cta') as HTMLAnchorElement | null;
-      expect(menuSignIn?.getAttribute('href')).toBe('https://identity.simplifyyours.com');
-      expect(menuSignIn?.getAttribute('rel')).toBe('noopener');
+      expect(menuSignIn?.tagName).toBe('BUTTON');
+      expect(menuSignIn?.getAttribute('type')).toBe('button');
       expect(menuCta?.getAttribute('href')).toBe('/signup');
+
+      menuSignIn!.click();
+      expect(fakeOidc.startAuthorization).toHaveBeenCalledTimes(1);
     });
 
     it('should render four mobile menu nav links in the design order', async () => {
@@ -145,12 +160,12 @@ describe('SiteHeader', () => {
       expect(fixture.componentInstance.menuOpen()).toBe(false);
     });
 
-    it('should close the menu when the menu sign-in link is clicked', async () => {
+    it('should close the menu when the menu sign-in button is clicked', async () => {
       const fixture = await setup();
       fixture.componentInstance.toggleMenu();
       fixture.detectChanges();
 
-      const menuSignIn = fixture.nativeElement.querySelector('.site-header__menu-sign-in') as HTMLAnchorElement;
+      const menuSignIn = fixture.nativeElement.querySelector('.site-header__menu-sign-in') as HTMLButtonElement;
       menuSignIn.click();
       fixture.detectChanges();
       expect(fixture.componentInstance.menuOpen()).toBe(false);

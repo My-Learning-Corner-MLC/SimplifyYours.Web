@@ -64,7 +64,7 @@
           </svg>
         </div>
       } @else {
-        <a class="site-header__sign-in" [href]="signInUrl" rel="noopener">Sign in</a>
+        <button type="button" class="site-header__sign-in" (click)="onSignInClick()">Sign in</button>
         <a class="site-header__sign-up" routerLink="/signup" (click)="closeMenu()">
           <span>Sign up</span>
           <span class="site-header__sign-up-arrow" aria-hidden="true">&rarr;</span>
@@ -131,15 +131,13 @@
       }
     </div>
     @if (!isSignedIn()) {
-      <a
+      <button
+        type="button"
         class="site-header__menu-sign-in"
-        [href]="signInUrl"
-        rel="noopener"
-        (click)="closeMenu()"
+        (click)="onSignInClick()"
       >
         <span class="site-header__menu-sign-in-label">Sign in</span>
-        <span class="site-header__menu-sign-in-caption">EXTERNAL</span>
-      </a>
+      </button>
       <a class="site-header__menu-cta" routerLink="/signup" (click)="closeMenu()">
         <span>Create an account</span>
         <span class="site-header__menu-cta-arrow" aria-hidden="true">&rarr;</span>
