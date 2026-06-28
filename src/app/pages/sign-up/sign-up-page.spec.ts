@@ -4,20 +4,24 @@ import { provideHttpClient } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 import { vi } from 'vitest';
 import { environment } from '../../../environments/environment';
+import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
 import { SignUpPage } from './sign-up-page';
 
 describe('SignUpPage', () => {
   let httpMock: HttpTestingController;
   let messageAdd: ReturnType<typeof vi.fn>;
+  let startAuthorizationSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     messageAdd = vi.fn();
+    startAuthorizationSpy = vi.fn().mockResolvedValue(undefined);
     await TestBed.configureTestingModule({
       imports: [SignUpPage],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: MessageService, useValue: { add: messageAdd } },
+        { provide: OidcRedirectService, useValue: { startAuthorization: startAuthorizationSpy } },
       ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
@@ -357,7 +361,7 @@ describe('SignUpPage', () => {
       expect(el(fixture, '[data-testid="sign-up-form"]')).toBeNull();
     });
 
-    it('success CTA links to the identity sign-in URL', () => {
+    it('success CTA starts the OIDC authorization flow', () => {
       const fixture = create();
       fillValid(fixture);
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
@@ -373,8 +377,10 @@ describe('SignUpPage', () => {
       });
       fixture.detectChanges();
 
-      const cta = el<HTMLAnchorElement>(fixture, '[data-testid="success-cta"]');
-      expect(cta?.getAttribute('href')).toBe(environment.identityBaseUrl);
+      const cta = el<HTMLButtonElement>(fixture, '[data-testid="success-cta"]');
+      expect(cta).not.toBeNull();
+      cta?.click();
+      expect(startAuthorizationSpy).toHaveBeenCalledOnce();
     });
 
     it('on error, returns to interactive state with field values preserved', () => {
