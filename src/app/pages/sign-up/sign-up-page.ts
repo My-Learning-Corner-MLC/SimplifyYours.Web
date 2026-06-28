@@ -25,11 +25,11 @@ import { AuthApiClient } from '../../core/auth/auth-api-client';
 import { SignUpError } from '../../core/auth/sign-up-error.model';
 import { SignUpResponse } from '../../core/auth/sign-up-response.model';
 import { evaluatePasswordStrength, PasswordStrength } from './password-strength';
+import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
 
 const EMAIL_TAKEN_PATTERN = /already\s+(in\s+use|exists)/i;
 const PAGE_ERROR_TOAST_SUMMARY = 'Sign-up failed';
-const PAGE_ERROR_TOAST_DETAIL =
-  'Something went wrong on our end. Please try again in a moment.';
+const PAGE_ERROR_TOAST_DETAIL = 'Something went wrong on our end. Please try again in a moment.';
 const CONTROL_ORDER = [
   'fullName',
   'email',
@@ -70,6 +70,7 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
   private readonly authApi = inject(AuthApiClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly messages = inject(MessageService);
+  private readonly oidcRedirect = inject(OidcRedirectService);
 
   readonly identityBaseUrl = environment.identityBaseUrl;
 
@@ -140,6 +141,10 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
 
   togglePasswordVisibility(): void {
     this.showPassword.update((v) => !v);
+  }
+
+  onSignInClick(): void {
+    void this.oidcRedirect.startAuthorization();
   }
 
   shouldShowError(controlName: string): boolean {
