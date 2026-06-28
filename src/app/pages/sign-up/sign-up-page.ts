@@ -66,7 +66,7 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
   private readonly authApi = inject(AuthApiClient);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly identityWebUrl = environment.identityWebUrl;
+  readonly identityBaseUrl = environment.identityBaseUrl;
 
   readonly form: FormGroup = this.fb.group(
     {

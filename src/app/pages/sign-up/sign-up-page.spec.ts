@@ -79,7 +79,7 @@ describe('SignUpPage', () => {
     it('renders an external sign-in link to identity.simplifyyours.com', () => {
       const fixture = create();
       const link = el<HTMLAnchorElement>(fixture, '[data-testid="sign-in-link"]');
-      expect(link?.getAttribute('href')).toBe(environment.identityWebUrl);
+      expect(link?.getAttribute('href')).toBe(environment.identityBaseUrl);
     });
 
     it('renders all five form rows', () => {
@@ -361,7 +361,7 @@ describe('SignUpPage', () => {
       fixture.detectChanges();
 
       const cta = el<HTMLAnchorElement>(fixture, '[data-testid="success-cta"]');
-      expect(cta?.getAttribute('href')).toBe(environment.identityWebUrl);
+      expect(cta?.getAttribute('href')).toBe(environment.identityBaseUrl);
     });
 
     it('on error, returns to interactive state with field values preserved', () => {
@@ -427,7 +427,7 @@ describe('SignUpPage', () => {
       expect(err?.textContent).toContain('This email is already in use.');
       const link = el<HTMLAnchorElement>(fixture, '[data-testid="error-email-signin-link"]');
       expect(link).not.toBeNull();
-      expect(link?.getAttribute('href')).toBe(environment.identityWebUrl);
+      expect(link?.getAttribute('href')).toBe(environment.identityBaseUrl);
     });
 
     it('clears a per-field backend error live when the user edits that field', () => {

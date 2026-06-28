@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
+import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
 
 interface NavLink {
   label: string;
@@ -26,10 +27,9 @@ interface NavLink {
 })
 export class SiteHeader {
   private readonly auth = inject(AuthSessionService);
+  private readonly oidcRedirect = inject(OidcRedirectService);
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly hamburgerRef = viewChild<ElementRef<HTMLButtonElement>>('hamburger');
-
-  readonly signInUrl = 'https://identity.simplifyyours.com';
 
   readonly navLinks: NavLink[] = [
     { label: 'How it works', path: '/how-it-works' },
@@ -98,6 +98,11 @@ export class SiteHeader {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  onSignInClick(): void {
+    this.closeMenu();
+    void this.oidcRedirect.startAuthorization();
   }
 
   private focusFirstMenuLink(): void {

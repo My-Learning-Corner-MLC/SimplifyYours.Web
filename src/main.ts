@@ -3,9 +3,9 @@ import { appConfig } from './app/app.config';
 import { App } from './app/app';
 import { environment } from './environments/environment';
 
-if (!environment.identityBaseUrl || !environment.identityWebUrl) {
+if (!environment.identityBaseUrl) {
   throw new Error(
-    'Identity URLs are not configured. Set identityBaseUrl and identityWebUrl in the active environment file before building.',
+    'Identity URL is not configured. Set identityBaseUrl in the active environment file before building.',
   );
 }
 

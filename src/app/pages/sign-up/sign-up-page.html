@@ -70,7 +70,7 @@
             Your account is ready. Sign in to start planning something memorable.
           </p>
           <a
-            [attr.href]="identityWebUrl"
+            [attr.href]="identityBaseUrl"
             target="_self"
             class="sign-up-page__submit sign-up-page__submit--link"
             data-testid="success-cta"
@@ -84,7 +84,7 @@
         <p class="sign-up-page__eyebrow">CREATE ACCOUNT</p>
         <p class="sign-up-page__sign-in">
           Already have an account?
-          <a [attr.href]="identityWebUrl" data-testid="sign-in-link">Sign in</a>
+          <a [attr.href]="identityBaseUrl" data-testid="sign-in-link">Sign in</a>
         </p>
       </header>
 
@@ -197,7 +197,7 @@
               <p id="sy-email-error" class="sign-up-page__error" data-testid="error-email">
                 This email is already in use.
                 <a
-                  [attr.href]="identityWebUrl"
+                  [attr.href]="identityBaseUrl"
                   class="sign-up-page__error-link"
                   data-testid="error-email-signin-link"
                 >Try signing in instead.</a>
