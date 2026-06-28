@@ -58,7 +58,8 @@ $sage: #7a8f5a;
     background: linear-gradient(160deg, $plum 0%, $plum-mid 60%, $plum-deep 100%);
     color: $cream;
     padding: 48px 56px;
-    overflow-y: auto;
+    overflow-y: hidden;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
   }
@@ -104,7 +105,12 @@ $sage: #7a8f5a;
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, $champagne-soft, $champagne 60%, $champagne-deep);
+    background: radial-gradient(
+      circle at 30% 30%,
+      $champagne-soft,
+      $champagne 60%,
+      $champagne-deep
+    );
   }
 
   &__brand-wordmark {
@@ -432,7 +438,9 @@ $sage: #7a8f5a;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease;
 
     &:checked {
       background: $plum;
@@ -533,12 +541,42 @@ $sage: #7a8f5a;
       border-radius: 2px;
     }
 
-    span:nth-child(1) { left: 8%; top: 12px; background: $champagne; transform: rotate(12deg); }
-    span:nth-child(2) { left: 26%; top: 36px; background: $plum; transform: rotate(-18deg); }
-    span:nth-child(3) { left: 44%; top: 6px; background: $coral; transform: rotate(28deg); }
-    span:nth-child(4) { left: 62%; top: 30px; background: $sage; transform: rotate(-10deg); }
-    span:nth-child(5) { left: 78%; top: 14px; background: $champagne; transform: rotate(20deg); }
-    span:nth-child(6) { left: 90%; top: 36px; background: $plum; transform: rotate(-24deg); }
+    span:nth-child(1) {
+      left: 8%;
+      top: 12px;
+      background: $champagne;
+      transform: rotate(12deg);
+    }
+    span:nth-child(2) {
+      left: 26%;
+      top: 36px;
+      background: $plum;
+      transform: rotate(-18deg);
+    }
+    span:nth-child(3) {
+      left: 44%;
+      top: 6px;
+      background: $coral;
+      transform: rotate(28deg);
+    }
+    span:nth-child(4) {
+      left: 62%;
+      top: 30px;
+      background: $sage;
+      transform: rotate(-10deg);
+    }
+    span:nth-child(5) {
+      left: 78%;
+      top: 14px;
+      background: $champagne;
+      transform: rotate(20deg);
+    }
+    span:nth-child(6) {
+      left: 90%;
+      top: 36px;
+      background: $plum;
+      transform: rotate(-24deg);
+    }
   }
 
   &__success-badge {
@@ -579,7 +617,9 @@ $sage: #7a8f5a;
 }
 
 @keyframes sign-up-spinner {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // Responsive collapse.

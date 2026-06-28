@@ -1,17 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { MessageService } from 'primeng/api';
 import { vi } from 'vitest';
 import { environment } from '../../../environments/environment';
 import { SignUpPage } from './sign-up-page';
 
 describe('SignUpPage', () => {
   let httpMock: HttpTestingController;
+  let messageAdd: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    messageAdd = vi.fn();
     await TestBed.configureTestingModule({
       imports: [SignUpPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: MessageService, useValue: { add: messageAdd } },
+      ],
     }).compileComponents();
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -94,7 +101,9 @@ describe('SignUpPage', () => {
     it('renders the fine print footer', () => {
       const fixture = create();
       const fine = el<HTMLElement>(fixture, '[data-testid="fine-print"]');
-      expect(fine?.textContent).toContain('By signing in you agree to our terms and privacy policy.');
+      expect(fine?.textContent).toContain(
+        'By signing in you agree to our terms and privacy policy.',
+      );
     });
 
     it('does not render social sign-up buttons or a marketing-tips checkbox', () => {
@@ -125,7 +134,9 @@ describe('SignUpPage', () => {
     it('rejects fullName shorter than 2 chars after trim', () => {
       const fixture = create();
       setValue(fixture, 'fullName', '  a  ');
-      expect(fixture.componentInstance.form.get('fullName')?.hasError('trimmedMinLength')).toBe(true);
+      expect(fixture.componentInstance.form.get('fullName')?.hasError('trimmedMinLength')).toBe(
+        true,
+      );
     });
 
     it('rejects invalid email format', () => {
@@ -167,7 +178,9 @@ describe('SignUpPage', () => {
     it('requires acceptTermsAndPrivacy to be true', () => {
       const fixture = create();
       setValue(fixture, 'acceptTermsAndPrivacy', false);
-      expect(fixture.componentInstance.form.get('acceptTermsAndPrivacy')?.hasError('required')).toBe(true);
+      expect(
+        fixture.componentInstance.form.get('acceptTermsAndPrivacy')?.hasError('required'),
+      ).toBe(true);
     });
   });
 
@@ -372,7 +385,10 @@ describe('SignUpPage', () => {
       );
 
       const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
-      req.flush({ errors: { Email: ['already in use'] } }, { status: 400, statusText: 'Bad Request' });
+      req.flush(
+        { errors: { Email: ['already in use'] } },
+        { status: 400, statusText: 'Bad Request' },
+      );
       fixture.detectChanges();
 
       expect(fixture.componentInstance.submitting()).toBe(false);
@@ -381,10 +397,7 @@ describe('SignUpPage', () => {
       expect(fixture.componentInstance.form.get('email')?.value).toBe('eleanor@whitmore.studio');
     });
 
-    function submitAndFlush400(
-      fixture: ComponentFixture<SignUpPage>,
-      body: object,
-    ): void {
+    function submitAndFlush400(fixture: ComponentFixture<SignUpPage>, body: object): void {
       fillValid(fixture);
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
@@ -415,8 +428,12 @@ describe('SignUpPage', () => {
       const banner = el<HTMLElement>(fixture, '[data-testid="multi-error-banner"]');
       expect(banner).not.toBeNull();
       expect(banner?.getAttribute('role')).toBe('alert');
-      expect(el(fixture, '[data-testid="error-full-name"]')?.textContent).toContain('Name looks suspicious.');
-      expect(el(fixture, '[data-testid="error-email"]')?.textContent).toContain('Email looks suspicious.');
+      expect(el(fixture, '[data-testid="error-full-name"]')?.textContent).toContain(
+        'Name looks suspicious.',
+      );
+      expect(el(fixture, '[data-testid="error-email"]')?.textContent).toContain(
+        'Email looks suspicious.',
+      );
     });
 
     it('renders the email-taken variant with an italic "Try signing in instead." link', () => {
@@ -440,7 +457,7 @@ describe('SignUpPage', () => {
       expect(el(fixture, '[data-testid="error-email"]')).toBeNull();
     });
 
-    it('on 500, renders the page-level banner with role="alert"', () => {
+    it('on 500, fires a MessageService error toast and renders no inline page-error banner', () => {
       const fixture = create();
       fillValid(fixture);
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
@@ -450,14 +467,15 @@ describe('SignUpPage', () => {
       req.flush({ traceId: 'abc' }, { status: 500, statusText: 'Server Error' });
       fixture.detectChanges();
 
-      const banner = el<HTMLElement>(fixture, '[data-testid="page-error-banner"]');
-      expect(banner).not.toBeNull();
-      expect(banner?.getAttribute('role')).toBe('alert');
-      expect(banner?.textContent).toContain('Something went wrong on our end');
-      expect(banner?.textContent).not.toContain('traceId');
+      expect(messageAdd).toHaveBeenCalledTimes(1);
+      const toast = messageAdd.mock.calls[0][0];
+      expect(toast.severity).toBe('error');
+      expect(toast.detail).toContain('Something went wrong on our end');
+      expect(JSON.stringify(toast)).not.toContain('traceId');
+      expect(el(fixture, '[data-testid="page-error-banner"]')).toBeNull();
     });
 
-    it('on network error, renders the same page-level banner', () => {
+    it('on network error, fires the same MessageService error toast', () => {
       const fixture = create();
       fillValid(fixture);
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
@@ -467,7 +485,9 @@ describe('SignUpPage', () => {
       req.error(new ProgressEvent('error'), { status: 0, statusText: 'Network error' });
       fixture.detectChanges();
 
-      expect(el(fixture, '[data-testid="page-error-banner"]')).not.toBeNull();
+      expect(messageAdd).toHaveBeenCalledTimes(1);
+      expect(messageAdd.mock.calls[0][0].severity).toBe('error');
+      expect(el(fixture, '[data-testid="page-error-banner"]')).toBeNull();
     });
 
     it('preserves field values after a 5xx failure', () => {
@@ -484,32 +504,17 @@ describe('SignUpPage', () => {
       expect(fixture.componentInstance.form.get('fullName')?.value).toBe('Eleanor Whitmore');
     });
 
-    it('clears the page-level banner on a fresh submit', () => {
+    it('never renders an inline page-error banner on a 5xx (toast only)', () => {
       const fixture = create();
       fillValid(fixture);
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up')).flush(
-        {},
-        { status: 500, statusText: 'Server Error' },
-      );
+      httpMock
+        .expectOne((r) => r.url.endsWith('/auth/sign-up'))
+        .flush({}, { status: 500, statusText: 'Server Error' });
       fixture.detectChanges();
-      expect(el(fixture, '[data-testid="page-error-banner"]')).not.toBeNull();
-
-      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
-        new Event('submit'),
-      );
-      fixture.detectChanges();
-      expect(fixture.componentInstance.pageError()).toBeNull();
-
-      httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up')).flush({
-        userId: '1',
-        email: 'eleanor@whitmore.studio',
-        fullName: 'Eleanor Whitmore',
-        role: 'Organizer',
-        status: 'Active',
-      });
+      expect(el(fixture, '[data-testid="page-error-banner"]')).toBeNull();
     });
 
     it('clears previous backend errors on a fresh submit', () => {
@@ -554,23 +559,6 @@ describe('SignUpPage', () => {
 
       expect(document.activeElement).toBe(
         el<HTMLElement>(fixture, '[data-testid="multi-error-banner"]'),
-      );
-    });
-
-    it('focuses the page-error banner on a 5xx', () => {
-      const fixture = create();
-      fillValid(fixture);
-      el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
-        new Event('submit'),
-      );
-      httpMock
-        .expectOne((r) => r.url.endsWith('/auth/sign-up'))
-        .flush({}, { status: 500, statusText: 'Server Error' });
-      fixture.detectChanges();
-      fixture.detectChanges();
-
-      expect(document.activeElement).toBe(
-        el<HTMLElement>(fixture, '[data-testid="page-error-banner"]'),
       );
     });
 

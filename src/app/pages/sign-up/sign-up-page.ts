@@ -19,6 +19,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 import { environment } from '../../../environments/environment';
 import { AuthApiClient } from '../../core/auth/auth-api-client';
 import { SignUpError } from '../../core/auth/sign-up-error.model';
@@ -26,6 +27,9 @@ import { SignUpResponse } from '../../core/auth/sign-up-response.model';
 import { evaluatePasswordStrength, PasswordStrength } from './password-strength';
 
 const EMAIL_TAKEN_PATTERN = /already\s+(in\s+use|exists)/i;
+const PAGE_ERROR_TOAST_SUMMARY = 'Sign-up failed';
+const PAGE_ERROR_TOAST_DETAIL =
+  'Something went wrong on our end. Please try again in a moment.';
 const CONTROL_ORDER = [
   'fullName',
   'email',
@@ -65,6 +69,7 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
   private readonly fb = inject(FormBuilder);
   private readonly authApi = inject(AuthApiClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly messages = inject(MessageService);
 
   readonly identityBaseUrl = environment.identityBaseUrl;
 
@@ -85,23 +90,23 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
   readonly successFirstName = signal('');
   readonly showPassword = signal(false);
   readonly passwordValue = signal('');
+  readonly lockedPaneHeight = signal<number | null>(null);
   readonly passwordStrength = computed<PasswordStrength>(() =>
     evaluatePasswordStrength(this.passwordValue()),
   );
   readonly backendErrors = signal<Record<string, string[]>>({});
-  readonly pageError = signal<string | null>(null);
   readonly backendErrorCount = computed(() => Object.keys(this.backendErrors()).length);
 
   @ViewChild('fullNameInput', { static: false })
   private fullNameInput?: ElementRef<HTMLInputElement>;
 
-  @ViewChild('pageErrorBanner', { static: false })
-  private pageErrorBanner?: ElementRef<HTMLElement>;
-
   @ViewChild('multiErrorBanner', { static: false })
   private multiErrorBanner?: ElementRef<HTMLElement>;
 
-  private pendingBannerFocus: 'page' | 'multi' | null = null;
+  @ViewChild('formPane', { static: false })
+  private formPane?: ElementRef<HTMLElement>;
+
+  private pendingMultiBannerFocus = false;
 
   constructor() {
     this.form
@@ -123,15 +128,12 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
   }
 
   ngAfterViewChecked(): void {
-    if (!this.pendingBannerFocus) {
+    if (!this.pendingMultiBannerFocus) {
       return;
     }
-    const target =
-      this.pendingBannerFocus === 'page'
-        ? this.pageErrorBanner?.nativeElement
-        : this.multiErrorBanner?.nativeElement;
+    const target = this.multiErrorBanner?.nativeElement;
     if (target) {
-      this.pendingBannerFocus = null;
+      this.pendingMultiBannerFocus = false;
       target.focus();
     }
   }
@@ -168,7 +170,6 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
     }
 
     this.backendErrors.set({});
-    this.pageError.set(null);
     this.submitting.set(true);
     this.form.disable({ emitEvent: false });
     const value = this.form.getRawValue() as {
@@ -182,6 +183,10 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
     this.authApi.signUp(value).subscribe({
       next: (response: SignUpResponse) => {
         this.submitting.set(false);
+        const measured = this.formPane?.nativeElement?.offsetHeight ?? 0;
+        if (measured > 0) {
+          this.lockedPaneHeight.set(measured);
+        }
         this.successFirstName.set(this.firstNameFrom(value.fullName, response.fullName));
         this.succeeded.set(true);
       },
@@ -208,14 +213,17 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
 
   private applyBackendError(error: SignUpError): void {
     if (error.pageError) {
-      this.pageError.set(error.pageError);
-      this.pendingBannerFocus = 'page';
+      this.messages.add({
+        severity: 'error',
+        summary: PAGE_ERROR_TOAST_SUMMARY,
+        detail: PAGE_ERROR_TOAST_DETAIL,
+      });
       return;
     }
     const fields = error.fieldErrors ?? {};
     this.backendErrors.set({ ...fields });
     if (Object.keys(fields).length >= 2) {
-      this.pendingBannerFocus = 'multi';
+      this.pendingMultiBannerFocus = true;
     } else if (Object.keys(fields).length === 1) {
       this.focusFirstBackendOffender();
     }

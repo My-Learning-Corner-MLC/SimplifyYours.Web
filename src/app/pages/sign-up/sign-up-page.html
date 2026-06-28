@@ -51,7 +51,7 @@
       </ul>
     </aside>
 
-    <div class="sign-up-page__form-pane" data-testid="form-pane">
+    <div #formPane class="sign-up-page__form-pane" data-testid="form-pane">
       @if (succeeded()) {
         <div class="sign-up-page__success" data-testid="success-pane">
           <div class="sign-up-page__confetti" aria-hidden="true">
@@ -95,17 +95,7 @@
         <div class="sign-up-page__title-divider"></div>
       </div>
 
-      @if (pageError()) {
-        <div
-          #pageErrorBanner
-          class="sign-up-page__banner"
-          role="alert"
-          tabindex="-1"
-          data-testid="page-error-banner"
-        >
-          {{ pageError() }}
-        </div>
-      } @else if (backendErrorCount() >= 2) {
+      @if (backendErrorCount() >= 2) {
         <div
           #multiErrorBanner
           class="sign-up-page__banner"
