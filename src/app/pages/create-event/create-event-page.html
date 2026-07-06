@@ -1,0 +1,342 @@
+<main class="ce-shell">
+  <header class="ce-header">
+    <p class="ce-eyebrow">Create occasion</p>
+    <h1 class="ce-title">
+      @if (step() === 1) {
+        Let’s shape your occasion
+      } @else {
+        Where &amp; when
+      }
+    </h1>
+  </header>
+
+  <nav class="ce-steprail" aria-label="Create occasion steps">
+    <ol>
+      <li
+        class="ce-step"
+        [class.is-active]="step() === 1"
+        [class.is-done]="step() > 1"
+        [attr.aria-current]="step() === 1 ? 'step' : null"
+      >
+        <span class="ce-step-num" aria-hidden="true">1</span>
+        <span class="ce-step-label">Basics</span>
+      </li>
+      <li
+        class="ce-step"
+        [class.is-active]="step() === 2"
+        [class.is-upcoming]="step() < 2"
+        [attr.aria-current]="step() === 2 ? 'step' : null"
+      >
+        <span class="ce-step-num" aria-hidden="true">2</span>
+        <span class="ce-step-label">Where &amp; when</span>
+      </li>
+    </ol>
+  </nav>
+
+  <div class="ce-live-region" aria-live="assertive" role="alert">
+    @if (pageError()) {
+      <p class="ce-page-error">{{ pageError() }}</p>
+    }
+  </div>
+
+  <form class="ce-form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    @if (step() === 1) {
+      <section class="ce-card" aria-labelledby="ce-basics-heading">
+        <h2 id="ce-basics-heading" class="ce-card-title">The basics</h2>
+
+        <div class="ce-field">
+          <label class="ce-label" for="ce-event-name">Occasion name</label>
+          <input
+            id="ce-event-name"
+            class="ce-input"
+            type="text"
+            formControlName="eventName"
+            maxlength="200"
+            autocomplete="off"
+            placeholder="Mateo turns five"
+            [attr.aria-invalid]="shouldShowError('eventName') || hasBackendError('eventName')"
+            [attr.aria-describedby]="'ce-event-name-error'"
+          />
+          <p id="ce-event-name-error" class="ce-error" aria-live="polite">
+            @if (shouldShowError('eventName')) {
+              Give your occasion a name of at least 3 characters.
+            } @else if (hasBackendError('eventName')) {
+              {{ backendErrorMessage('eventName') }}
+            }
+          </p>
+        </div>
+
+        <fieldset class="ce-field ce-type-fieldset">
+          <legend class="ce-label">What are we celebrating?</legend>
+          <div class="ce-type-chips" id="ce-event-type" role="group" aria-label="Occasion type">
+            @for (type of eventTypes; track type) {
+              <button
+                type="button"
+                class="ce-chip"
+                [class.is-selected]="isTypeSelected(type)"
+                [attr.aria-pressed]="isTypeSelected(type)"
+                (click)="selectType(type)"
+              >
+                {{ eventTypeLabels[type] }}
+              </button>
+            }
+          </div>
+          <p class="ce-error" aria-live="polite">
+            @if (shouldShowError('eventType')) {
+              Pick the kind of occasion this is.
+            } @else if (hasBackendError('eventType')) {
+              {{ backendErrorMessage('eventType') }}
+            }
+          </p>
+        </fieldset>
+
+        <div class="ce-field-row">
+          <div class="ce-field">
+            <label class="ce-label" for="ce-event-date">Date <span class="ce-optional">(optional)</span></label>
+            <input id="ce-event-date" class="ce-input" type="date" formControlName="eventDate" />
+          </div>
+          <div class="ce-field">
+            <label class="ce-label" for="ce-start-time">Start time <span class="ce-optional">(optional)</span></label>
+            <input id="ce-start-time" class="ce-input" type="time" formControlName="startTime" />
+          </div>
+        </div>
+        <p class="ce-error" aria-live="polite">
+          @if (shouldShowTimeError()) {
+            The occasion needs to start now or in the future.
+          } @else if (hasBackendError('eventTime')) {
+            {{ backendErrorMessage('eventTime') }}
+          }
+        </p>
+
+        <div class="ce-field">
+          <label class="ce-label" for="ce-description">
+            Tell us more <span class="ce-optional">(optional)</span>
+          </label>
+          <textarea
+            id="ce-description"
+            class="ce-input ce-textarea"
+            formControlName="eventDescription"
+            rows="4"
+            maxlength="5000"
+            placeholder="A backyard party with cake, balloons, and a piñata."
+            [attr.aria-invalid]="shouldShowError('eventDescription')"
+          ></textarea>
+          <p class="ce-error" aria-live="polite">
+            @if (shouldShowError('eventDescription')) {
+              Keep the description under 5000 characters.
+            } @else if (hasBackendError('eventDescription')) {
+              {{ backendErrorMessage('eventDescription') }}
+            }
+          </p>
+        </div>
+      </section>
+
+      <footer class="ce-actions">
+        <button type="button" class="ce-btn ce-btn-ghost" disabled aria-disabled="true">Back</button>
+        <div class="ce-actions-main">
+          <button
+            type="button"
+            class="ce-btn ce-btn-quiet"
+            (click)="onSubmit(true)"
+            [disabled]="submitting()"
+          >
+            Create now, finish later
+          </button>
+          <button type="button" class="ce-btn ce-btn-primary" (click)="nextStep()">
+            Next step
+          </button>
+        </div>
+      </footer>
+    } @else {
+      <section class="ce-card" formGroupName="location" aria-labelledby="ce-where-heading">
+        <h2 id="ce-where-heading" class="ce-card-title">Where it happens</h2>
+
+        <div class="ce-field">
+          <label class="ce-label" for="ce-venue-name">Venue name <span class="ce-optional">(optional)</span></label>
+          <input
+            id="ce-venue-name"
+            class="ce-input"
+            type="text"
+            formControlName="venueName"
+            autocomplete="off"
+            placeholder="The Backyard"
+            [attr.aria-invalid]="shouldShowError('location.venueName') || hasBackendError('location.venueName')"
+          />
+          <p class="ce-error" aria-live="polite">
+            @if (shouldShowError('location.venueName')) {
+              Keep the venue name under 200 characters.
+            } @else if (hasBackendError('location.venueName')) {
+              {{ backendErrorMessage('location.venueName') }}
+            }
+          </p>
+        </div>
+
+        <div class="ce-field">
+          <label class="ce-label" for="ce-address">Address <span class="ce-optional">(optional)</span></label>
+          <input
+            id="ce-address"
+            class="ce-input"
+            type="text"
+            formControlName="address"
+            autocomplete="street-address"
+            placeholder="414 Maple Street, Brooklyn, NY 11215"
+            [attr.aria-invalid]="shouldShowError('location.address') || hasBackendError('location.address')"
+          />
+          <p class="ce-error" aria-live="polite">
+            @if (shouldShowError('location.address')) {
+              Keep the address under 500 characters.
+            } @else if (hasBackendError('location.address')) {
+              {{ backendErrorMessage('location.address') }}
+            }
+          </p>
+        </div>
+
+        <div class="ce-field">
+          <label class="ce-label" for="ce-online-url">Online link <span class="ce-optional">(optional)</span></label>
+          <input
+            id="ce-online-url"
+            class="ce-input"
+            type="url"
+            formControlName="onlineUrl"
+            autocomplete="off"
+            placeholder="https://meet.example.com/our-party"
+            [attr.aria-invalid]="shouldShowError('location.onlineUrl') || hasBackendError('location.onlineUrl')"
+          />
+          <p class="ce-error" aria-live="polite">
+            @if (shouldShowError('location.onlineUrl')) {
+              Use a full link that starts with http:// or https:// (under 2048 characters).
+            } @else if (hasBackendError('location.onlineUrl')) {
+              {{ backendErrorMessage('location.onlineUrl') }}
+            }
+          </p>
+        </div>
+
+        <div class="ce-field">
+          <label class="ce-label" for="ce-location-notes">
+            Notes for guests <span class="ce-optional">(optional)</span>
+          </label>
+          <textarea
+            id="ce-location-notes"
+            class="ce-input ce-textarea"
+            formControlName="notes"
+            rows="3"
+            maxlength="2000"
+            placeholder="Park on Maple; side gate unlocked from 1:30."
+            [attr.aria-invalid]="shouldShowError('location.notes') || hasBackendError('location.notes')"
+          ></textarea>
+          <p class="ce-error" aria-live="polite">
+            @if (shouldShowError('location.notes')) {
+              Keep the notes under 2000 characters.
+            } @else if (hasBackendError('location.notes')) {
+              {{ backendErrorMessage('location.notes') }}
+            }
+          </p>
+        </div>
+      </section>
+
+      <section class="ce-card" aria-labelledby="ce-when-heading">
+        <h2 id="ce-when-heading" class="ce-card-title">When it happens</h2>
+
+        <div class="ce-field">
+          <label class="ce-label" for="ce-time-zone">Time zone <span class="ce-optional">(optional)</span></label>
+          <select
+            id="ce-time-zone"
+            class="ce-input ce-select"
+            formControlName="timeZoneId"
+            [attr.aria-invalid]="hasBackendError('timeZoneId')"
+          >
+            <option value="">Use my current time zone</option>
+            @for (zone of timeZones; track zone) {
+              <option [value]="zone">{{ zone }}</option>
+            }
+          </select>
+          <p class="ce-error" aria-live="polite">
+            @if (hasBackendError('timeZoneId')) {
+              {{ backendErrorMessage('timeZoneId') }}
+            }
+          </p>
+        </div>
+
+        <dl class="ce-echo">
+          <div>
+            <dt>Date</dt>
+            <dd>{{ form.get('eventDate')?.value || 'Not set yet' }}</dd>
+          </div>
+          <div>
+            <dt>Start time</dt>
+            <dd>{{ form.get('startTime')?.value || 'Not set yet' }}</dd>
+          </div>
+        </dl>
+        <p class="ce-hint">You can change the date and time on the previous step.</p>
+      </section>
+
+      <footer class="ce-actions">
+        <button type="button" class="ce-btn ce-btn-ghost" (click)="backStep()">Back</button>
+        <div class="ce-actions-main">
+          <button
+            type="button"
+            class="ce-btn ce-btn-quiet"
+            (click)="onSubmit(true)"
+            [disabled]="submitting()"
+          >
+            Create now, finish later
+          </button>
+          <button type="submit" class="ce-btn ce-btn-primary" [disabled]="submitting()">
+            @if (submitting()) {
+              Creating…
+            } @else {
+              Create occasion
+            }
+          </button>
+        </div>
+      </footer>
+    }
+  </form>
+</main>
+
+<p-dialog
+  header="Your occasion is ready 🎉"
+  [visible]="successEvent() !== null"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '30rem', maxWidth: '92vw' }"
+>
+  @if (successRecap(); as recap) {
+    <div class="ce-recap">
+      <span class="ce-recap-chip ce-recap-name">{{ recap.name }}</span>
+      <span class="ce-recap-chip">{{ recap.type }}</span>
+      <span class="ce-recap-chip">{{ recap.when }}</span>
+    </div>
+    <p class="ce-recap-note">
+      It’s saved to your dashboard — guests, invitations, and budget come next.
+    </p>
+  }
+  <div class="ce-dialog-actions">
+    <button type="button" class="ce-btn ce-btn-quiet" (click)="createAnother()">
+      Create another
+    </button>
+    <button type="button" class="ce-btn ce-btn-primary" (click)="goToDashboard()">
+      View my occasions
+    </button>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Leave without saving?"
+  [visible]="leaveDialogVisible()"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '26rem', maxWidth: '92vw' }"
+>
+  <p class="ce-recap-note">
+    Your occasion hasn’t been created yet. If you leave now, what you’ve entered will be lost.
+  </p>
+  <div class="ce-dialog-actions">
+    <button type="button" class="ce-btn ce-btn-quiet" (click)="onLeaveChoice(true)">
+      Leave without saving
+    </button>
+    <button type="button" class="ce-btn ce-btn-primary" (click)="onLeaveChoice(false)">
+      Keep planning
+    </button>
+  </div>
+</p-dialog>

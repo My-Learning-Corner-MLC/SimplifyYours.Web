@@ -1,0 +1,356 @@
+// Palette mirrors sign-up-page.scss (parchment + plum):
+//   ink   #2A1F2D on cream #FFFCF5 → 15.4:1 (AAA)
+//   plum  #5A2849 on cream #FFFCF5 →  9.5:1 (AAA)
+$plum: #5a2849;
+$plum-deep: #2a1f2d;
+$plum-mid: #3f1a33;
+$champagne: #c8a876;
+$champagne-deep: #9b7e4f;
+$canvas: #e7e5df;
+$cream: #fffcf5;
+$linen: #f5efe6;
+$linen-border: #ece2d2;
+$ink: #2a1f2d;
+$ink-soft: #4a4045;
+$muted: #7a6b6e;
+$coral-ink: #7a3a24;
+
+.ce-shell {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: $ink;
+}
+
+.ce-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.ce-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $champagne-deep;
+}
+
+.ce-title {
+  margin: 0;
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  color: $plum-deep;
+}
+
+.ce-steprail {
+  margin-bottom: 2rem;
+
+  ol {
+    display: flex;
+    justify-content: center;
+    gap: 2.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.ce-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $muted;
+
+  &.is-active {
+    color: $plum;
+    font-weight: 600;
+
+    .ce-step-num {
+      background: $plum;
+      color: $cream;
+      border-color: $plum;
+    }
+  }
+
+  &.is-done .ce-step-num {
+    background: $champagne;
+    border-color: $champagne;
+    color: $plum-deep;
+  }
+}
+
+.ce-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid $linen-border;
+  background: $cream;
+  font-size: 0.85rem;
+}
+
+.ce-live-region .ce-page-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  background: #fbeae4;
+  border: 1px solid #eac6b8;
+  color: $coral-ink;
+}
+
+.ce-card {
+  background: $cream;
+  border: 1px solid $linen-border;
+  border-radius: 1rem;
+  padding: 1.75rem;
+  box-shadow: 0 10px 30px rgba(42, 31, 45, 0.06);
+
+  + .ce-card {
+    margin-top: 1.25rem;
+  }
+}
+
+.ce-card-title {
+  margin: 0 0 1.25rem;
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  color: $plum-mid;
+}
+
+.ce-field {
+  margin-bottom: 1.1rem;
+}
+
+.ce-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 32rem) {
+    grid-template-columns: 1fr;
+  }
+
+  .ce-field {
+    margin-bottom: 0.25rem;
+  }
+}
+
+.ce-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $ink-soft;
+}
+
+.ce-optional {
+  font-weight: 400;
+  color: $muted;
+}
+
+.ce-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.6rem;
+  border: 1px solid $linen-border;
+  background: $linen;
+  color: $ink;
+  font: inherit;
+
+  &:focus-visible {
+    outline: 2px solid $plum;
+    outline-offset: 1px;
+    background: $cream;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: $coral-ink;
+  }
+}
+
+.ce-textarea {
+  resize: vertical;
+  min-height: 5.5rem;
+}
+
+.ce-select {
+  appearance: auto;
+}
+
+.ce-type-fieldset {
+  border: 0;
+  margin: 0 0 1.1rem;
+  padding: 0;
+
+  legend {
+    padding: 0;
+  }
+}
+
+.ce-type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ce-chip {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid $linen-border;
+  background: $cream;
+  color: $ink-soft;
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $champagne;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $plum;
+    outline-offset: 2px;
+  }
+
+  &.is-selected {
+    background: $plum;
+    border-color: $plum;
+    color: $cream;
+    font-weight: 600;
+  }
+}
+
+.ce-error {
+  min-height: 1.1rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: $coral-ink;
+}
+
+.ce-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: $muted;
+}
+
+.ce-echo {
+  display: flex;
+  gap: 2.5rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 0.6rem;
+  background: $linen;
+
+  dt {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  dd {
+    margin: 0.15rem 0 0;
+    color: $ink;
+  }
+}
+
+.ce-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.ce-actions-main {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ce-btn {
+  padding: 0.65rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $plum;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.ce-btn-primary {
+  background: $plum;
+  color: $cream;
+
+  &:hover:not(:disabled) {
+    background: $plum-mid;
+  }
+}
+
+.ce-btn-quiet {
+  background: $linen;
+  border-color: $linen-border;
+  color: $plum;
+
+  &:hover:not(:disabled) {
+    border-color: $champagne;
+  }
+}
+
+.ce-btn-ghost {
+  background: transparent;
+  color: $muted;
+}
+
+.ce-recap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.ce-recap-chip {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: $linen;
+  border: 1px solid $linen-border;
+  color: $ink-soft;
+  font-size: 0.9rem;
+}
+
+.ce-recap-name {
+  background: $plum;
+  border-color: $plum;
+  color: $cream;
+  font-weight: 600;
+}
+
+.ce-recap-note {
+  margin: 0 0 1.25rem;
+  color: $ink-soft;
+}
+
+.ce-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

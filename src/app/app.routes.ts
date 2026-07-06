@@ -7,6 +7,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/dashboard/dashboard-page').then((m) => m.DashboardPage),
   },
   {
+    path: 'create-event',
+    loadComponent: () =>
+      import('./pages/create-event/create-event-page').then((m) => m.CreateEventPage),
+  },
+  {
     path: 'auth/callback',
     loadComponent: () =>
       import('./pages/auth-callback/auth-callback-page').then((m) => m.AuthCallbackPage),
