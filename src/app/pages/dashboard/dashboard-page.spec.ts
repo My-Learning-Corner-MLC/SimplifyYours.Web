@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { DashboardPage } from './dashboard-page';
 
 describe('DashboardPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DashboardPage],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -20,6 +22,17 @@ describe('DashboardPage', () => {
     const heading = fixture.nativeElement.querySelector('h1') as HTMLElement | null;
     expect(heading).not.toBeNull();
     expect(heading?.textContent).toContain('Dashboard Page');
+  });
+
+  it('links to the create-event page', async () => {
+    const fixture = TestBed.createComponent(DashboardPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const link = fixture.nativeElement.querySelector(
+      'a[href="/create-event"]',
+    ) as HTMLAnchorElement | null;
+    expect(link).not.toBeNull();
+    expect(link?.textContent).toContain('Create occasion');
   });
 
   it('should render a PrimeNG check icon', async () => {

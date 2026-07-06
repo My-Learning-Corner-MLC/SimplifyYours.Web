@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { createEventLeaveGuard } from './pages/create-event/create-event-leave.guard';
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   {
@@ -10,6 +12,7 @@ export const routes: Routes = [
     path: 'create-event',
     loadComponent: () =>
       import('./pages/create-event/create-event-page').then((m) => m.CreateEventPage),
+    canDeactivate: [createEventLeaveGuard],
   },
   {
     path: 'auth/callback',
