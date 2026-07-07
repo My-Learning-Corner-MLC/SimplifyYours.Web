@@ -12,7 +12,12 @@ import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { Countdown, describeCountdown, formatEventWhen } from '../../core/events/event-countdown';
 import { EventApiClient } from '../../core/events/event-api-client';
 import { EventSummary } from '../../core/events/event-summary.model';
-import { eventTypeEmoji, eventTypeLabel } from '../../core/events/event-type-display';
+import {
+  EventTypeTint,
+  eventTypeEmoji,
+  eventTypeLabel,
+  eventTypeTint,
+} from '../../core/events/event-type-display';
 import { QueryEventsError } from '../../core/events/query-events-error.model';
 
 type DashboardState = 'loading' | 'error' | 'empty' | 'ready';
@@ -28,6 +33,7 @@ export interface EventCardVm {
   readonly description: string | null;
   readonly emoji: string;
   readonly typeLabel: string;
+  readonly tint: EventTypeTint;
   readonly whenLabel: string;
   readonly venue: string | null;
   readonly countdown: Countdown;
@@ -195,6 +201,7 @@ export class DashboardPage implements OnInit {
       description: event.eventDescription,
       emoji: eventTypeEmoji(event.eventType),
       typeLabel: eventTypeLabel(event.eventType),
+      tint: eventTypeTint(event.eventType),
       whenLabel: formatEventWhen(event.eventTime, event.eventStartTime, event.eventEndTime),
       venue: this.resolveVenue(event),
       countdown,
