@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -33,18 +34,39 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   other: 'Other',
 };
 
-const STEP_1_CONTROLS = ['eventName', 'eventType', 'eventDate', 'startTime', 'eventDescription'];
+export const EVENT_TYPE_EMOJI: Record<EventType, string> = {
+  birthday: '🎂',
+  wedding: '💍',
+  event: '🎉',
+  anniversary: '🥂',
+  launch: '🚀',
+  dinner: '🍽️',
+  other: '＋',
+};
+
+interface WizardStep {
+  readonly index: 1 | 2;
+  readonly title: string;
+  readonly subtitle: string;
+}
+
+export const WIZARD_STEPS: readonly WizardStep[] = [
+  { index: 1, title: 'The basics', subtitle: 'Name, type, date' },
+  { index: 2, title: 'Where and when', subtitle: 'Venue, schedule, link' },
+];
+
+const STEP_1_CONTROLS = ['eventName', 'eventType', 'eventDate', 'startTime', 'endTime', 'eventDescription'];
 
 const CONTROL_IDS: Record<string, string> = {
   eventName: 'ce-event-name',
   eventType: 'ce-event-type',
   eventDate: 'ce-event-date',
   startTime: 'ce-start-time',
+  endTime: 'ce-end-time',
   eventDescription: 'ce-description',
   timeZoneId: 'ce-time-zone',
   'location.venueName': 'ce-venue-name',
   'location.address': 'ce-address',
-  'location.onlineUrl': 'ce-online-url',
   'location.notes': 'ce-location-notes',
 };
 
@@ -56,19 +78,6 @@ function trimmedMinLength(min: number) {
     }
     return v.length >= min ? null : { trimmedMinLength: { requiredLength: min } };
   };
-}
-
-function absoluteHttpUrl(ctl: AbstractControl): ValidationErrors | null {
-  const v = (ctl.value ?? '').toString().trim();
-  if (v.length === 0) {
-    return null;
-  }
-  try {
-    const url = new URL(v);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? null : { absoluteHttpUrl: true };
-  } catch {
-    return { absoluteHttpUrl: true };
-  }
 }
 
 function futureEventTime(group: AbstractControl): ValidationErrors | null {
@@ -84,6 +93,21 @@ function futureEventTime(group: AbstractControl): ValidationErrors | null {
   return combined.getTime() >= Date.now() ? null : { pastEventTime: true };
 }
 
+function endAfterStart(group: AbstractControl): ValidationErrors | null {
+  const date = (group.get('eventDate')?.value ?? '').toString();
+  const start = (group.get('startTime')?.value ?? '').toString();
+  const end = (group.get('endTime')?.value ?? '').toString();
+  if (!date || !end) {
+    return null;
+  }
+  const startDate = new Date(`${date}T${start || '00:00'}`);
+  const endDate = new Date(`${date}T${end}`);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return null;
+  }
+  return endDate.getTime() >= startDate.getTime() ? null : { endBeforeStart: true };
+}
+
 function supportedTimeZones(): readonly string[] {
   try {
     return Intl.supportedValuesOf('timeZone');
@@ -94,7 +118,7 @@ function supportedTimeZones(): readonly string[] {
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, DialogModule],
+  imports: [ReactiveFormsModule, DialogModule, NgTemplateOutlet],
   selector: 'app-create-event-page',
   templateUrl: './create-event-page.html',
   styleUrl: './create-event-page.scss',
@@ -108,6 +132,8 @@ export class CreateEventPage {
 
   readonly eventTypes = CREATABLE_EVENT_TYPES;
   readonly eventTypeLabels = EVENT_TYPE_LABELS;
+  readonly eventTypeEmoji = EVENT_TYPE_EMOJI;
+  readonly steps = WIZARD_STEPS;
   readonly timeZones = supportedTimeZones();
 
   readonly form: FormGroup = this.fb.group(
@@ -116,16 +142,16 @@ export class CreateEventPage {
       eventType: ['', [Validators.required]],
       eventDate: [''],
       startTime: [''],
+      endTime: [''],
       eventDescription: ['', [Validators.maxLength(5000)]],
       timeZoneId: [''],
       location: this.fb.group({
         venueName: ['', [Validators.maxLength(200)]],
         address: ['', [Validators.maxLength(500)]],
-        onlineUrl: ['', [Validators.maxLength(2048), absoluteHttpUrl]],
         notes: ['', [Validators.maxLength(2000)]],
       }),
     },
-    { validators: futureEventTime },
+    { validators: [futureEventTime, endAfterStart] },
   );
 
   readonly step = signal<1 | 2>(1);
@@ -145,8 +171,9 @@ export class CreateEventPage {
     }
     return {
       name: created.eventName,
-      type: EVENT_TYPE_LABELS[created.eventType as EventType] ?? created.eventType,
-      when: this.formatEventTime(created.eventTime, created.timeZoneId),
+      typeEmoji: EVENT_TYPE_EMOJI[created.eventType as EventType] ?? '🎉',
+      typeLabel: EVENT_TYPE_LABELS[created.eventType as EventType] ?? created.eventType,
+      when: this.formatEventWindow(created.eventTime, created.eventEndTime, created.timeZoneId),
     };
   });
 
@@ -159,6 +186,14 @@ export class CreateEventPage {
 
   isTypeSelected(type: EventType): boolean {
     return this.form.get('eventType')?.value === type;
+  }
+
+  isStepDone(index: 1 | 2): boolean {
+    return this.step() > index;
+  }
+
+  isStepActive(index: 1 | 2): boolean {
+    return this.step() === index;
   }
 
   nextStep(): void {
@@ -177,7 +212,12 @@ export class CreateEventPage {
 
   isStepOneValid(): boolean {
     const controlsValid = STEP_1_CONTROLS.every((name) => !this.form.get(name)?.invalid);
-    return controlsValid && !this.form.hasError('pastEventTime') && !this.form.hasError('invalidEventTime');
+    return (
+      controlsValid &&
+      !this.form.hasError('pastEventTime') &&
+      !this.form.hasError('invalidEventTime') &&
+      !this.form.hasError('endBeforeStart')
+    );
   }
 
   shouldShowError(path: string): boolean {
@@ -190,8 +230,17 @@ export class CreateEventPage {
 
   shouldShowTimeError(): boolean {
     const hasError =
-      this.form.hasError('pastEventTime') || this.form.hasError('invalidEventTime');
+      this.form.hasError('pastEventTime') ||
+      this.form.hasError('invalidEventTime') ||
+      this.form.hasError('endBeforeStart');
     return hasError && (this.stepAttempted() || this.submitted() || !!this.form.get('eventDate')?.touched);
+  }
+
+  timeErrorMessage(): string {
+    if (this.form.hasError('endBeforeStart')) {
+      return 'The end time needs to be after the start time.';
+    }
+    return 'The occasion needs to start now or in the future.';
   }
 
   hasBackendError(path: string): boolean {
@@ -227,7 +276,7 @@ export class CreateEventPage {
           this.messages.add({
             severity: 'success',
             summary: 'Occasion created',
-            detail: `“${response.eventName}” is saved — you can finish the details any time.`,
+            detail: `“${response.eventName}” created — view it anytime from your dashboard.`,
           });
           void this.router.navigate(['/dashboard']);
           return;
@@ -256,11 +305,20 @@ export class CreateEventPage {
       eventType: '',
       eventDate: '',
       startTime: '',
+      endTime: '',
       eventDescription: '',
       timeZoneId: '',
       location: { venueName: '', address: '', onlineUrl: '', notes: '' },
     });
     this.step.set(1);
+  }
+
+  requestCancel(): void {
+    if (!this.form.dirty || this.successEvent() !== null || this.finishedLater()) {
+      void this.router.navigate(['/dashboard']);
+      return;
+    }
+    this.leaveDialogVisible.set(true);
   }
 
   confirmLeave(): Promise<boolean> | boolean {
@@ -275,8 +333,15 @@ export class CreateEventPage {
 
   onLeaveChoice(leave: boolean): void {
     this.leaveDialogVisible.set(false);
-    this.resolveLeave?.(leave);
-    this.resolveLeave = null;
+    if (this.resolveLeave !== null) {
+      this.resolveLeave(leave);
+      this.resolveLeave = null;
+      return;
+    }
+    // Triggered from the in-form Cancel affordance (no pending navigation).
+    if (leave) {
+      void this.router.navigate(['/dashboard']);
+    }
   }
 
   controlId(path: string): string {
@@ -289,9 +354,10 @@ export class CreateEventPage {
       eventType: string;
       eventDate: string;
       startTime: string;
+      endTime: string;
       eventDescription: string;
       timeZoneId: string;
-      location: { venueName: string; address: string; onlineUrl: string; notes: string };
+      location: { venueName: string; address: string; notes: string };
     };
 
     const request: CreateEventRequest = {
@@ -299,9 +365,17 @@ export class CreateEventPage {
       eventType: raw.eventType,
     };
 
-    const eventTime = this.toEventTimeIso(raw.eventDate, raw.startTime);
+    const eventTime = this.toIso(raw.eventDate, raw.startTime, '00:00');
     if (eventTime !== null) {
       request.eventTime = eventTime;
+    }
+    const eventStartTime = raw.startTime ? this.toIso(raw.eventDate, raw.startTime, null) : null;
+    if (eventStartTime !== null) {
+      request.eventStartTime = eventStartTime;
+    }
+    const eventEndTime = raw.endTime ? this.toIso(raw.eventDate, raw.endTime, null) : null;
+    if (eventEndTime !== null) {
+      request.eventEndTime = eventEndTime;
     }
     const description = raw.eventDescription.trim();
     if (description.length > 0) {
@@ -315,14 +389,12 @@ export class CreateEventPage {
     const location = {
       venueName: raw.location.venueName.trim(),
       address: raw.location.address.trim(),
-      onlineUrl: raw.location.onlineUrl.trim(),
       notes: raw.location.notes.trim(),
     };
     if (Object.values(location).some((value) => value.length > 0)) {
       request.location = {
         venueName: location.venueName || null,
         address: location.address || null,
-        onlineUrl: location.onlineUrl || null,
         notes: location.notes || null,
       };
     }
@@ -330,27 +402,52 @@ export class CreateEventPage {
     return request;
   }
 
-  private toEventTimeIso(date: string, time: string): string | null {
+  private toIso(date: string, time: string, fallbackTime: string | null): string | null {
     if (!date) {
       return null;
     }
-    const combined = new Date(`${date}T${time || '00:00'}`);
+    const resolvedTime = time || fallbackTime;
+    if (resolvedTime === null) {
+      return null;
+    }
+    const combined = new Date(`${date}T${resolvedTime}`);
     return Number.isNaN(combined.getTime()) ? null : combined.toISOString();
   }
 
-  private formatEventTime(eventTime: string, timeZoneId: string | null): string {
-    const date = new Date(eventTime);
-    if (Number.isNaN(date.getTime())) {
+  private formatEventWindow(
+    eventTime: string,
+    eventEndTime: string | null,
+    timeZoneId: string | null,
+  ): string {
+    const start = new Date(eventTime);
+    if (Number.isNaN(start.getTime())) {
       return eventTime;
     }
+    const zone = timeZoneId ?? undefined;
     try {
-      return new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'full',
-        timeStyle: 'short',
-        timeZone: timeZoneId ?? undefined,
-      }).format(date);
+      const day = new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        timeZone: zone,
+      }).format(start);
+      const startTime = new Intl.DateTimeFormat(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: zone,
+      }).format(start);
+      const end = eventEndTime ? new Date(eventEndTime) : null;
+      if (end && !Number.isNaN(end.getTime())) {
+        const endTime = new Intl.DateTimeFormat(undefined, {
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: zone,
+        }).format(end);
+        return `${day} · ${startTime} – ${endTime}`;
+      }
+      return `${day} · ${startTime}`;
     } catch {
-      return date.toLocaleString();
+      return start.toLocaleString();
     }
   }
 
@@ -384,9 +481,12 @@ export class CreateEventPage {
   }
 
   private focusFirstInvalid(paths: string[]): void {
-    if (this.form.hasError('pastEventTime') || this.form.hasError('invalidEventTime')) {
-      const nameCtl = this.form.get('eventName');
-      if (!nameCtl?.invalid && !this.form.get('eventType')?.invalid) {
+    if (
+      this.form.hasError('pastEventTime') ||
+      this.form.hasError('invalidEventTime') ||
+      this.form.hasError('endBeforeStart')
+    ) {
+      if (!this.form.get('eventName')?.invalid && !this.form.get('eventType')?.invalid) {
         document.getElementById(CONTROL_IDS['eventDate'])?.focus();
         return;
       }

@@ -19,13 +19,14 @@ describe('EventApiClient', () => {
   const validRequest = (): CreateEventRequest => ({
     eventName: 'Mateo turns five',
     eventTime: '2026-08-17T14:00:00Z',
+    eventStartTime: '2026-08-17T14:00:00Z',
+    eventEndTime: '2026-08-17T18:00:00Z',
     eventType: 'birthday',
     eventDescription: 'Backyard birthday party',
     timeZoneId: 'America/Los_Angeles',
     location: {
       venueName: 'The Backyard',
       address: '414 Maple Street, Brooklyn, NY 11215',
-      onlineUrl: null,
       notes: 'Side gate unlocked from 1:30.',
     },
   });
@@ -34,6 +35,8 @@ describe('EventApiClient', () => {
     id: 'e1',
     eventName: 'Mateo turns five',
     eventTime: '2026-08-17T14:00:00+00:00',
+    eventStartTime: '2026-08-17T14:00:00+00:00',
+    eventEndTime: '2026-08-17T18:00:00+00:00',
     eventType: 'birthday',
     eventDescription: 'Backyard birthday party',
     createdAt: '2026-07-06T10:00:00+00:00',
@@ -42,7 +45,6 @@ describe('EventApiClient', () => {
     location: {
       venueName: 'The Backyard',
       address: '414 Maple Street, Brooklyn, NY 11215',
-      onlineUrl: null,
       notes: 'Side gate unlocked from 1:30.',
     },
     timeZoneId: 'America/Los_Angeles',
@@ -79,7 +81,7 @@ describe('EventApiClient', () => {
       {
         errors: {
           EventName: ['Event name must contain at least 3 characters.'],
-          'Location.OnlineUrl': ['Online link must be an absolute http or https URL.'],
+          'Location.Address': ['Address must not exceed 500 characters.'],
           TimeZoneId: ['Time zone must be a valid IANA time zone id.'],
         },
       },
@@ -89,7 +91,7 @@ describe('EventApiClient', () => {
     expect(err).toEqual({
       fieldErrors: {
         eventName: ['Event name must contain at least 3 characters.'],
-        'location.onlineUrl': ['Online link must be an absolute http or https URL.'],
+        'location.address': ['Address must not exceed 500 characters.'],
         timeZoneId: ['Time zone must be a valid IANA time zone id.'],
       },
     });

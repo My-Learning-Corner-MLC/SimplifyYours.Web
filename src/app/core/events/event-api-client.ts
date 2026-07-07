@@ -12,12 +12,13 @@ const GENERIC_PAGE_ERROR = 'Something went wrong on our end. Please try again in
 const ALLOWED_FIELD_KEYS = new Set([
   'eventName',
   'eventTime',
+  'eventStartTime',
+  'eventEndTime',
   'eventType',
   'eventDescription',
   'timeZoneId',
   'location.venueName',
   'location.address',
-  'location.onlineUrl',
   'location.notes',
 ]);
 

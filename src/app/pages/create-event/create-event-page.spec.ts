@@ -32,6 +32,8 @@ describe('CreateEventPage', () => {
     eventTime: '2026-08-17T14:00:00+00:00',
     eventType: 'birthday',
     eventDescription: null,
+    eventStartTime: null,
+    eventEndTime: null,
     createdAt: '2026-07-06T10:00:00+00:00',
     updatedAt: '2026-07-06T10:00:00+00:00',
     concurrencyToken: 'token',
@@ -72,7 +74,7 @@ describe('CreateEventPage', () => {
       expect(el.querySelectorAll('.ce-chip').length).toBe(6);
       expect(el.querySelector('#ce-event-date')).not.toBeNull();
       expect(el.querySelector('#ce-description')).not.toBeNull();
-      expect(el.querySelector('.ce-steprail')).not.toBeNull();
+      expect(el.querySelector('.ce-rail')).not.toBeNull();
       expect(el.textContent).not.toContain('Venue name');
     });
 
@@ -111,21 +113,14 @@ describe('CreateEventPage', () => {
       fixture.detectChanges();
     });
 
-    it('renders venue, address, online link, notes, and timezone with no mode selector', () => {
+    it('renders venue, address, notes, and timezone with no online link or mode selector', () => {
       const el: HTMLElement = fixture.nativeElement;
       expect(el.querySelector('#ce-venue-name')).not.toBeNull();
       expect(el.querySelector('#ce-address')).not.toBeNull();
-      expect(el.querySelector('#ce-online-url')).not.toBeNull();
       expect(el.querySelector('#ce-location-notes')).not.toBeNull();
       expect(el.querySelector('#ce-time-zone')).not.toBeNull();
-      expect(el.textContent).not.toMatch(/in-person|hybrid/i);
-    });
-
-    it('blocks submit when the online link is malformed', () => {
-      component.form.get('location.onlineUrl')?.setValue('not-a-url');
-      component.onSubmit();
-      httpMock.expectNone(url);
-      expect(component.form.get('location.onlineUrl')?.invalid).toBe(true);
+      expect(el.querySelector('#ce-online-url')).toBeNull();
+      expect(el.textContent).not.toMatch(/online link|in-person|hybrid/i);
     });
 
     it('blocks submit when location fields exceed their caps', () => {
@@ -162,6 +157,7 @@ describe('CreateEventPage', () => {
       const date = futureDate();
       component.form.get('eventDate')?.setValue(date);
       component.form.get('startTime')?.setValue('14:00');
+      component.form.get('endTime')?.setValue('18:00');
       component.form.get('eventDescription')?.setValue('Backyard party');
       component.form.get('timeZoneId')?.setValue('America/Los_Angeles');
       component.form.get('location.venueName')?.setValue('The Backyard');
@@ -174,12 +170,13 @@ describe('CreateEventPage', () => {
       expect(req.request.body.eventName).toBe('Mateo turns five');
       expect(req.request.body.eventType).toBe('birthday');
       expect(req.request.body.eventTime).toBe(new Date(`${date}T14:00`).toISOString());
+      expect(req.request.body.eventStartTime).toBe(new Date(`${date}T14:00`).toISOString());
+      expect(req.request.body.eventEndTime).toBe(new Date(`${date}T18:00`).toISOString());
       expect(req.request.body.eventDescription).toBe('Backyard party');
       expect(req.request.body.timeZoneId).toBe('America/Los_Angeles');
       expect(req.request.body.location).toEqual({
         venueName: 'The Backyard',
         address: null,
-        onlineUrl: null,
         notes: 'Side gate unlocked.',
       });
       req.flush(createdResponse(), { status: 201, statusText: 'Created' });
@@ -188,7 +185,7 @@ describe('CreateEventPage', () => {
       expect(component.successEvent()).toEqual(createdResponse());
       const recap = component.successRecap();
       expect(recap?.name).toBe('Mateo turns five');
-      expect(recap?.type).toBe('Birthday');
+      expect(recap?.typeLabel).toBe('Birthday');
     });
 
     it('shows the finish-later toast and navigates to the dashboard', () => {
@@ -204,14 +201,13 @@ describe('CreateEventPage', () => {
     });
 
     it('maps server field errors onto the matching controls', () => {
-      component.form.get('location.onlineUrl')?.setValue('https://meet.example.com/x');
       component.onSubmit();
 
       httpMock.expectOne(url).flush(
         {
           errors: {
             EventName: ['Event name must contain at least 3 characters.'],
-            'Location.OnlineUrl': ['Online link must be an absolute http or https URL.'],
+            'Location.VenueName': ['Venue name must not exceed 200 characters.'],
           },
         },
         { status: 400, statusText: 'Bad Request' },
@@ -220,7 +216,7 @@ describe('CreateEventPage', () => {
 
       expect(component.backendErrors()).toEqual({
         eventName: ['Event name must contain at least 3 characters.'],
-        'location.onlineUrl': ['Online link must be an absolute http or https URL.'],
+        'location.venueName': ['Venue name must not exceed 200 characters.'],
       });
       expect(component.step()).toBe(1);
       expect(fixture.nativeElement.textContent).toContain(
