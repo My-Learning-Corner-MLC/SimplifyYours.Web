@@ -263,10 +263,10 @@ describe('SiteHeader', () => {
       TestBed.resetTestingModule();
     });
 
-    it('should render the four signed-in nav links in design order with My occasions active', async () => {
+    it('should render the four signed-in nav links in design order with Dashboard active', async () => {
       const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
       const router = TestBed.inject(Router);
-      await router.navigateByUrl('/my-occasions');
+      await router.navigateByUrl('/dashboard');
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
@@ -274,7 +274,7 @@ describe('SiteHeader', () => {
       const links = fixture.nativeElement.querySelectorAll('.site-header__nav-link');
       expect(links.length).toBe(4);
       const labels = Array.from(links).map((el) => (el as HTMLElement).textContent?.trim());
-      expect(labels).toEqual(['My occasions', 'Guests', 'Themes', 'Vendors']);
+      expect(labels).toEqual(['Dashboard', 'Guests', 'Themes', 'Vendors']);
       expect((links[0] as HTMLElement).classList).toContain('site-header__nav-link--active');
     });
 
@@ -323,7 +323,7 @@ describe('SiteHeader', () => {
 
       const menuLinks = fixture.nativeElement.querySelectorAll('.site-header__menu-link');
       const labels = Array.from(menuLinks).map((el) => (el as HTMLElement).textContent?.trim());
-      expect(labels).toEqual(['My occasions', 'Guests', 'Themes', 'Vendors']);
+      expect(labels).toEqual(['Dashboard', 'Guests', 'Themes', 'Vendors']);
 
       expect(fixture.nativeElement.querySelector('.site-header__menu-sign-in')).toBeNull();
       expect(fixture.nativeElement.querySelector('.site-header__menu-cta')).toBeNull();

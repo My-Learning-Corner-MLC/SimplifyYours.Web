@@ -1,4 +1,157 @@
-<h1 class="text-3xl font-bold">
-  Dashboard Page
-  <i class="pi pi-check ml-2"></i>
-</h1>
+<section class="dashboard" data-testid="dashboard-page">
+  @switch (state()) {
+    @case ('loading') {
+      <div class="dashboard__loading" data-testid="dashboard-loading" aria-busy="true" aria-live="polite">
+        <span class="sr-only">Loading your occasions…</span>
+        <div class="dashboard__skeleton"></div>
+        <div class="dashboard__skeleton"></div>
+        <div class="dashboard__skeleton"></div>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="dashboard__error" data-testid="dashboard-error" role="alert">
+        <span class="dashboard__error-glyph" aria-hidden="true">⚠️</span>
+        <p class="dashboard__error-title">{{ loadError()?.message }}</p>
+        <button class="dashboard__retry" type="button" (click)="retry()">Try again</button>
+      </div>
+    }
+
+    @case ('empty') {
+      <div class="empty-state" data-testid="dashboard-empty">
+        <span class="empty-state__glow empty-state__glow--top-left" aria-hidden="true"></span>
+        <span class="empty-state__glow empty-state__glow--mid-right" aria-hidden="true"></span>
+        <span class="empty-state__glow empty-state__glow--bottom-right" aria-hidden="true"></span>
+        <span class="empty-state__dot empty-state__dot--1" aria-hidden="true"></span>
+        <span class="empty-state__dot empty-state__dot--2" aria-hidden="true"></span>
+        <span class="empty-state__dot empty-state__dot--3" aria-hidden="true"></span>
+        <span class="empty-state__dot empty-state__dot--4" aria-hidden="true"></span>
+
+        <div class="empty-state__content">
+          <p class="empty-state__eyebrow">Welcome@if (firstName()) {, {{ firstName() }}}</p>
+          <h1 class="empty-state__headline">
+            A blank page
+            <span class="empty-state__headline-italic">is the best part.</span>
+          </h1>
+          <p class="empty-state__lede">
+            Tell us what you&rsquo;re planning &mdash; a birthday, a quiet anniversary, a launch
+            with three hundred guests &mdash; and we&rsquo;ll lay out the rest. Names, invitations,
+            the schedule. You bring the reason, we&rsquo;ll bring the order.
+          </p>
+          <a class="empty-state__cta" routerLink="/create-event">Plan your first occasion</a>
+
+          <p class="empty-state__shapes-label">Or start from a familiar shape &mdash;</p>
+          <ul class="empty-state__shapes" role="list">
+            @for (quick of quickTypes; track quick.type) {
+              <li>
+                <a
+                  class="empty-state__shape"
+                  routerLink="/create-event"
+                  [queryParams]="{ type: quick.type }"
+                >
+                  <span aria-hidden="true">{{ quick.emoji }}</span> {{ quick.label }}
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+
+    @default {
+      <header class="dashboard__header">
+        <p class="dashboard__eyebrow">{{ todayLabel }}</p>
+        <h1 class="dashboard__greeting">{{ greeting() }}</h1>
+      </header>
+
+      <div class="dashboard__section-header">
+        <div>
+          <h2 class="dashboard__section-title">Your upcoming moments</h2>
+          <span class="dashboard__section-underline" aria-hidden="true"></span>
+        </div>
+        <div class="dashboard__toolbar" role="tablist" aria-label="Filter occasions">
+          @for (tab of filterTabs; track tab.key) {
+            <button
+              type="button"
+              role="tab"
+              class="dashboard__tab"
+              [class.dashboard__tab--active]="activeFilter() === tab.key"
+              [attr.aria-selected]="activeFilter() === tab.key"
+              (click)="setFilter(tab.key)"
+            >
+              {{ tab.label }}
+              <span class="dashboard__tab-count">{{ countFor(tab.key) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (hasMore()) {
+        <p class="dashboard__more-note">
+          Showing the first {{ loadedCount() }} of {{ totalCount() }} occasions.
+        </p>
+      }
+
+      @if (visibleEvents().length === 0) {
+        <p class="dashboard__filter-empty" data-testid="dashboard-filter-empty">
+          @switch (activeFilter()) {
+            @case ('past') { No past occasions yet. }
+            @default { Nothing upcoming yet — start one below. }
+          }
+        </p>
+      }
+
+      <ul class="dashboard__grid" role="list">
+        @for (event of visibleEvents(); track event.id) {
+          <li
+            class="event-card"
+            [class.event-card--past]="!event.isUpcoming"
+            [style.--tint-badge-bg]="event.tint.badgeBg"
+            [style.--tint-badge-fg]="event.tint.badgeFg"
+            [style.--tint-accent]="event.tint.accent"
+            [style.--tint-glow]="event.tint.glow"
+            data-testid="event-card"
+          >
+            <div class="event-card__accent-bar" aria-hidden="true"></div>
+            <span class="event-card__glow" aria-hidden="true"></span>
+            <div class="event-card__body">
+              <div class="event-card__top">
+                <div class="event-card__top-left">
+                  <span class="event-card__type">
+                    <span aria-hidden="true">{{ event.emoji }}</span> {{ event.typeLabel }}
+                  </span>
+                  <span class="event-card__countdown event-card__countdown--{{ event.countdown.tone }}">
+                    {{ event.countdown.label }}
+                  </span>
+                </div>
+                <span class="event-card__menu" aria-hidden="true">···</span>
+              </div>
+              <h3 class="event-card__name">{{ event.name }}</h3>
+              <p class="event-card__when">
+                {{ event.whenLabel }}@if (event.venue) {<span class="event-card__venue"> · {{ event.venue }}</span>}
+              </p>
+              @if (event.description) {
+                <p class="event-card__desc">{{ event.description }}</p>
+              }
+              <div class="event-card__footer">
+                <a class="event-card__open" [routerLink]="['/events', event.id]">
+                  Open event <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </div>
+          </li>
+        }
+
+        <li class="event-card event-card--new">
+          <a class="event-card__new-link" routerLink="/create-event">
+            <span class="event-card__new-plus" aria-hidden="true">+</span>
+            <span class="event-card__new-title">Begin another occasion</span>
+            <span class="event-card__new-sub">
+              Birthday, wedding, launch &mdash; anything worth gathering for
+            </span>
+          </a>
+        </li>
+      </ul>
+    }
+  }
+</section>

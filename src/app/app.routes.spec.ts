@@ -24,6 +24,18 @@ describe('app routes', () => {
     expect(location.path()).toBe('/dashboard');
   });
 
+  it('resolves /create-event to the create-event page', async () => {
+    const router = TestBed.inject(Router);
+    const location = TestBed.inject(Location);
+    await router.navigate(['/create-event']);
+    expect(location.path()).toBe('/create-event');
+  });
+
+  it('guards /create-event with a canDeactivate guard', () => {
+    const route = routes.find((r) => r.path === 'create-event');
+    expect(route?.canDeactivate?.length).toBe(1);
+  });
+
   it('declares an /auth/callback route before the wildcard', () => {
     const callbackIndex = routes.findIndex((r) => r.path === 'auth/callback');
     const wildcardIndex = routes.findIndex((r) => r.path === '**');
