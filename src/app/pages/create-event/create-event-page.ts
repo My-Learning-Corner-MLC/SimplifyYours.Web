@@ -65,32 +65,53 @@ function trimmedMinLength(min: number) {
   };
 }
 
-function futureEventTime(group: AbstractControl): ValidationErrors | null {
+function parseDateOnly(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+  const [, year, month, day] = match;
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
+function toMinutesOfDay(value: string): number | null {
+  const match = /^(\d{2}):(\d{2})/.exec(value);
+  if (!match) {
+    return null;
+  }
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+// The event date is required and date-only; "future" is a calendar-day
+// comparison against today, independent of the (optional) time-of-day.
+function futureEventDate(group: AbstractControl): ValidationErrors | null {
   const date = (group.get('eventDate')?.value ?? '').toString();
-  const time = (group.get('startTime')?.value ?? '').toString();
   if (!date) {
     return null;
   }
-  const combined = new Date(`${date}T${time || '00:00'}`);
-  if (Number.isNaN(combined.getTime())) {
-    return { invalidEventTime: true };
+  const eventDate = parseDateOnly(date);
+  if (!eventDate) {
+    return { invalidEventDate: true };
   }
-  return combined.getTime() >= Date.now() ? null : { pastEventTime: true };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return eventDate.getTime() >= today.getTime() ? null : { pastEventDate: true };
 }
 
+// Start/end are time-of-day only (no date component), so this is a pure
+// minutes-of-day comparison.
 function endAfterStart(group: AbstractControl): ValidationErrors | null {
-  const date = (group.get('eventDate')?.value ?? '').toString();
   const start = (group.get('startTime')?.value ?? '').toString();
   const end = (group.get('endTime')?.value ?? '').toString();
-  if (!date || !end) {
+  if (!end) {
     return null;
   }
-  const startDate = new Date(`${date}T${start || '00:00'}`);
-  const endDate = new Date(`${date}T${end}`);
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+  const startMinutes = toMinutesOfDay(start || '00:00');
+  const endMinutes = toMinutesOfDay(end);
+  if (startMinutes === null || endMinutes === null) {
     return null;
   }
-  return endDate.getTime() >= startDate.getTime() ? null : { endBeforeStart: true };
+  return endMinutes >= startMinutes ? null : { endBeforeStart: true };
 }
 
 function supportedTimeZones(): readonly string[] {
@@ -136,7 +157,7 @@ export class CreateEventPage {
         notes: ['', [Validators.maxLength(2000)]],
       }),
     },
-    { validators: [futureEventTime, endAfterStart] },
+    { validators: [futureEventDate, endAfterStart] },
   );
 
   readonly step = signal<1 | 2>(1);
@@ -158,7 +179,12 @@ export class CreateEventPage {
       name: created.eventName,
       typeEmoji: EVENT_TYPE_EMOJI[created.eventType as EventType] ?? '🎉',
       typeLabel: EVENT_TYPE_LABELS[created.eventType as EventType] ?? created.eventType,
-      when: this.formatEventWindow(created.eventTime, created.eventEndTime, created.timeZoneId),
+      when: this.formatEventWindow(
+        created.eventDate,
+        created.eventStartTime,
+        created.eventEndTime,
+        created.timeZoneId,
+      ),
     };
   });
 
@@ -199,8 +225,8 @@ export class CreateEventPage {
     const controlsValid = STEP_1_CONTROLS.every((name) => !this.form.get(name)?.invalid);
     return (
       controlsValid &&
-      !this.form.hasError('pastEventTime') &&
-      !this.form.hasError('invalidEventTime') &&
+      !this.form.hasError('pastEventDate') &&
+      !this.form.hasError('invalidEventDate') &&
       !this.form.hasError('endBeforeStart')
     );
   }
@@ -215,8 +241,8 @@ export class CreateEventPage {
 
   shouldShowTimeError(): boolean {
     const hasError =
-      this.form.hasError('pastEventTime') ||
-      this.form.hasError('invalidEventTime') ||
+      this.form.hasError('pastEventDate') ||
+      this.form.hasError('invalidEventDate') ||
       this.form.hasError('endBeforeStart');
     return hasError && (this.stepAttempted() || this.submitted() || !!this.form.get('eventDate')?.touched);
   }
@@ -225,7 +251,7 @@ export class CreateEventPage {
     if (this.form.hasError('endBeforeStart')) {
       return 'The end time needs to be after the start time.';
     }
-    return 'The occasion needs to start now or in the future.';
+    return 'The occasion needs to be today or in the future.';
   }
 
   hasBackendError(path: string): boolean {
@@ -350,17 +376,14 @@ export class CreateEventPage {
       eventType: raw.eventType,
     };
 
-    const eventTime = this.toIso(raw.eventDate, raw.startTime, '00:00');
-    if (eventTime !== null) {
-      request.eventTime = eventTime;
+    if (raw.eventDate) {
+      request.eventDate = raw.eventDate;
     }
-    const eventStartTime = raw.startTime ? this.toIso(raw.eventDate, raw.startTime, null) : null;
-    if (eventStartTime !== null) {
-      request.eventStartTime = eventStartTime;
+    if (raw.startTime) {
+      request.eventStartTime = raw.startTime;
     }
-    const eventEndTime = raw.endTime ? this.toIso(raw.eventDate, raw.endTime, null) : null;
-    if (eventEndTime !== null) {
-      request.eventEndTime = eventEndTime;
+    if (raw.endTime) {
+      request.eventEndTime = raw.endTime;
     }
     const description = raw.eventDescription.trim();
     if (description.length > 0) {
@@ -387,53 +410,52 @@ export class CreateEventPage {
     return request;
   }
 
-  private toIso(date: string, time: string, fallbackTime: string | null): string | null {
-    if (!date) {
-      return null;
-    }
-    const resolvedTime = time || fallbackTime;
-    if (resolvedTime === null) {
-      return null;
-    }
-    const combined = new Date(`${date}T${resolvedTime}`);
-    return Number.isNaN(combined.getTime()) ? null : combined.toISOString();
-  }
-
+  // Start/end are wall-clock time-of-day only (no timezone conversion applies
+  // to a bare clock reading) — timeZoneId is shown as a label, not used to
+  // shift the displayed time.
   private formatEventWindow(
-    eventTime: string,
-    eventEndTime: string | null,
+    eventDate: string,
+    startTimeOfDay: string | null,
+    endTimeOfDay: string | null,
     timeZoneId: string | null,
   ): string {
-    const start = new Date(eventTime);
-    if (Number.isNaN(start.getTime())) {
-      return eventTime;
+    const date = parseDateOnly(eventDate);
+    if (!date) {
+      return eventDate;
     }
-    const zone = timeZoneId ?? undefined;
-    try {
-      const day = new Intl.DateTimeFormat(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        timeZone: zone,
-      }).format(start);
-      const startTime = new Intl.DateTimeFormat(undefined, {
-        hour: 'numeric',
-        minute: '2-digit',
-        timeZone: zone,
-      }).format(start);
-      const end = eventEndTime ? new Date(eventEndTime) : null;
-      if (end && !Number.isNaN(end.getTime())) {
-        const endTime = new Intl.DateTimeFormat(undefined, {
-          hour: 'numeric',
-          minute: '2-digit',
-          timeZone: zone,
-        }).format(end);
-        return `${day} · ${startTime} – ${endTime}`;
-      }
-      return `${day} · ${startTime}`;
-    } catch {
-      return start.toLocaleString();
+    const day = new Intl.DateTimeFormat(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    }).format(date);
+
+    const start = this.parseTimeOfDay(startTimeOfDay);
+    const zoneSuffix = timeZoneId ? ` (${timeZoneId})` : '';
+    if (!start) {
+      return `${day}${zoneSuffix}`;
     }
+    const end = this.parseTimeOfDay(endTimeOfDay);
+    const timeLabel = end
+      ? `${this.formatTimeOfDay(start)} – ${this.formatTimeOfDay(end)}`
+      : this.formatTimeOfDay(start);
+    return `${day} · ${timeLabel}${zoneSuffix}`;
+  }
+
+  private parseTimeOfDay(value: string | null): { hour: number; minute: number } | null {
+    if (!value) {
+      return null;
+    }
+    const match = /^(\d{2}):(\d{2})/.exec(value);
+    if (!match) {
+      return null;
+    }
+    return { hour: Number(match[1]), minute: Number(match[2]) };
+  }
+
+  private formatTimeOfDay(time: { hour: number; minute: number }): string {
+    return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(
+      new Date(2000, 0, 1, time.hour, time.minute),
+    );
   }
 
   private applyBackendError(error: CreateEventError): void {
@@ -467,8 +489,8 @@ export class CreateEventPage {
 
   private focusFirstInvalid(paths: string[]): void {
     if (
-      this.form.hasError('pastEventTime') ||
-      this.form.hasError('invalidEventTime') ||
+      this.form.hasError('pastEventDate') ||
+      this.form.hasError('invalidEventDate') ||
       this.form.hasError('endBeforeStart')
     ) {
       if (!this.form.get('eventName')?.invalid && !this.form.get('eventType')?.invalid) {

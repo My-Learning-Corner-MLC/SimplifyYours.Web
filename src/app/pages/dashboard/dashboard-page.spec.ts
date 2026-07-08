@@ -10,13 +10,19 @@ import { EventSummary } from '../../core/events/event-summary.model';
 import { QueryEventsResponse } from '../../core/events/query-events-response.model';
 import { DashboardPage } from './dashboard-page';
 
-const daysFromNow = (days: number): string =>
-  new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+const daysFromNow = (days: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const makeEvent = (overrides: Partial<EventSummary> = {}): EventSummary => ({
   id: crypto.randomUUID(),
   eventName: 'Mateo turns five',
-  eventTime: daysFromNow(10),
+  eventDate: daysFromNow(10),
   eventType: 'birthday',
   eventDescription: 'Backyard party',
   createdAt: daysFromNow(-20),
@@ -87,7 +93,7 @@ describe('DashboardPage', () => {
   it('renders the populated dashboard with a greeting and event cards', () => {
     const api = new ApiStub();
     api.queryEvents.mockReturnValue(
-      of(makeResponse([makeEvent({ eventName: 'Mateo turns five', eventTime: daysFromNow(10) })])),
+      of(makeResponse([makeEvent({ eventName: 'Mateo turns five', eventDate: daysFromNow(10) })])),
     );
     const fixture = setup(api, makeSession('Eleanor Whitmore'));
 
@@ -108,8 +114,8 @@ describe('DashboardPage', () => {
     api.queryEvents.mockReturnValue(
       of(
         makeResponse([
-          makeEvent({ eventName: 'Future gala', eventTime: daysFromNow(30) }),
-          makeEvent({ eventName: 'Old dinner', eventTime: daysFromNow(-30) }),
+          makeEvent({ eventName: 'Future gala', eventDate: daysFromNow(30) }),
+          makeEvent({ eventName: 'Old dinner', eventDate: daysFromNow(-30) }),
         ]),
       ),
     );
@@ -136,10 +142,10 @@ describe('DashboardPage', () => {
     api.queryEvents.mockReturnValue(
       of(
         makeResponse([
-          makeEvent({ eventName: 'Later', eventTime: daysFromNow(40) }),
-          makeEvent({ eventName: 'Sooner', eventTime: daysFromNow(5) }),
-          makeEvent({ eventName: 'Recent past', eventTime: daysFromNow(-2) }),
-          makeEvent({ eventName: 'Distant past', eventTime: daysFromNow(-40) }),
+          makeEvent({ eventName: 'Later', eventDate: daysFromNow(40) }),
+          makeEvent({ eventName: 'Sooner', eventDate: daysFromNow(5) }),
+          makeEvent({ eventName: 'Recent past', eventDate: daysFromNow(-2) }),
+          makeEvent({ eventName: 'Distant past', eventDate: daysFromNow(-40) }),
         ]),
       ),
     );
@@ -152,7 +158,7 @@ describe('DashboardPage', () => {
 
   it('shows an inline message when the active filter has no events', () => {
     const api = new ApiStub();
-    api.queryEvents.mockReturnValue(of(makeResponse([makeEvent({ eventTime: daysFromNow(-10) })])));
+    api.queryEvents.mockReturnValue(of(makeResponse([makeEvent({ eventDate: daysFromNow(-10) })])));
     const fixture = setup(api);
     // Only a past event exists; default Upcoming tab is empty but account is not.
     const host = fixture.nativeElement as HTMLElement;
@@ -177,9 +183,9 @@ describe('DashboardPage', () => {
         makeResponse([
           makeEvent({
             eventName: 'Garden party',
-            eventTime: daysFromNow(12),
-            eventStartTime: daysFromNow(12),
-            eventEndTime: new Date(Date.now() + 12 * 86400000 + 4 * 3600000).toISOString(),
+            eventDate: daysFromNow(12),
+            eventStartTime: '18:00',
+            eventEndTime: '22:00',
             location: { venueName: 'The Orchard House', address: null, notes: null },
           }),
         ]),

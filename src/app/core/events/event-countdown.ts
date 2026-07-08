@@ -14,19 +14,38 @@ function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
+/**
+ * Parses a "yyyy-MM-dd" date-only string as a local calendar date.
+ * `new Date(dateOnlyIso)` would parse it as UTC midnight, which can shift the
+ * displayed day backward for users behind UTC — this reads the components
+ * directly instead.
+ */
+function parseDateOnly(dateOnlyIso: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateOnlyIso);
+  if (!match) {
+    return null;
+  }
+  const [, year, month, day] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 /** Whole calendar days between two instants, event-day minus now-day. */
-export function dayOffset(eventTimeIso: string, now: Date): number {
-  const eventDay = startOfDay(new Date(eventTimeIso));
+export function dayOffset(eventDateIso: string, now: Date): number {
+  const eventDay = parseDateOnly(eventDateIso);
+  if (!eventDay) {
+    return 0;
+  }
   const today = startOfDay(now);
-  return Math.round((eventDay - today) / MS_PER_DAY);
+  return Math.round((eventDay.getTime() - today) / MS_PER_DAY);
 }
 
 /**
  * Describes how far away an event is, in the design's chip language:
  * `TODAY`, `T − N DAYS`/`T − N WEEKS` (future), `N DAYS/WEEKS AGO` (past).
  */
-export function describeCountdown(eventTimeIso: string, now: Date): Countdown {
-  const offset = dayOffset(eventTimeIso, now);
+export function describeCountdown(eventDateIso: string, now: Date): Countdown {
+  const offset = dayOffset(eventDateIso, now);
 
   if (offset === 0) {
     return { label: 'TODAY', tone: 'today', dayOffset: 0 };
@@ -61,39 +80,48 @@ const TIME_FORMAT = new Intl.DateTimeFormat('en-GB', {
   hour12: false,
 });
 
-function parse(iso: string | null | undefined): Date | null {
-  if (!iso) {
+/** Parses a "HH:mm" or "HH:mm:ss" time-of-day-only string (no date component). */
+function parseTimeOfDay(value: string | null | undefined): { hour: number; minute: number } | null {
+  if (!value) {
     return null;
   }
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const match = /^(\d{2}):(\d{2})/.exec(value);
+  if (!match) {
+    return null;
+  }
+  const [, hour, minute] = match;
+  return { hour: Number(hour), minute: Number(minute) };
+}
+
+function formatTimeOfDay(time: { hour: number; minute: number }): string {
+  return TIME_FORMAT.format(new Date(2000, 0, 1, time.hour, time.minute));
 }
 
 /**
  * Human date/time line for an event card, e.g. "Sat, 5 Jul 2026, 14:00 – 18:00".
- * Falls back to the single `eventTime` when start/end are absent.
+ * Falls back to the date alone when start/end are absent.
  */
 export function formatEventWhen(
-  eventTimeIso: string,
-  startIso: string | null = null,
-  endIso: string | null = null,
+  eventDateIso: string,
+  startTimeOfDay: string | null = null,
+  endTimeOfDay: string | null = null,
 ): string {
-  const dateSource = parse(startIso) ?? parse(eventTimeIso);
-  if (!dateSource) {
+  const eventDay = parseDateOnly(eventDateIso);
+  if (!eventDay) {
     return '';
   }
 
-  const datePart = DATE_FORMAT.format(dateSource);
-  const start = parse(startIso) ?? parse(eventTimeIso);
-  const end = parse(endIso);
+  const datePart = DATE_FORMAT.format(eventDay);
+  const start = parseTimeOfDay(startTimeOfDay);
+  const end = parseTimeOfDay(endTimeOfDay);
 
   if (!start) {
     return datePart;
   }
 
   const timePart = end
-    ? `${TIME_FORMAT.format(start)} – ${TIME_FORMAT.format(end)}`
-    : TIME_FORMAT.format(start);
+    ? `${formatTimeOfDay(start)} – ${formatTimeOfDay(end)}`
+    : formatTimeOfDay(start);
 
   return `${datePart}, ${timePart}`;
 }

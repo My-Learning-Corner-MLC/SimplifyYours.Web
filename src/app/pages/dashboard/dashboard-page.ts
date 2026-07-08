@@ -194,7 +194,7 @@ export class DashboardPage implements OnInit {
   }
 
   private toCard(event: EventSummary): EventCardVm {
-    const countdown = describeCountdown(event.eventTime, this.now);
+    const countdown = describeCountdown(event.eventDate, this.now);
     return {
       id: event.id,
       name: event.eventName,
@@ -202,7 +202,7 @@ export class DashboardPage implements OnInit {
       emoji: eventTypeEmoji(event.eventType),
       typeLabel: eventTypeLabel(event.eventType),
       tint: eventTypeTint(event.eventType),
-      whenLabel: formatEventWhen(event.eventTime, event.eventStartTime, event.eventEndTime),
+      whenLabel: formatEventWhen(event.eventDate, event.eventStartTime, event.eventEndTime),
       venue: this.resolveVenue(event),
       countdown,
       isUpcoming: countdown.dayOffset >= 0,

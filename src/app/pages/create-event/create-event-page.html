@@ -285,8 +285,8 @@
   <p class="ce-error" aria-live="polite">
     @if (shouldShowTimeError()) {
       {{ timeErrorMessage() }}
-    } @else if (hasBackendError('eventTime')) {
-      {{ backendErrorMessage('eventTime') }}
+    } @else if (hasBackendError('eventDate')) {
+      {{ backendErrorMessage('eventDate') }}
     } @else if (hasBackendError('eventEndTime')) {
       {{ backendErrorMessage('eventEndTime') }}
     }

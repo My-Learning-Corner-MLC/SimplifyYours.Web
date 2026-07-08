@@ -45,8 +45,8 @@ describe('describeCountdown', () => {
 });
 
 describe('formatEventWhen', () => {
-  it('formats a valid ISO timestamp into a readable line', () => {
-    const label = formatEventWhen('2026-07-05T14:00:00');
+  it('formats a date-only value into a readable line', () => {
+    const label = formatEventWhen('2026-07-05');
     expect(label).toMatch(/2026/);
     expect(label).toMatch(/Jul/);
   });
@@ -56,16 +56,18 @@ describe('formatEventWhen', () => {
   });
 
   it('renders a start–end time range when both are provided', () => {
-    const label = formatEventWhen(
-      '2026-07-05T14:00:00Z',
-      '2026-07-05T14:00:00Z',
-      '2026-07-05T18:00:00Z',
-    );
+    const label = formatEventWhen('2026-07-05', '14:00', '18:00');
     expect(label).toContain('–');
   });
 
   it('falls back to the single event time when there is no end time', () => {
-    const label = formatEventWhen('2026-07-05T14:00:00Z', '2026-07-05T14:00:00Z', null);
+    const label = formatEventWhen('2026-07-05', '14:00', null);
+    expect(label).not.toContain('–');
+    expect(label).toMatch(/2026/);
+  });
+
+  it('falls back to the date alone when there is no start time', () => {
+    const label = formatEventWhen('2026-07-05', null, null);
     expect(label).not.toContain('–');
     expect(label).toMatch(/2026/);
   });

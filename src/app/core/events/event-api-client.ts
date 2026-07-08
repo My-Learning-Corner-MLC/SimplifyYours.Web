@@ -19,7 +19,7 @@ const QUERY_EVENTS_AUTH_ERROR =
 
 const ALLOWED_FIELD_KEYS = new Set([
   'eventName',
-  'eventTime',
+  'eventDate',
   'eventStartTime',
   'eventEndTime',
   'eventType',
