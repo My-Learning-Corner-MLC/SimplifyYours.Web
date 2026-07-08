@@ -266,7 +266,7 @@ describe('SiteHeader', () => {
     it('should render the four signed-in nav links in design order with Dashboard active', async () => {
       const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
       const router = TestBed.inject(Router);
-      await router.navigateByUrl('/my-occasions');
+      await router.navigateByUrl('/dashboard');
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
