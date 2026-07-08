@@ -2,7 +2,7 @@ import { EventLocation } from './event-location.model';
 
 export interface CreateEventRequest {
   eventName: string;
-  eventTime?: string | null;
+  eventDate?: string | null;
   eventStartTime?: string | null;
   eventEndTime?: string | null;
   eventType: string;

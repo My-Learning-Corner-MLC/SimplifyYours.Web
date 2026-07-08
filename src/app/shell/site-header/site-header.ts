@@ -39,7 +39,7 @@ export class SiteHeader {
   ];
 
   readonly signedInNavLinks: NavLink[] = [
-    { label: 'My occasions', path: '/my-occasions' },
+    { label: 'Dashboard', path: '/dashboard' },
     { label: 'Guests', path: '/guests' },
     { label: 'Themes', path: '/themes' },
     { label: 'Vendors', path: '/vendors' },

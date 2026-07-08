@@ -1,0 +1,656 @@
+// Occasion theme tokens (see design spec "SimplifyYours Occasion").
+$plum: #5a2849;
+$plum-hover: #4a1f3b;
+$plum-ink: #2a1f2d;
+$champagne: #c8a876;
+$coral: #e07b5a;
+$rust: #b05540;
+$amber: #c28840;
+$olive: #7a8f5a;
+$parchment: #f5efe6;
+$linen: #fffcf5;
+$muted: #7a6b6e;
+$body-text: #4a4045;
+$hairline: #ece2d2;
+
+$resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
+$hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
+
+// The dashboard is a full-screen parchment panel (design "Dashboard · 1440"):
+// the host fills the flex height of <main> and paints the parchment edge-to-edge.
+// Content fills the full width (no centred column) and is left-aligned with a
+// generous left gutter, matching the mockup's left-hugging hero + card sections.
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: $parchment;
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  padding: 40px 64px 64px;
+  color: $plum-ink;
+
+  // ---- Header ---------------------------------------------------------
+  &__header {
+    margin-bottom: 32px;
+  }
+
+  &__eyebrow {
+    margin: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  &__greeting {
+    margin: 6px 0 0;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: $plum-ink;
+  }
+
+  // ---- Section header (title + tabs) -----------------------------------
+  &__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  &__section-title {
+    margin: 0;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 30px;
+    color: $plum-ink;
+  }
+
+  &__section-underline {
+    display: block;
+    width: 64px;
+    height: 1px;
+    background: $champagne;
+    margin-top: 8px;
+  }
+
+  // ---- Tabs -----------------------------------------------------------
+  &__toolbar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  &__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    // Transparent border reserved so the hover border adds no layout shift.
+    border: 1px solid transparent;
+    border-radius: 99px;
+    background: $linen;
+    color: $body-text;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background 180ms ease-out,
+      color 180ms ease-out,
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out,
+      transform 180ms ease-out;
+
+    // Inactive hover: warm champagne wash + a gentle lift, so it reads as
+    // "pressable" without borrowing the plum fill reserved for the active tab.
+    &:hover {
+      color: $plum-ink;
+      background: rgba(200, 168, 118, 0.16);
+      border-color: rgba(200, 168, 118, 0.55);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(90, 40, 73, 0.08);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    &--active {
+      background: $plum;
+      color: $linen;
+      border-color: $plum;
+
+      // Active hover deepens the plum rather than lightening — reinforces the
+      // selected state instead of competing with the inactive hover wash.
+      &:hover {
+        color: $linen;
+        background: $plum-hover;
+        border-color: $plum-hover;
+      }
+    }
+  }
+
+  &__tab-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    opacity: 0.85;
+  }
+
+  &__more-note {
+    margin: -8px 0 16px;
+    font-size: 12px;
+    color: $muted;
+  }
+
+  // Quiet caption above the lone "Begin another occasion" card — a light
+  // inline note, not a full-width dashed box competing with that card.
+  &__filter-empty {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: $muted;
+
+    &::before {
+      content: '';
+      width: 18px;
+      height: 1px;
+      background: $champagne;
+    }
+  }
+
+  // ---- Grid -----------------------------------------------------------
+  &__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  // ---- Loading --------------------------------------------------------
+  &__loading {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding-top: 40px;
+  }
+
+  &__skeleton {
+    height: 200px;
+    border-radius: 14px;
+    background: linear-gradient(100deg, $linen 30%, $parchment 50%, $linen 70%);
+    background-size: 200% 100%;
+    animation: dashboard-shimmer 1.4s ease-in-out infinite;
+  }
+
+  // ---- Error ----------------------------------------------------------
+  &__error {
+    max-width: 460px;
+    margin: 64px auto;
+    text-align: center;
+    padding: 32px;
+    background: $linen;
+    border-radius: 14px;
+    box-shadow: $resting-shadow;
+  }
+
+  &__error-glyph {
+    font-size: 28px;
+  }
+
+  &__error-title {
+    margin: 12px 0 20px;
+    font-size: 15px;
+    color: $body-text;
+  }
+
+  &__retry {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 99px;
+    background: $plum;
+    color: $linen;
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: $plum-hover;
+    }
+  }
+}
+
+// ---- Event card -------------------------------------------------------
+.event-card {
+  --tint-badge-bg: #f6efe0;
+  --tint-badge-fg: #8a6b2f;
+  --tint-accent: #{$champagne};
+  --tint-glow: rgba(200, 168, 118, 0.14);
+
+  position: relative;
+  background: $linen;
+  border: 1px solid $hairline;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $hover-shadow;
+    border-color: $champagne;
+  }
+
+  &--past {
+    opacity: 0.82;
+  }
+
+  &__accent-bar {
+    height: 5px;
+    background: linear-gradient(90deg, $champagne 0%, var(--tint-accent) 65%, $plum 100%);
+  }
+
+  &__glow {
+    position: absolute;
+    right: -50px;
+    top: -30px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--tint-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  &__body {
+    position: relative;
+    padding: 22px 26px 20px;
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__top-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__type {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 11px;
+    border-radius: 99px;
+    background: var(--tint-badge-bg);
+    color: var(--tint-badge-fg);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__countdown {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    color: $plum;
+
+    &--today {
+      color: #b8532f;
+    }
+
+    &--past {
+      color: $muted;
+      font-weight: 500;
+    }
+  }
+
+  &__menu {
+    color: $muted;
+    font-size: 18px;
+    line-height: 0;
+  }
+
+  &__name {
+    margin: 10px 0 0;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.15;
+    color: $plum-ink;
+  }
+
+  &__when {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    color: $muted;
+    line-height: 1.45;
+  }
+
+  &__venue {
+    color: $plum-ink;
+    font-weight: 500;
+  }
+
+  &__desc {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $body-text;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid $hairline;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  &__open {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: $plum;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+    }
+  }
+
+  // "Begin another occasion" — dashed placeholder card
+  &--new {
+    background: transparent;
+    border: 1.5px dashed #d6c8b0;
+    min-height: 222px;
+
+    &:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: $plum;
+    }
+  }
+
+  &__new-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 100%;
+    padding: 36px 30px;
+    text-align: center;
+    text-decoration: none;
+    transition: background 180ms ease-out;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(255, 252, 245, 0.6);
+    }
+  }
+
+  &__new-plus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: $linen;
+    border: 1px solid $hairline;
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px;
+    line-height: 1;
+    color: $plum;
+  }
+
+  &__new-title {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: $plum-ink;
+  }
+
+  &__new-sub {
+    font-size: 12.5px;
+    color: $muted;
+  }
+}
+
+// ---- Empty state ------------------------------------------------------
+.empty-state {
+  // Full-bleed panel: cancel .dashboard's padding (40/64/64) with negative
+  // margins so the decorative glow orbs reach the screen edges like the design
+  // ("Dashboard · Empty state"); its own 64px padding keeps the hero content
+  // inset to the same left gutter as the populated dashboard.
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: -40px -64px -64px;
+  padding: 96px 64px;
+  overflow: hidden;
+
+  &__glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+
+    &--top-left {
+      left: -80px;
+      top: -40px;
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, rgba(200, 168, 118, 0.28) 0%, transparent 70%);
+    }
+
+    &--mid-right {
+      right: 40px;
+      top: 80px;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(224, 123, 90, 0.2) 0%, transparent 70%);
+    }
+
+    &--bottom-right {
+      right: -80px;
+      bottom: -80px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(90, 40, 73, 0.1) 0%, transparent 70%);
+    }
+  }
+
+  &__dot {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+
+    &--1 {
+      left: 12%;
+      top: 18%;
+      width: 8px;
+      height: 8px;
+      background: $champagne;
+    }
+
+    &--2 {
+      left: 22%;
+      top: 30%;
+      width: 5px;
+      height: 5px;
+      background: $coral;
+    }
+
+    &--3 {
+      right: 18%;
+      bottom: 28%;
+      width: 6px;
+      height: 6px;
+      background: $olive;
+    }
+
+    &--4 {
+      right: 10%;
+      top: 22%;
+      width: 7px;
+      height: 7px;
+      background: $coral;
+    }
+  }
+
+  &__content {
+    position: relative;
+    max-width: 640px;
+  }
+
+  &__eyebrow {
+    margin: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: $plum;
+    font-weight: 600;
+  }
+
+  &__headline {
+    margin: 14px 0 0;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: clamp(40px, 7vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: $plum-ink;
+  }
+
+  &__headline-italic {
+    font-style: italic;
+    color: $plum;
+  }
+
+  &__lede {
+    margin: 20px 0 0;
+    max-width: 520px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: $body-text;
+  }
+
+  &__cta {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 14px 28px;
+    border-radius: 10px;
+    background: $plum;
+    color: $linen;
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(90, 40, 73, 0.18);
+    transition: background 180ms ease-out, transform 180ms ease-out;
+
+    &:hover,
+    &:focus-visible {
+      background: $plum-hover;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__shapes-label {
+    margin: 40px 0 0;
+    font-size: 11.5px;
+    color: $muted;
+    letter-spacing: 0.04em;
+  }
+
+  &__shapes {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__shape {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid $hairline;
+    border-radius: 99px;
+    background: $linen;
+    color: $plum-ink;
+    font-size: 12.5px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: border-color 180ms ease-out;
+
+    &:hover,
+    &:focus-visible {
+      border-color: $champagne;
+    }
+  }
+}
+
+@keyframes dashboard-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 28px 20px 48px;
+  }
+
+  .dashboard__grid,
+  .dashboard__loading {
+    grid-template-columns: 1fr;
+  }
+
+  .empty-state {
+    margin: -28px -20px -48px;
+    padding: 56px 20px;
+  }
+}

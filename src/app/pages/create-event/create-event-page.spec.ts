@@ -29,7 +29,7 @@ describe('CreateEventPage', () => {
   const createdResponse = (): CreateEventResponse => ({
     id: 'e1',
     eventName: 'Mateo turns five',
-    eventTime: '2026-08-17T14:00:00+00:00',
+    eventDate: '2026-08-17',
     eventType: 'birthday',
     eventDescription: null,
     eventStartTime: null,
@@ -90,7 +90,7 @@ describe('CreateEventPage', () => {
       expect(fixture.nativeElement.textContent).toContain('at least 3 characters');
     });
 
-    it('blocks Next when the event time is in the past', () => {
+    it('blocks Next when the event date is in the past', () => {
       fillStepOne();
       component.form.get('eventDate')?.setValue('2020-01-01');
       component.nextStep();
@@ -169,9 +169,9 @@ describe('CreateEventPage', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body.eventName).toBe('Mateo turns five');
       expect(req.request.body.eventType).toBe('birthday');
-      expect(req.request.body.eventTime).toBe(new Date(`${date}T14:00`).toISOString());
-      expect(req.request.body.eventStartTime).toBe(new Date(`${date}T14:00`).toISOString());
-      expect(req.request.body.eventEndTime).toBe(new Date(`${date}T18:00`).toISOString());
+      expect(req.request.body.eventDate).toBe(date);
+      expect(req.request.body.eventStartTime).toBe('14:00');
+      expect(req.request.body.eventEndTime).toBe('18:00');
       expect(req.request.body.eventDescription).toBe('Backyard party');
       expect(req.request.body.timeZoneId).toBe('America/Los_Angeles');
       expect(req.request.body.location).toEqual({
