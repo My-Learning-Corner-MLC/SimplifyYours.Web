@@ -60,11 +60,8 @@
 
     @default {
       <header class="dashboard__header">
-        <div>
-          <p class="dashboard__eyebrow">{{ todayLabel }}</p>
-          <h1 class="dashboard__greeting">{{ greeting() }}</h1>
-        </div>
-        <a class="dashboard__new-cta" routerLink="/create-event">+ New occasion</a>
+        <p class="dashboard__eyebrow">{{ todayLabel }}</p>
+        <h1 class="dashboard__greeting">{{ greeting() }}</h1>
       </header>
 
       <div class="dashboard__section-header">
@@ -98,8 +95,8 @@
       @if (visibleEvents().length === 0) {
         <p class="dashboard__filter-empty" data-testid="dashboard-filter-empty">
           @switch (activeFilter()) {
-            @case ('past') { Nothing in the past yet. }
-            @default { Nothing upcoming yet — time to plan something. }
+            @case ('past') { No past occasions yet. }
+            @default { Nothing upcoming yet — start one below. }
           }
         </p>
       }

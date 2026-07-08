@@ -96,8 +96,11 @@ describe('DashboardPage', () => {
     expect(heading?.textContent).toContain('Eleanor');
     expect(host.querySelectorAll('[data-testid="event-card"]').length).toBe(1);
     expect(host.textContent).toContain('Mateo turns five');
-    const newCta = host.querySelector('.dashboard__new-cta') as HTMLAnchorElement | null;
-    expect(newCta?.getAttribute('href')).toBe('/create-event');
+    // The header no longer carries a redundant "+ New occasion" CTA — the
+    // trailing "Begin another occasion" card is the single create affordance.
+    expect(host.querySelector('.dashboard__new-cta')).toBeNull();
+    const beginAnother = host.querySelector('.event-card__new-link') as HTMLAnchorElement | null;
+    expect(beginAnother?.getAttribute('href')).toBe('/create-event');
   });
 
   it('defaults to the Upcoming filter and hides past events until Past is selected', () => {

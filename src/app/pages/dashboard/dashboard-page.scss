@@ -17,8 +17,9 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
 $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
 
 // The dashboard is a full-screen parchment panel (design "Dashboard · 1440"):
-// the host fills the flex height of <main> and paints the parchment edge-to-edge,
-// while the content column is centred at the 1440 design width.
+// the host fills the flex height of <main> and paints the parchment edge-to-edge.
+// Content fills the full width (no centred column) and is left-aligned with a
+// generous left gutter, matching the mockup's left-hugging hero + card sections.
 :host {
   display: flex;
   flex-direction: column;
@@ -31,18 +32,11 @@ $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
   flex-direction: column;
   flex: 1;
   width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 40px 56px 64px;
+  padding: 40px 64px 64px;
   color: $plum-ink;
 
   // ---- Header ---------------------------------------------------------
   &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 24px;
-    flex-wrap: wrap;
     margin-bottom: 32px;
   }
 
@@ -63,24 +57,6 @@ $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
     line-height: 1.1;
     letter-spacing: -0.01em;
     color: $plum-ink;
-  }
-
-  &__new-cta {
-    display: inline-flex;
-    align-items: center;
-    padding: 10px 18px;
-    border-radius: 8px;
-    background: $plum;
-    color: $linen;
-    font-weight: 500;
-    font-size: 13px;
-    text-decoration: none;
-    transition: background 180ms ease-out;
-
-    &:hover,
-    &:focus-visible {
-      background: $plum-hover;
-    }
   }
 
   // ---- Section header (title + tabs) -----------------------------------
@@ -121,7 +97,8 @@ $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
     align-items: center;
     gap: 6px;
     padding: 7px 14px;
-    border: none;
+    // Transparent border reserved so the hover border adds no layout shift.
+    border: 1px solid transparent;
     border-radius: 99px;
     background: $linen;
     color: $body-text;
@@ -129,16 +106,45 @@ $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 180ms ease-out, color 180ms ease-out;
+    transition:
+      background 180ms ease-out,
+      color 180ms ease-out,
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out,
+      transform 180ms ease-out;
 
-    &:hover,
-    &:focus-visible {
+    // Inactive hover: warm champagne wash + a gentle lift, so it reads as
+    // "pressable" without borrowing the plum fill reserved for the active tab.
+    &:hover {
       color: $plum-ink;
+      background: rgba(200, 168, 118, 0.16);
+      border-color: rgba(200, 168, 118, 0.55);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(90, 40, 73, 0.08);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: none;
     }
 
     &--active {
       background: $plum;
       color: $linen;
+      border-color: $plum;
+
+      // Active hover deepens the plum rather than lightening — reinforces the
+      // selected state instead of competing with the inactive hover wash.
+      &:hover {
+        color: $linen;
+        background: $plum-hover;
+        border-color: $plum-hover;
+      }
     }
   }
 
@@ -154,14 +160,22 @@ $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
     color: $muted;
   }
 
+  // Quiet caption above the lone "Begin another occasion" card — a light
+  // inline note, not a full-width dashed box competing with that card.
   &__filter-empty {
-    margin: 0 0 20px;
-    padding: 20px 22px;
-    border: 1px dashed $champagne;
-    border-radius: 12px;
-    background: rgba(200, 168, 118, 0.08);
-    color: $body-text;
-    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: $muted;
+
+    &::before {
+      content: '';
+      width: 18px;
+      height: 1px;
+      background: $champagne;
+    }
   }
 
   // ---- Grid -----------------------------------------------------------
@@ -440,12 +454,17 @@ $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
 
 // ---- Empty state ------------------------------------------------------
 .empty-state {
+  // Full-bleed panel: cancel .dashboard's padding (40/64/64) with negative
+  // margins so the decorative glow orbs reach the screen edges like the design
+  // ("Dashboard · Empty state"); its own 64px padding keeps the hero content
+  // inset to the same left gutter as the populated dashboard.
   position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 56px 0;
+  margin: -40px -64px -64px;
+  padding: 96px 64px;
   overflow: hidden;
 
   &__glow {
@@ -631,6 +650,7 @@ $hover-shadow: 0 8px 24px rgba(90, 40, 73, 0.1);
   }
 
   .empty-state {
-    padding: 40px 0;
+    margin: -28px -20px -48px;
+    padding: 56px 20px;
   }
 }
