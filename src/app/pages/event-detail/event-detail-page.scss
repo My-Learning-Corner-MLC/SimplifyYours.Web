@@ -630,6 +630,40 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     flex-wrap: wrap;
   }
 
+  // Guests-tab loading / error / empty states (inside the tab, below the toolbar).
+  &__guests-status {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  &__guests-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 56px 24px;
+    background: $linen;
+    border: 1px dashed $hairline;
+    border-radius: 12px;
+  }
+
+  &__guests-empty-title {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 22px;
+    color: $plum-ink;
+  }
+
+  &__guests-empty-text {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: $body-text;
+    max-width: 380px;
+    margin: 0;
+  }
+
   &__search {
     position: relative;
     display: inline-flex;
