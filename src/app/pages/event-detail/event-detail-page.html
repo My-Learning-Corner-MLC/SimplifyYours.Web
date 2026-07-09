@@ -34,14 +34,21 @@
           [style.--tint-badge-bg]="vm.tint.badgeBg"
           [style.--tint-badge-fg]="vm.tint.badgeFg"
         >
-          <!-- Action bar -->
+          <!-- Action bar: breadcrumb + page actions -->
           <div class="detail__actionbar">
-            <button type="button" class="detail__action detail__action--ghost" data-testid="event-detail-share">
-              Share invite
-            </button>
-            <button type="button" class="detail__action detail__action--primary" data-testid="event-detail-edit">
-              Edit event
-            </button>
+            <nav class="detail__eyebrow" aria-label="Breadcrumb">
+              <a routerLink="/dashboard">Events</a>
+              <span aria-hidden="true">›</span>
+              <span class="detail__eyebrow-current">{{ vm.name }}</span>
+            </nav>
+            <div class="detail__actions">
+              <button type="button" class="detail__action detail__action--ghost" data-testid="event-detail-share">
+                Share invite
+              </button>
+              <button type="button" class="detail__action detail__action--primary" data-testid="event-detail-edit">
+                Edit event
+              </button>
+            </div>
           </div>
 
           <!-- Hero -->
@@ -49,11 +56,6 @@
             <span class="detail__hero-glow detail__hero-glow--coral" aria-hidden="true"></span>
             <span class="detail__hero-glow detail__hero-glow--champagne" aria-hidden="true"></span>
             <div class="detail__hero-inner">
-              <nav class="detail__eyebrow" aria-label="Breadcrumb">
-                <a routerLink="/dashboard">Events</a>
-                <span aria-hidden="true">·</span>
-                <span class="detail__eyebrow-current">{{ vm.name }}</span>
-              </nav>
               <div class="detail__hero-meta">
                 <span class="detail__badge">{{ vm.typeLabel }}</span>
                 <span class="detail__when">{{ vm.dateLine }}</span>
@@ -116,7 +118,6 @@
                   </div>
 
                   <aside class="detail__aside">
-                    <!-- RSVP donut -->
                     <div class="detail__rsvp-card">
                       <span class="detail__rsvp-glow" aria-hidden="true"></span>
                       <div class="detail__rsvp-inner">
@@ -137,7 +138,6 @@
                       </div>
                     </div>
 
-                    <!-- The details -->
                     <div class="detail__facts-card">
                       <span class="detail__facts-eyebrow">The details</span>
                       <dl class="detail__facts">
@@ -161,7 +161,6 @@
                       </dl>
                     </div>
 
-                    <!-- Budget -->
                     <div class="detail__budget-card">
                       <div class="detail__budget-head">
                         <span class="detail__budget-eyebrow">Budget</span>
@@ -180,39 +179,74 @@
               }
 
               @case ('guests') {
-                <div class="detail__empty" data-testid="event-detail-guests" role="tabpanel">
-                  <span class="detail__empty-glyph" aria-hidden="true">✉️</span>
-                  <h2 class="detail__empty-title">Your guest list lives here.</h2>
-                  <p class="detail__empty-lede">
-                    Add the people you&rsquo;re inviting and track who&rsquo;s coming — names, emails,
-                    and RSVPs, all under this event.
-                  </p>
-                  <button type="button" class="detail__empty-cta">+ Add guest</button>
+                <div class="detail__guests" data-testid="event-detail-guests" role="tabpanel">
+                  <div class="detail__guests-toolbar">
+                    <div class="detail__chips" role="list" aria-label="Filter guests by status">
+                      @for (filter of guestFilters; track filter.label) {
+                        <span class="detail__chip" [class.detail__chip--active]="filter.label === 'All'" role="listitem">
+                          {{ filter.label }} · {{ filter.count }}
+                        </span>
+                      }
+                    </div>
+                    <div class="detail__guests-tools">
+                      <span class="detail__search">
+                        <span class="detail__search-icon" aria-hidden="true">⌕</span>
+                        <input type="search" placeholder="Find a guest…" aria-label="Find a guest" />
+                      </span>
+                      <button type="button" class="detail__tool-btn">Import CSV</button>
+                      <button type="button" class="detail__tool-btn detail__tool-btn--primary">+ Add guest</button>
+                    </div>
+                  </div>
+
+                  <div class="detail__table" role="table" aria-label="Guest list">
+                    <div class="detail__table-head" role="row">
+                      <span class="detail__cell-check" aria-hidden="true"></span>
+                      <span role="columnheader">Guest</span>
+                      <span role="columnheader">Email</span>
+                      <span role="columnheader">Party</span>
+                      <span role="columnheader">Status</span>
+                      <span role="columnheader">Meal</span>
+                      <span role="columnheader" class="detail__cell-right">Table</span>
+                    </div>
+                    @for (guest of guests; track guest.email) {
+                      <div class="detail__table-row" role="row">
+                        <span class="detail__cell-check detail__cell-check--row" aria-hidden="true"></span>
+                        <span class="detail__guest" role="cell">
+                          <span class="detail__avatar" [style.background]="guest.avatarBg">{{ guest.initial }}</span>
+                          <span class="detail__guest-id">
+                            <span class="detail__guest-name">{{ guest.name }}</span>
+                            <span class="detail__guest-group">{{ guest.group }}</span>
+                          </span>
+                        </span>
+                        <span class="detail__guest-email" role="cell">{{ guest.email }}</span>
+                        <span class="detail__guest-party" role="cell">{{ guest.party }}</span>
+                        <span role="cell">
+                          <span class="detail__status detail__status--{{ guest.status }}">
+                            {{ guestStatusLabel[guest.status] }}
+                          </span>
+                        </span>
+                        <span class="detail__guest-meal" role="cell">{{ guest.meal ?? '—' }}</span>
+                        <span class="detail__guest-table" role="cell">{{ guest.table ?? '—' }}</span>
+                      </div>
+                    }
+                  </div>
                 </div>
               }
 
               @case ('tables') {
-                <div class="detail__empty" data-testid="event-detail-tables" role="tabpanel">
-                  <span class="detail__empty-glyph" aria-hidden="true">🪑</span>
-                  <h2 class="detail__empty-title">Let&rsquo;s get everyone seated.</h2>
-                  <p class="detail__empty-lede">
-                    Add your first table to start arranging guests. You can name it, size it, and
-                    drag names onto seats — all by hand.
-                  </p>
-                  <button type="button" class="detail__empty-cta">+ Add first table</button>
-                </div>
+                <app-event-empty-tab
+                  variant="tables"
+                  [confirmedCount]="rsvp.confirmed"
+                  (seeGuestList)="setTab('guests')"
+                />
               }
 
               @case ('budget') {
-                <div class="detail__empty" data-testid="event-detail-budget" role="tabpanel">
-                  <span class="detail__empty-glyph" aria-hidden="true">$</span>
-                  <h2 class="detail__empty-title">Set a budget to get started.</h2>
-                  <p class="detail__empty-lede">
-                    Tell us what you&rsquo;d like to spend, and we&rsquo;ll help you stay on track.
-                    You can change it any time.
-                  </p>
-                  <button type="button" class="detail__empty-cta">Set a budget</button>
-                </div>
+                <app-event-empty-tab
+                  variant="budget"
+                  [guestCount]="rsvp.invited"
+                  [suggestions]="budgetSuggestions"
+                />
               }
             }
           </div>

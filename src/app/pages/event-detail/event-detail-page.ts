@@ -13,10 +13,15 @@ import { EventApiClient } from '../../core/events/event-api-client';
 import { EventDetail } from '../../core/events/event-detail.model';
 import { EventDetailError } from '../../core/events/event-detail-error.model';
 import { EventTypeTint, eventTypeLabel, eventTypeTint } from '../../core/events/event-type-display';
+import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
 import {
+  BUDGET_SUGGESTIONS_MOCK,
   BUDGET_SUMMARY_MOCK,
   DAY_OF_MOMENTS_MOCK,
   DETAIL_ROWS_MOCK,
+  GUEST_FILTERS_MOCK,
+  GUEST_STATUS_LABEL,
+  GUESTS_MOCK,
   NOTE_ON_THE_DAY_MOCK,
   RSVP_SUMMARY_MOCK,
 } from './event-detail-mocks';
@@ -50,7 +55,7 @@ const WEEKS_THRESHOLD_DAYS = 21;
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, EventEmptyTabComponent],
   selector: 'app-event-detail-page',
   templateUrl: './event-detail-page.html',
   styleUrl: './event-detail-page.scss',
@@ -83,6 +88,10 @@ export class EventDetailPage implements OnInit {
   readonly rsvp = RSVP_SUMMARY_MOCK;
   readonly dayOfMoments = DAY_OF_MOMENTS_MOCK;
   readonly detailRows = DETAIL_ROWS_MOCK;
+  readonly guests = GUESTS_MOCK;
+  readonly guestFilters = GUEST_FILTERS_MOCK;
+  readonly guestStatusLabel = GUEST_STATUS_LABEL;
+  readonly budgetSuggestions = BUDGET_SUGGESTIONS_MOCK;
 
   // Conic-gradient stops for the RSVP donut: champagne (confirmed) → coral
   // (declined) → translucent (awaiting), matching the design.

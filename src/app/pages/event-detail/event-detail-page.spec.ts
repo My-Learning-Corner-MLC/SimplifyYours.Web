@@ -80,18 +80,27 @@ describe('EventDetailPage', () => {
     expect(root.textContent).toContain('Add first table');
   });
 
-  it('renders empty states for guests and budget tabs', () => {
+  it('renders the guest list with mock guests on the Guests tab', () => {
     const fixture = setup(new ApiStub());
     const root = html(fixture);
 
     testId(root, 'event-detail-tab-guests')!.click();
     fixture.detectChanges();
-    expect(testId(root, 'event-detail-guests')).not.toBeNull();
+
+    const guests = testId(root, 'event-detail-guests')!;
+    expect(guests.querySelectorAll('[role="row"]').length).toBeGreaterThan(1);
+    expect(guests.textContent).toContain('Sir Reginald Ashworth');
+    expect(guests.textContent).toContain('Confirmed');
+  });
+
+  it('renders the empty state on the Budget tab', () => {
+    const fixture = setup(new ApiStub());
+    const root = html(fixture);
 
     testId(root, 'event-detail-tab-budget')!.click();
     fixture.detectChanges();
     expect(testId(root, 'event-detail-budget')).not.toBeNull();
-    expect(root.textContent).toContain('Set a budget');
+    expect(root.textContent).toContain('Set a budget to get started');
   });
 
   it('renders the Share invite and Edit event header actions', () => {

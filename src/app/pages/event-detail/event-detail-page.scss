@@ -16,6 +16,23 @@ $hairline-warm: #f0e7d6;
 
 $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
 
+// Shared linen surface used by every inner card/panel.
+%detail-surface {
+  background: $linen;
+  border: 1px solid $hairline;
+  border-radius: 12px;
+}
+
+// Shared mono eyebrow label.
+%detail-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: $muted;
+}
+
 :host {
   display: flex;
   flex-direction: column;
@@ -28,26 +45,32 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
   flex-direction: column;
   flex: 1;
   width: 100%;
-  padding: 40px 64px 64px;
   color: $plum-ink;
 
-  // ---- Card -----------------------------------------------------------
+  // ---- Card (full-bleed) ----------------------------------------------
   &__card {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     background: $parchment;
-    border-radius: 14px;
-    box-shadow: $resting-shadow;
     overflow: hidden;
   }
 
-  // ---- Action bar -----------------------------------------------------
+  // ---- Action bar: breadcrumb + actions -------------------------------
   &__actionbar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    padding: 18px 40px;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 18px 56px;
     background: $linen;
     border-bottom: 1px solid $hairline;
+  }
+
+  &__actions {
+    display: inline-flex;
+    gap: 10px;
   }
 
   &__action {
@@ -264,9 +287,7 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
 
   // ---- Panels (note + day of) -----------------------------------------
   &__panel {
-    background: $linen;
-    border: 1px solid $hairline;
-    border-radius: 12px;
+    @extend %detail-surface;
     padding: 28px 32px;
   }
 
@@ -461,19 +482,12 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
 
   // ---- The details ----------------------------------------------------
   &__facts-card {
-    background: $linen;
-    border: 1px solid $hairline;
-    border-radius: 12px;
+    @extend %detail-surface;
     padding: 24px 28px;
   }
 
   &__facts-eyebrow {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: $muted;
+    @extend %detail-eyebrow;
   }
 
   &__facts {
@@ -522,9 +536,7 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
 
   // ---- Budget ---------------------------------------------------------
   &__budget-card {
-    background: $linen;
-    border: 1px solid $hairline;
-    border-radius: 12px;
+    @extend %detail-surface;
     padding: 24px 28px;
   }
 
@@ -535,12 +547,7 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
   }
 
   &__budget-eyebrow {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: $muted;
+    @extend %detail-eyebrow;
   }
 
   &__budget-pct {
@@ -584,59 +591,248 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     border-radius: 99px;
   }
 
-  // ---- Empty states ---------------------------------------------------
-  &__empty {
-    max-width: 520px;
-    margin: 8px auto 24px;
-    text-align: center;
-    padding: 44px 32px;
-    background: $linen;
-    border: 1px dashed $champagne;
-    border-radius: 16px;
+  // ---- Guests tab -----------------------------------------------------
+  &__guests-toolbar {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
   }
 
-  &__empty-glyph {
-    font-size: 30px;
-    margin-bottom: 12px;
+  &__chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
   }
 
-  &__empty-title {
-    margin: 0;
-    font-family: 'Instrument Serif', serif;
-    font-weight: 400;
-    font-size: 26px;
-    color: $plum-ink;
-  }
-
-  &__empty-lede {
-    max-width: 400px;
-    margin: 12px 0 22px;
-    font-size: 14px;
-    line-height: 1.6;
-    color: $body-text;
-  }
-
-  &__empty-cta {
-    padding: 10px 22px;
-    border: none;
+  &__chip {
+    padding: 7px 14px;
     border-radius: 99px;
-    background: $plum;
-    color: $linen;
+    background: $linen;
+    border: 1px solid $hairline;
+    color: $body-text;
+    font-size: 12px;
+
+    &--active {
+      background: $plum;
+      border-color: $plum;
+      color: $linen;
+      font-weight: 500;
+    }
+  }
+
+  &__guests-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__search {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+
+    input {
+      width: 200px;
+      padding: 7px 12px 7px 30px;
+      background: $linen;
+      border: 1px solid $hairline;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 12.5px;
+      color: $plum-ink;
+
+      &::placeholder {
+        color: $muted;
+      }
+
+      &:focus-visible {
+        outline: 2px solid $plum;
+        outline-offset: 1px;
+      }
+    }
+  }
+
+  &__search-icon {
+    position: absolute;
+    left: 11px;
+    color: $muted;
+    pointer-events: none;
+  }
+
+  &__tool-btn {
+    padding: 7px 14px;
+    background: $linen;
+    border: 1px solid $hairline;
+    border-radius: 8px;
     font: inherit;
-    font-weight: 600;
-    font-size: 13.5px;
+    font-size: 12.5px;
+    color: $body-text;
     cursor: pointer;
 
+    &--primary {
+      background: $plum;
+      border-color: $plum;
+      color: $linen;
+      font-weight: 500;
+    }
+
     &:hover {
+      border-color: $champagne;
+    }
+
+    &--primary:hover {
       background: $plum-hover;
+      border-color: $plum-hover;
     }
 
     &:focus-visible {
       outline: 2px solid $plum;
       outline-offset: 2px;
+    }
+  }
+
+  // Guest table (CSS grid, ARIA table roles) ----------------------------
+  $guest-cols: 36px 2fr 1.4fr 1.1fr 1fr 0.7fr 0.6fr;
+
+  &__table {
+    @extend %detail-surface;
+    overflow: hidden;
+  }
+
+  &__table-head,
+  &__table-row {
+    display: grid;
+    grid-template-columns: $guest-cols;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__table-head {
+    padding: 14px 22px;
+    background: #f8f2e6;
+    border-bottom: 1px solid $hairline;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  &__table-row {
+    padding: 16px 22px;
+    border-bottom: 1px solid $hairline-warm;
+
+    &:nth-child(even) {
+      background: #fbf6eb;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__cell-check {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid $champagne;
+    border-radius: 3px;
+
+    &--row {
+      border-color: #d6c8b0;
+    }
+  }
+
+  &__cell-right {
+    text-align: right;
+  }
+
+  &__guest {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  &__avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $plum;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 16px;
+  }
+
+  &__guest-id {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__guest-name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: $plum-ink;
+  }
+
+  &__guest-group {
+    font-size: 11.5px;
+    color: $muted;
+  }
+
+  &__guest-email {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: $body-text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__guest-party {
+    font-size: 13px;
+    color: $plum-ink;
+  }
+
+  &__guest-meal {
+    font-size: 12.5px;
+    color: $plum-ink;
+  }
+
+  &__guest-table {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: $plum;
+    text-align: right;
+  }
+
+  &__status {
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &--confirmed {
+      background: #f0efe2;
+      color: #5a6b3a;
+    }
+
+    &--awaiting {
+      background: #f6ece0;
+      color: #8a5a25;
+    }
+
+    &--declined {
+      background: #f4e2dd;
+      color: #8a3a25;
     }
   }
 

@@ -1,0 +1,64 @@
+<div
+  class="blank"
+  role="tabpanel"
+  [attr.data-testid]="'event-detail-' + variant"
+>
+  @if (variant === 'tables') {
+    <span class="blank__glow blank__glow--left" aria-hidden="true"></span>
+    <span class="blank__glow blank__glow--right" aria-hidden="true"></span>
+    <div class="blank__inner">
+      <div class="blank__table-illo" aria-hidden="true">
+        <div class="blank__table-disc">Table 1</div>
+        @for (angle of seats; track angle) {
+          <span class="blank__seat" [style.transform]="'rotate(' + angle + 'deg) translateY(-104px)'">
+            <span [style.transform]="'rotate(' + -angle + 'deg)'">+</span>
+          </span>
+        }
+      </div>
+      <span class="blank__eyebrow">Table management</span>
+      <h2 class="blank__title">Let&rsquo;s get everyone seated.</h2>
+      <p class="blank__lede">
+        Add your first table to start arranging guests. You can name it, size it, and
+        drag names onto seats — all by hand.
+      </p>
+      <div class="blank__actions">
+        <button type="button" class="blank__cta">+ Add first table</button>
+        <button type="button" class="blank__cta blank__cta--ghost">Import from a template</button>
+      </div>
+      <div class="blank__foot">
+        <span>{{ confirmedCount }} confirmed guests are waiting on a seat</span>
+        <button type="button" class="blank__link" (click)="seeGuestList.emit()">See guest list →</button>
+      </div>
+    </div>
+  } @else {
+    <span class="blank__glow blank__glow--left" aria-hidden="true"></span>
+    <span class="blank__glow blank__glow--olive" aria-hidden="true"></span>
+    <div class="blank__inner">
+      <div class="blank__receipts" aria-hidden="true">
+        <span class="blank__receipt blank__receipt--back"></span>
+        <span class="blank__receipt blank__receipt--front">
+          <span class="blank__receipt-label">BUDGET</span>
+          <span class="blank__receipt-amount">$ —</span>
+        </span>
+      </div>
+      <span class="blank__eyebrow">Budget</span>
+      <h2 class="blank__title">Set a budget to get started.</h2>
+      <p class="blank__lede">
+        Tell us what you&rsquo;d like to spend, and we&rsquo;ll help you stay on track.
+        You can change it any time — and we&rsquo;ll never make you feel bad about it.
+      </p>
+      <div class="blank__actions">
+        <button type="button" class="blank__cta">Set a budget</button>
+        <button type="button" class="blank__cta blank__cta--ghost">Skip for now</button>
+      </div>
+      <div class="blank__suggest">
+        <p class="blank__suggest-label">Common starting points for {{ guestCount }} guests —</p>
+        <div class="blank__suggest-chips">
+          @for (suggestion of suggestions; track suggestion) {
+            <button type="button" class="blank__suggest-chip">{{ suggestion }}</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
