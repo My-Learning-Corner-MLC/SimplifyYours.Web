@@ -1,19 +1,22 @@
 // ---------------------------------------------------------------------------
-// SAMPLE / MOCK DATA — NOT REAL EVENT DATA.
+// MOCK DATA — NOT REAL EVENT DATA.
 //
-// The Overview tab's RSVP summary, budget summary, "Day of" timeline, and the
-// Dress/Headcount/Planner detail rows are designed here but not yet backed by a
-// service (guest-management, budget, and day-of "moments" features do not exist
-// in the MVP yet). Everything in this file is hard-coded placeholder content so
-// the screen matches the design; the UI tags it visibly as a sample so an
-// organizer never mistakes it for their real numbers.
+// The Overview tab's "A note on the day", RSVP summary, budget summary,
+// "Day of" timeline, and the Dress/Headcount/Planner detail rows are not yet
+// backed by a service (guest-management, budget, and day-of "moments" features
+// do not exist in the MVP yet). Everything in this file is hard-coded
+// placeholder content so the screen renders exactly like the design; it is
+// wired to the real APIs once those features ship.
 //
 // When the backing features ship, delete this file and feed the panels from the
 // real APIs. Keeping it isolated makes that removal a single-file change.
 // ---------------------------------------------------------------------------
 
-/** Banner copy shown wherever sample data is rendered. */
-export const SAMPLE_DATA_NOTE = 'Sample preview — live data arrives when this area is wired up.';
+/** "A note on the day" narrative (no event field for this yet). */
+export const NOTE_ON_THE_DAY_MOCK =
+  'The boat from Bellagio leaves the pier at 4 pm. Ceremony in the rose garden as the sun ' +
+  'softens. Dinner under the loggia, dancing on the lawn until late. Guests are welcome to ' +
+  'stay over at Villa Astoria — rooms are held under "Whitmore-Hayes."';
 
 export interface RsvpSummaryMock {
   readonly confirmed: number;

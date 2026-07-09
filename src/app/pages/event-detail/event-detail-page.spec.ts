@@ -94,14 +94,14 @@ describe('EventDetailPage', () => {
     expect(root.textContent).toContain('Set a budget');
   });
 
-  it('renders the Share and Edit header actions as disabled', () => {
+  it('renders the Share invite and Edit event header actions', () => {
     const fixture = setup(new ApiStub());
     const root = html(fixture);
 
     const share = testId(root, 'event-detail-share') as HTMLButtonElement;
     const edit = testId(root, 'event-detail-edit') as HTMLButtonElement;
-    expect(share.disabled).toBe(true);
-    expect(edit.disabled).toBe(true);
+    expect(share.textContent).toContain('Share invite');
+    expect(edit.textContent).toContain('Edit event');
   });
 
   it('shows the not-found state on a 404', () => {

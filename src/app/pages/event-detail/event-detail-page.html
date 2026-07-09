@@ -30,58 +30,40 @@
     @default {
       @if (header(); as vm) {
         <div
-          class="detail__panel"
+          class="detail__card"
           [style.--tint-badge-bg]="vm.tint.badgeBg"
           [style.--tint-badge-fg]="vm.tint.badgeFg"
-          [style.--tint-accent]="vm.tint.accent"
         >
-          <!-- Header: breadcrumb + page actions -->
-          <div class="detail__topbar">
-            <nav class="detail__breadcrumb" aria-label="Breadcrumb">
-              <a routerLink="/dashboard">Events</a>
-              <span aria-hidden="true">›</span>
-              <span class="detail__breadcrumb-current">{{ vm.name }}</span>
-            </nav>
-            <div class="detail__actions">
-              <button
-                type="button"
-                class="detail__action detail__action--ghost"
-                disabled
-                title="Sharing invitations is coming soon."
-                data-testid="event-detail-share"
-              >
-                Share invite
-              </button>
-              <button
-                type="button"
-                class="detail__action detail__action--primary"
-                disabled
-                title="Editing events is coming soon."
-                data-testid="event-detail-edit"
-              >
-                Edit event
-              </button>
-            </div>
+          <!-- Action bar -->
+          <div class="detail__actionbar">
+            <button type="button" class="detail__action detail__action--ghost" data-testid="event-detail-share">
+              Share invite
+            </button>
+            <button type="button" class="detail__action detail__action--primary" data-testid="event-detail-edit">
+              Edit event
+            </button>
           </div>
 
-          <!-- Hero: badge, date + countdown, title, description -->
+          <!-- Hero -->
           <header class="detail__hero">
-            <div class="detail__hero-meta">
-              <span class="detail__badge">
-                <span aria-hidden="true">{{ vm.emoji }}</span> {{ vm.typeLabel }}
-              </span>
-              <span class="detail__when">
-                {{ vm.whenLabel }}
-                <span
-                  class="detail__countdown detail__countdown--{{ vm.countdown.tone }}"
-                >· {{ vm.countdown.label }}</span>
-              </span>
+            <span class="detail__hero-glow detail__hero-glow--coral" aria-hidden="true"></span>
+            <span class="detail__hero-glow detail__hero-glow--champagne" aria-hidden="true"></span>
+            <div class="detail__hero-inner">
+              <nav class="detail__eyebrow" aria-label="Breadcrumb">
+                <a routerLink="/dashboard">Events</a>
+                <span aria-hidden="true">·</span>
+                <span class="detail__eyebrow-current">{{ vm.name }}</span>
+              </nav>
+              <div class="detail__hero-meta">
+                <span class="detail__badge">{{ vm.typeLabel }}</span>
+                <span class="detail__when">{{ vm.dateLine }}</span>
+              </div>
+              <h1 class="detail__title">{{ vm.name }}</h1>
+              <span class="detail__title-rule" aria-hidden="true"></span>
+              @if (vm.description) {
+                <p class="detail__lede">{{ vm.description }}</p>
+              }
             </div>
-            <h1 class="detail__title">{{ vm.name }}</h1>
-            <span class="detail__title-rule" aria-hidden="true"></span>
-            @if (vm.description) {
-              <p class="detail__lede">{{ vm.description }}</p>
-            }
           </header>
 
           <!-- Tabs -->
@@ -107,20 +89,18 @@
               @case ('overview') {
                 <div class="detail__overview" data-testid="event-detail-overview" role="tabpanel">
                   <div class="detail__main">
-                    @if (vm.description) {
-                      <article class="detail__card">
-                        <h2 class="detail__card-title">A note on the day</h2>
-                        <span class="detail__card-rule" aria-hidden="true"></span>
-                        <p class="detail__note">{{ vm.description }}</p>
-                      </article>
-                    }
+                    <article class="detail__panel">
+                      <h2 class="detail__panel-title">A note on the day</h2>
+                      <span class="detail__panel-rule" aria-hidden="true"></span>
+                      <p class="detail__note">{{ noteOnTheDay }}</p>
+                    </article>
 
-                    <article class="detail__card">
-                      <div class="detail__card-head">
-                        <h2 class="detail__card-title">Day of</h2>
-                        <span class="detail__sample-tag" [title]="sampleNote">Sample</span>
+                    <article class="detail__panel">
+                      <div class="detail__panel-head">
+                        <h2 class="detail__panel-title">Day of</h2>
+                        <span class="detail__panel-action">+ Add moment</span>
                       </div>
-                      <span class="detail__card-rule" aria-hidden="true"></span>
+                      <span class="detail__panel-rule" aria-hidden="true"></span>
                       <ol class="detail__timeline" role="list">
                         @for (moment of dayOfMoments; track moment.time) {
                           <li class="detail__moment">
@@ -136,63 +116,64 @@
                   </div>
 
                   <aside class="detail__aside">
-                    <!-- RSVP summary (sample) -->
-                    <div class="detail__side-card">
-                      <div class="detail__side-head">
-                        <span class="detail__side-eyebrow detail__side-eyebrow--accent">RSVPs</span>
-                        <span class="detail__sample-tag" [title]="sampleNote">Sample</span>
-                      </div>
-                      <div class="detail__rsvp">
-                        <span class="detail__rsvp-ring">
-                          <strong>{{ rsvp.confirmed }}</strong>
-                          <small>of {{ rsvp.invited }}</small>
-                        </span>
-                        <ul class="detail__rsvp-legend" role="list">
-                          <li><span class="detail__dot detail__dot--go"></span>{{ rsvp.confirmed }} confirmed</li>
-                          <li><span class="detail__dot detail__dot--no"></span>{{ rsvp.declined }} declined</li>
-                          <li><span class="detail__dot detail__dot--wait"></span>{{ rsvp.awaiting }} awaiting</li>
-                        </ul>
+                    <!-- RSVP donut -->
+                    <div class="detail__rsvp-card">
+                      <span class="detail__rsvp-glow" aria-hidden="true"></span>
+                      <div class="detail__rsvp-inner">
+                        <span class="detail__rsvp-eyebrow">RSVPS</span>
+                        <div class="detail__rsvp-row">
+                          <span class="detail__donut" [style.background]="rsvpDonut">
+                            <span class="detail__donut-core">
+                              <strong>{{ rsvp.confirmed }}</strong>
+                              <small>OF {{ rsvp.invited }}</small>
+                            </span>
+                          </span>
+                          <ul class="detail__rsvp-legend" role="list">
+                            <li><span class="detail__dot detail__dot--go"></span>{{ rsvp.confirmed }} confirmed</li>
+                            <li><span class="detail__dot detail__dot--no"></span>{{ rsvp.declined }} declined</li>
+                            <li><span class="detail__dot detail__dot--wait"></span>{{ rsvp.awaiting }} awaiting</li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
 
                     <!-- The details -->
-                    <div class="detail__side-card">
-                      <span class="detail__side-eyebrow">The details</span>
+                    <div class="detail__facts-card">
+                      <span class="detail__facts-eyebrow">The details</span>
                       <dl class="detail__facts">
                         @if (vm.venue) {
                           <div class="detail__fact">
                             <dt>Venue</dt>
                             <dd>
                               {{ vm.venue }}
-                              @if (venueAddress()) {
-                                <span class="detail__fact-sub">{{ venueAddress() }}</span>
+                              @if (vm.venueAddress) {
+                                <span class="detail__fact-sub">{{ vm.venueAddress }}</span>
                               }
                             </dd>
                           </div>
                         }
                         @for (row of detailRows; track row.label) {
                           <div class="detail__fact">
-                            <dt>{{ row.label }} <span class="detail__sample-tag" [title]="sampleNote">Sample</span></dt>
-                            <dd>{{ row.value }}</dd>
+                            <dt>{{ row.label }}</dt>
+                            <dd [class.detail__fact-mono]="row.label === 'Headcount'">{{ row.value }}</dd>
                           </div>
                         }
                       </dl>
                     </div>
 
-                    <!-- Budget summary (sample) -->
-                    <div class="detail__side-card">
-                      <div class="detail__side-head">
-                        <span class="detail__side-eyebrow">Budget</span>
-                        <span class="detail__sample-tag" [title]="sampleNote">Sample</span>
+                    <!-- Budget -->
+                    <div class="detail__budget-card">
+                      <div class="detail__budget-head">
+                        <span class="detail__budget-eyebrow">Budget</span>
+                        <span class="detail__budget-pct">{{ budget.percent }}% spent</span>
                       </div>
                       <p class="detail__budget-line">
                         <strong>{{ budget.spent }}</strong>
-                        <span class="detail__budget-of"> / {{ budget.total }}</span>
+                        <span class="detail__budget-of">/ {{ budget.total }}</span>
                       </p>
                       <div class="detail__meter" aria-hidden="true">
                         <span class="detail__meter-fill" [style.width.%]="budget.percent"></span>
                       </div>
-                      <p class="detail__budget-pct">{{ budget.percent }}% spent</p>
                     </div>
                   </aside>
                 </div>
@@ -206,10 +187,7 @@
                     Add the people you&rsquo;re inviting and track who&rsquo;s coming — names, emails,
                     and RSVPs, all under this event.
                   </p>
-                  <button type="button" class="detail__empty-cta" disabled title="Guest management is coming soon.">
-                    + Add guest
-                  </button>
-                  <p class="detail__empty-note">Coming soon</p>
+                  <button type="button" class="detail__empty-cta">+ Add guest</button>
                 </div>
               }
 
@@ -221,10 +199,7 @@
                     Add your first table to start arranging guests. You can name it, size it, and
                     drag names onto seats — all by hand.
                   </p>
-                  <button type="button" class="detail__empty-cta" disabled title="Table management is coming soon.">
-                    + Add first table
-                  </button>
-                  <p class="detail__empty-note">Coming soon</p>
+                  <button type="button" class="detail__empty-cta">+ Add first table</button>
                 </div>
               }
 
@@ -236,10 +211,7 @@
                     Tell us what you&rsquo;d like to spend, and we&rsquo;ll help you stay on track.
                     You can change it any time.
                   </p>
-                  <button type="button" class="detail__empty-cta" disabled title="Budgeting is coming soon.">
-                    Set a budget
-                  </button>
-                  <p class="detail__empty-note">Coming soon</p>
+                  <button type="button" class="detail__empty-cta">Set a budget</button>
                 </div>
               }
             }
