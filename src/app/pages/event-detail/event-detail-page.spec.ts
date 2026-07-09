@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { EventApiClient } from '../../core/events/event-api-client';
@@ -34,7 +34,7 @@ function setup(api: ApiStub, id: string | null = 'e1') {
       { provide: EventApiClient, useValue: api },
       {
         provide: ActivatedRoute,
-        useValue: { snapshot: { paramMap: { get: () => id } } },
+        useValue: { paramMap: of(convertToParamMap(id === null ? {} : { id })) },
       },
     ],
   });

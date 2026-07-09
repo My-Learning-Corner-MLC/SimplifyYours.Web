@@ -107,8 +107,13 @@ export class EventDetailPage implements OnInit {
   readonly venueAddress = computed(() => this.event()?.location?.address?.trim() || null);
 
   ngOnInit(): void {
-    this.eventId = this.route.snapshot.paramMap.get('id') ?? '';
-    this.load();
+    // Subscribe to the param map (not the one-shot snapshot) so navigating
+    // straight from one event to another — same route, different :id — reloads
+    // the detail instead of reusing the stale component instance.
+    this.route.paramMap.subscribe((params) => {
+      this.eventId = params.get('id') ?? '';
+      this.load();
+    });
   }
 
   load(): void {
