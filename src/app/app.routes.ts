@@ -15,6 +15,11 @@ export const routes: Routes = [
     canDeactivate: [createEventLeaveGuard],
   },
   {
+    path: 'events/:id',
+    loadComponent: () =>
+      import('./pages/event-detail/event-detail-page').then((m) => m.EventDetailPage),
+  },
+  {
     path: 'auth/callback',
     loadComponent: () =>
       import('./pages/auth-callback/auth-callback-page').then((m) => m.AuthCallbackPage),

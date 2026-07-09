@@ -1,0 +1,644 @@
+// Occasion theme tokens (shared with the dashboard — see "SimplifyYours Occasion").
+$plum: #5a2849;
+$plum-hover: #4a1f3b;
+$plum-ink: #2a1f2d;
+$champagne: #c8a876;
+$coral: #e07b5a;
+$olive: #7a8f5a;
+$amber: #c28840;
+$parchment: #f5efe6;
+$linen: #fffcf5;
+$muted: #7a6b6e;
+$body-text: #4a4045;
+$hairline: #ece2d2;
+
+$resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: $parchment;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  padding: 40px 64px 64px;
+  color: $plum-ink;
+
+  // ---- Panel ----------------------------------------------------------
+  &__panel {
+    background: $parchment;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  // ---- Topbar: breadcrumb + actions ----------------------------------
+  &__topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  &__breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $muted;
+
+    a {
+      color: $muted;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        color: $plum;
+      }
+    }
+  }
+
+  &__breadcrumb-current {
+    color: $plum-ink;
+  }
+
+  &__actions {
+    display: inline-flex;
+    gap: 10px;
+  }
+
+  &__action {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 160ms ease-out, color 160ms ease-out;
+
+    &--ghost {
+      background: $linen;
+      border: 1px solid $hairline;
+      color: $body-text;
+    }
+
+    &--primary {
+      background: $plum;
+      border: 1px solid $plum;
+      color: $linen;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  // ---- Hero -----------------------------------------------------------
+  &__hero {
+    margin-bottom: 28px;
+  }
+
+  &__hero-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 99px;
+    background: var(--tint-badge-bg, #{$parchment});
+    color: var(--tint-badge-fg, #{$plum});
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__when {
+    font-size: 13.5px;
+    color: $body-text;
+  }
+
+  &__countdown {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: $muted;
+
+    &--today {
+      color: $coral;
+    }
+
+    &--past {
+      color: $muted;
+    }
+  }
+
+  &__title {
+    margin: 0;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: $plum-ink;
+  }
+
+  &__title-rule {
+    display: block;
+    width: 80px;
+    height: 1px;
+    background: $champagne;
+    margin: 18px 0 0;
+  }
+
+  &__lede {
+    max-width: 720px;
+    margin: 18px 0 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: $body-text;
+  }
+
+  // ---- Tabs -----------------------------------------------------------
+  &__tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid $hairline;
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+
+  &__tab {
+    padding: 7px 16px;
+    border: 1px solid transparent;
+    border-radius: 99px;
+    background: $linen;
+    color: $body-text;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background 180ms ease-out,
+      color 180ms ease-out,
+      border-color 180ms ease-out,
+      transform 180ms ease-out;
+
+    &:hover {
+      color: $plum-ink;
+      background: rgba(200, 168, 118, 0.16);
+      border-color: rgba(200, 168, 118, 0.55);
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+
+    &--active {
+      background: $plum;
+      color: $linen;
+      border-color: $plum;
+
+      &:hover {
+        background: $plum-hover;
+        border-color: $plum-hover;
+        color: $linen;
+      }
+    }
+  }
+
+  // ---- Overview layout ------------------------------------------------
+  &__overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+    gap: 24px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__aside {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  // ---- Cards ----------------------------------------------------------
+  &__card {
+    background: $linen;
+    border: 1px solid $hairline;
+    border-radius: 12px;
+    padding: 28px 32px;
+  }
+
+  &__card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__card-title {
+    margin: 0;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 22px;
+    color: $plum-ink;
+  }
+
+  &__card-rule {
+    display: block;
+    width: 48px;
+    height: 1px;
+    background: $champagne;
+    margin: 10px 0 16px;
+  }
+
+  &__note {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: $body-text;
+  }
+
+  // ---- Timeline -------------------------------------------------------
+  &__timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__moment {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  &__moment-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: $amber;
+    padding-top: 1px;
+  }
+
+  &__moment-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-left: 1px solid $hairline;
+    padding-left: 16px;
+  }
+
+  &__moment-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: $plum-ink;
+  }
+
+  &__moment-detail {
+    font-size: 12.5px;
+    color: $muted;
+  }
+
+  // ---- Side cards -----------------------------------------------------
+  &__side-card {
+    background: $linen;
+    border: 1px solid $hairline;
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+
+  &__side-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  &__side-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: $muted;
+
+    &--accent {
+      color: $champagne;
+    }
+  }
+
+  &__sample-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(200, 168, 118, 0.18);
+    color: $amber;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: help;
+  }
+
+  // ---- RSVP -----------------------------------------------------------
+  &__rsvp {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  &__rsvp-ring {
+    width: 74px;
+    height: 74px;
+    flex: none;
+    border-radius: 50%;
+    background: $plum;
+    color: $linen;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+
+    strong {
+      font-size: 22px;
+    }
+
+    small {
+      font-size: 10px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+  }
+
+  &__rsvp-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    color: $body-text;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+
+    &--go {
+      background: $champagne;
+    }
+
+    &--no {
+      background: $coral;
+    }
+
+    &--wait {
+      background: $olive;
+    }
+  }
+
+  // ---- Facts ----------------------------------------------------------
+  &__facts {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__fact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    dt {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: $muted;
+    }
+
+    dd {
+      margin: 0;
+      font-size: 14px;
+      color: $plum-ink;
+    }
+  }
+
+  &__fact-sub {
+    display: block;
+    font-size: 12px;
+    color: $muted;
+  }
+
+  // ---- Budget ---------------------------------------------------------
+  &__budget-line {
+    margin: 0;
+    font-size: 20px;
+    color: $plum-ink;
+
+    strong {
+      font-weight: 600;
+    }
+  }
+
+  &__budget-of {
+    color: $muted;
+    font-size: 14px;
+  }
+
+  &__meter {
+    margin-top: 14px;
+    height: 6px;
+    background: $parchment;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  &__meter-fill {
+    display: block;
+    height: 100%;
+    background: $champagne;
+    border-radius: 99px;
+  }
+
+  &__budget-pct {
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: $muted;
+  }
+
+  // ---- Empty states ---------------------------------------------------
+  &__empty {
+    max-width: 520px;
+    margin: 32px auto 40px;
+    text-align: center;
+    padding: 40px 32px;
+    background: $linen;
+    border: 1px dashed $champagne;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__empty-glyph {
+    font-size: 30px;
+    margin-bottom: 12px;
+  }
+
+  &__empty-title {
+    margin: 0;
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 26px;
+    color: $plum-ink;
+  }
+
+  &__empty-lede {
+    max-width: 400px;
+    margin: 12px 0 22px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: $body-text;
+  }
+
+  &__empty-cta {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 99px;
+    background: $plum;
+    color: $linen;
+    font: inherit;
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__empty-note {
+    margin: 12px 0 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  // ---- Loading --------------------------------------------------------
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 8px;
+  }
+
+  &__skeleton {
+    height: 140px;
+    border-radius: 14px;
+    background: linear-gradient(100deg, $linen 30%, $parchment 50%, $linen 70%);
+    background-size: 200% 100%;
+    animation: detail-shimmer 1.4s ease-in-out infinite;
+
+    &--head {
+      height: 90px;
+    }
+  }
+
+  // ---- Notices (error / not-found) ------------------------------------
+  &__notice {
+    max-width: 460px;
+    margin: 64px auto;
+    text-align: center;
+    padding: 32px;
+    background: $linen;
+    border-radius: 14px;
+    box-shadow: $resting-shadow;
+  }
+
+  &__notice-glyph {
+    font-size: 28px;
+  }
+
+  &__notice-title {
+    margin: 12px 0 20px;
+    font-size: 15px;
+    color: $body-text;
+  }
+
+  &__retry {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 99px;
+    background: $plum;
+    color: $linen;
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: $plum-hover;
+    }
+  }
+}
+
+@keyframes detail-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
