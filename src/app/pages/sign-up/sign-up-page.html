@@ -107,16 +107,19 @@
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
+          <p class="sign-up-page__success-eyebrow">YOUR ACCOUNT IS READY</p>
           <h2 class="sign-up-page__success-headline" data-testid="success-headline">
             Welcome to SimplifyYours,
             <span class="sign-up-page__success-name">{{ successFirstName() }}.</span>
           </h2>
+          <div class="sign-up-page__success-divider"></div>
           <p class="sign-up-page__success-copy">
-            Your account is ready. Sign in to start planning something memorable.
+            You&rsquo;ve successfully created your account in SimplifyYours. Sign in to start
+            planning something memorable.
           </p>
           <button
             type="button"
-            class="sign-up-page__submit sign-up-page__submit--link"
+            class="sign-up-page__submit"
             data-testid="success-cta"
             (click)="onSignInClick()"
           >

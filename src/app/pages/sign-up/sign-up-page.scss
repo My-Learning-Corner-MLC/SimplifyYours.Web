@@ -471,6 +471,7 @@ $sage: #7a8f5a;
   }
 
   &__submit {
+    width: 100%;
     margin-top: 20px;
     padding: 13px 22px;
     background: $plum;
@@ -519,25 +520,6 @@ $sage: #7a8f5a;
     border-top-color: $cream;
     animation: sign-up-spinner 0.7s linear infinite;
     display: inline-block;
-  }
-
-  &__submit--link {
-    display: inline-flex;
-    width: auto;
-    background: transparent;
-    color: $plum;
-    border: 1.5px solid $plum;
-    box-shadow: none;
-    text-decoration: none;
-
-    .sign-up-page__submit-arrow {
-      color: $plum;
-    }
-
-    &:hover,
-    &:focus-visible {
-      background: rgba(90, 40, 73, 0.06);
-    }
   }
 
   &__success {
@@ -608,12 +590,20 @@ $sage: #7a8f5a;
     box-shadow: 0 0 0 10px rgba(200, 168, 118, 0.18);
   }
 
+  &__success-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: $muted;
+    margin: 0;
+  }
+
   &__success-headline {
     font-family: 'Instrument Serif', serif;
     font-size: 38px;
     line-height: 1.05;
     letter-spacing: -0.012em;
-    margin: 0 0 12px;
+    margin: 12px 0 0;
     font-weight: 400;
     color: $ink;
   }
@@ -623,11 +613,18 @@ $sage: #7a8f5a;
     color: $plum;
   }
 
+  &__success-divider {
+    height: 1px;
+    width: 56px;
+    background: $champagne;
+    margin-top: 18px;
+  }
+
   &__success-copy {
     font-size: 15px;
     line-height: 1.6;
     color: $ink-soft;
-    margin: 0 0 28px;
+    margin: 18px 0 28px;
     max-width: 460px;
   }
 }
