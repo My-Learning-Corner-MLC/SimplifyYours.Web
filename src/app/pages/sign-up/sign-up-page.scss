@@ -487,6 +487,20 @@ $sage: #7a8f5a;
     font-weight: 500;
     font-family: inherit;
     cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      box-shadow 120ms ease;
+
+    &:hover,
+    &:focus-visible {
+      background: $plum-mid;
+      box-shadow: 0 6px 18px rgba(90, 40, 73, 0.24);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
   }
 
   &__submit-arrow {
