@@ -91,6 +91,23 @@ describe('SiteHeader', () => {
       expect(fakeOidc.startAuthorization).toHaveBeenCalledTimes(1);
     });
 
+    it('should hide the sign-in and sign-up actions (top bar and mobile menu) while on the sign-up route', async () => {
+      const fixture = await setup();
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl('/signup');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.site-header__sign-in')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.site-header__sign-up')).toBeNull();
+
+      fixture.componentInstance.toggleMenu();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.site-header__menu-sign-in')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.site-header__menu-cta')).toBeNull();
+    });
+
     it('should render the mobile hamburger button with correct aria attributes', async () => {
       const fixture = await setup();
       const hamburger = fixture.nativeElement.querySelector('.site-header__hamburger') as HTMLButtonElement | null;

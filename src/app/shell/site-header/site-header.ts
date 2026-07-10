@@ -8,7 +8,9 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { MenuItem, MessageService, PrimeTemplate } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { Popover } from 'primeng/popover';
@@ -17,6 +19,8 @@ import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
 import { MOCK_NOTIFICATIONS } from '../../core/notifications/mock-notifications';
 import { NotificationItem } from '../../core/notifications/notification-item.model';
 import { notificationTint } from '../../core/notifications/notification-display';
+
+const AUTH_ACTIONS_HIDDEN_ROUTES = ['/signup'];
 
 interface NavLink {
   label: string;
@@ -38,6 +42,18 @@ export class SiteHeader {
   private readonly messages = inject(MessageService);
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly hamburgerRef = viewChild<ElementRef<HTMLButtonElement>>('hamburger');
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  readonly hideAuthActions = computed(() =>
+    AUTH_ACTIONS_HIDDEN_ROUTES.some((route) => this.currentUrl().split('?')[0] === route),
+  );
 
   readonly navLinks: NavLink[] = [
     { label: 'Home', path: '/home' },

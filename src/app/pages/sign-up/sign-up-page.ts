@@ -20,7 +20,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { environment } from '../../../environments/environment';
 import { AuthApiClient } from '../../core/auth/auth-api-client';
 import { SignUpError } from '../../core/auth/sign-up-error.model';
 import { SignUpResponse } from '../../core/auth/sign-up-response.model';
@@ -71,8 +70,6 @@ export class SignUpPage implements AfterViewInit, AfterViewChecked {
   private readonly destroyRef = inject(DestroyRef);
   private readonly messages = inject(MessageService);
   private readonly oidcRedirect = inject(OidcRedirectService);
-
-  readonly identityBaseUrl = environment.identityBaseUrl;
 
   readonly form: FormGroup = this.fb.group(
     {
