@@ -1,0 +1,24 @@
+.static-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 60vh;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.static-page__title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #2a1f2d;
+}
+
+.static-page__text {
+  margin: 0;
+  max-width: 42rem;
+  font-size: 1.05rem;
+  color: #4a4045;
+}

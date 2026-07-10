@@ -45,7 +45,15 @@
             <span class="site-header__notif-dot" aria-hidden="true"></span>
           }
         </button>
-        <div class="site-header__avatar-pill">
+        <button
+          type="button"
+          class="site-header__avatar-pill"
+          [class.site-header__avatar-pill--active]="profileMenuOpen()"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="profileMenuOpen()"
+          aria-label="Open account menu"
+          (click)="profileMenu.toggle($event)"
+        >
           <span class="site-header__avatar-initial" aria-hidden="true">{{ initial() }}</span>
           <span class="site-header__avatar-name">{{ firstName() }}</span>
           <svg
@@ -62,7 +70,59 @@
           >
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
-        </div>
+        </button>
+        <p-menu
+          #profileMenu
+          [popup]="true"
+          [model]="profileMenuItems"
+          appendTo="body"
+          styleClass="site-header-profile-menu"
+          (onShow)="onProfileMenuShow()"
+          (onHide)="onProfileMenuHide()"
+        >
+          <ng-template pTemplate="start">
+            <div class="site-header__profile-menu-identity">
+              <span class="site-header__profile-menu-avatar" aria-hidden="true">{{ initial() }}</span>
+              <span class="site-header__profile-menu-identity-text">
+                <span class="site-header__profile-menu-name">{{ fullName() }}</span>
+                <span class="site-header__profile-menu-email">{{ email() }}</span>
+              </span>
+              <button
+                type="button"
+                class="site-header__profile-menu-close"
+                aria-label="Close menu"
+                (click)="profileMenu.hide()"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="end">
+            <div class="site-header__profile-menu-signout">
+              <button
+                type="button"
+                class="site-header__profile-menu-signout-btn"
+                (click)="profileMenu.hide(); onSignOut()"
+              >
+                <i class="pi pi-sign-out" aria-hidden="true"></i>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </ng-template>
+        </p-menu>
       } @else {
         <button type="button" class="site-header__sign-in" (click)="onSignInClick()">Sign in</button>
         <a class="site-header__sign-up" routerLink="/signup" (click)="closeMenu()">

@@ -130,7 +130,37 @@
   gap: 10px;
   padding: 6px 14px 6px 6px;
   background: #f5efe6;
+  border: none;
   border-radius: 99px;
+  font: inherit;
+  cursor: pointer;
+  transition: background 140ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #ece2d2;
+  }
+
+  // Matches the "dropdown open" state in the approved design (Part 04 · User
+  // menu, 3A): the pill fills plum and the name/chevron flip to cream while
+  // the menu is open.
+  &.site-header__avatar-pill--active {
+    background: #5a2849;
+
+    &:hover,
+    &:focus-visible {
+      background: #4a1f3b;
+    }
+
+    .site-header__avatar-name {
+      color: #fffcf5;
+    }
+
+    .site-header__avatar-chevron {
+      color: #fffcf5;
+      transform: rotate(180deg);
+    }
+  }
 }
 
 .site-header__avatar-initial {
@@ -156,6 +186,7 @@
 
 .site-header__avatar-chevron {
   color: #5a2849;
+  transition: color 140ms ease, transform 160ms ease;
 }
 
 .site-header__actions {
@@ -440,5 +471,253 @@
   .site-header__menu,
   .site-header__menu.site-header__menu--open {
     display: none;
+  }
+}
+
+// The profile menu (`p-menu[appendTo="body"]`) is rendered as a CDK-style
+// overlay attached directly to <body>, outside this component's view
+// encapsulation boundary — ::ng-deep is the only way to reskin it to match
+// the approved design (Part 04 · User menu). Every rule below is scoped
+// under the `site-header-profile-menu` styleClass so it can't leak onto any
+// other p-menu instance in the app. The compound `.p-menu.site-header-profile-menu`
+// selector (rather than the class alone) is required to out-specificity
+// PrimeNG's own `.p-menu { background: var(--p-menu-background) }` theme
+// rule, which is injected at runtime after this stylesheet and would
+// otherwise win the cascade tie (and resolve to its dark-mode tokens).
+::ng-deep .p-menu.site-header-profile-menu {
+  width: 296px;
+  max-width: calc(100vw - 32px);
+  border: 1px solid #ece2d2;
+  border-radius: 14px;
+  background: #fffcf5;
+  box-shadow: 0 12px 32px rgba(42, 31, 45, 0.18);
+  overflow: hidden;
+
+  .site-header__profile-menu-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #ece2d2;
+  }
+
+  .site-header__profile-menu-close {
+    display: none;
+  }
+
+  .site-header__profile-menu-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c8a876, #9b7e4f);
+    color: #2a1f2d;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 17px;
+  }
+
+  .site-header__profile-menu-identity-text {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .site-header__profile-menu-name {
+    overflow: hidden;
+    color: #2a1f2d;
+    font-size: 13.5px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .site-header__profile-menu-email {
+    overflow: hidden;
+    color: #7a766e;
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .p-menu-list {
+    padding: 8px;
+  }
+
+  .p-menu-submenu-label {
+    padding: 10px 12px 6px;
+    color: #7a6b6e;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+
+    &:not(:first-child) {
+      margin-top: 4px;
+      padding-top: 14px;
+      border-top: 1px solid #ece2d2;
+    }
+  }
+
+  .p-menu-item-content,
+  .p-menu-item-link,
+  .site-header__profile-menu-signout-btn {
+    border-radius: 8px;
+    // No eased hand-off between our override and PrimeNG's own dark-mode
+    // background — without this, the outgoing item briefly renders its
+    // (dark) mid-transition value while moving the pointer between items.
+    transition: none !important;
+  }
+
+  // PrimeNG highlights the item on native `:hover`, on `:focus` (it calls
+  // `.focus()` on mouseenter to keep mouse/keyboard behavior in sync — not
+  // just `:focus-visible`, which a programmatic focus call doesn't trigger),
+  // and via a `data-p-focused` attribute it syncs separately. Its own
+  // dark-mode tokens win on any of these left uncovered, or on a plain
+  // specificity tie, so every path is forced here.
+  .p-menu-item-content:hover,
+  .p-menu-item-content:focus,
+  .p-menu-item-content:focus-visible,
+  .p-menu-item[data-p-focused='true'] .p-menu-item-content,
+  .p-menu-item[data-p-focused='true'] .p-menu-item-link,
+  .p-menu-item-link:hover,
+  .p-menu-item-link:focus,
+  .p-menu-item-link:focus-visible,
+  .site-header__profile-menu-signout-btn:hover,
+  .site-header__profile-menu-signout-btn:focus,
+  .site-header__profile-menu-signout-btn:focus-visible {
+    background: #f5efe6 !important;
+  }
+
+  .p-menu-item-content,
+  .p-menu-item-link {
+    background: transparent !important;
+  }
+
+  .p-menu-item-link {
+    gap: 12px;
+    padding: 9px 12px;
+    color: #2a1f2d;
+    font-size: 13.5px;
+  }
+
+  .p-menu-item-icon {
+    color: #5a2849;
+    font-size: 16px;
+  }
+
+  .site-header__profile-menu-signout {
+    margin-top: 4px;
+    padding: 8px;
+    border-top: 1px solid #ece2d2;
+  }
+
+  .site-header__profile-menu-signout-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    color: #4a4045;
+    font: inherit;
+    font-size: 13.5px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 140ms ease;
+
+    .pi {
+      font-size: 16px;
+    }
+  }
+}
+
+// Below the desktop/tablet breakpoint the same popup becomes a bottom sheet
+// anchored to the viewport edge, per Part 04 · 3B of the design — full width,
+// rounded top corners, and a close (✕) button instead of a floating card.
+@media (max-width: 767.98px) {
+  ::ng-deep .p-menu.site-header-profile-menu {
+    position: fixed !important;
+    top: auto !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 32px rgba(42, 31, 45, 0.18);
+
+    .site-header__profile-menu-identity {
+      padding: 14px 22px 18px;
+    }
+
+    .site-header__profile-menu-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: #f5efe6;
+      color: #2a1f2d;
+      cursor: pointer;
+      padding: 0;
+      transition: background 140ms ease;
+
+      &:hover,
+      &:focus-visible {
+        background: #ece2d2;
+      }
+    }
+
+    .site-header__profile-menu-avatar {
+      width: 44px;
+      height: 44px;
+      font-size: 19px;
+    }
+
+    .site-header__profile-menu-name {
+      font-size: 15px;
+    }
+
+    .site-header__profile-menu-email {
+      font-size: 12px;
+    }
+
+    .p-menu-list {
+      padding: 8px 14px;
+    }
+
+    .p-menu-item-link {
+      padding: 12px 10px;
+      font-size: 14.5px;
+    }
+
+    .p-menu-item-icon {
+      font-size: 18px;
+    }
+
+    .site-header__profile-menu-signout {
+      padding: 18px 22px 26px;
+      border-top: none;
+    }
+
+    .site-header__profile-menu-signout-btn {
+      justify-content: center;
+      padding: 14px;
+      border: 1px solid #ece2d2;
+      border-radius: 12px;
+      font-weight: 500;
+      font-size: 14px;
+    }
   }
 }
