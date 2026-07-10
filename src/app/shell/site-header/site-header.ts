@@ -8,9 +8,13 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
+
+const AUTH_ACTIONS_HIDDEN_ROUTES = ['/signup'];
 
 interface NavLink {
   label: string;
@@ -28,8 +32,21 @@ interface NavLink {
 export class SiteHeader {
   private readonly auth = inject(AuthSessionService);
   private readonly oidcRedirect = inject(OidcRedirectService);
+  private readonly router = inject(Router);
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly hamburgerRef = viewChild<ElementRef<HTMLButtonElement>>('hamburger');
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  readonly hideAuthActions = computed(() =>
+    AUTH_ACTIONS_HIDDEN_ROUTES.some((route) => this.currentUrl().split('?')[0] === route),
+  );
 
   readonly navLinks: NavLink[] = [
     { label: 'How it works', path: '/how-it-works' },

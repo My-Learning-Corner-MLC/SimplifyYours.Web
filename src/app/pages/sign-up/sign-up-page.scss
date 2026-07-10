@@ -57,7 +57,7 @@ $sage: #7a8f5a;
     position: relative;
     background: linear-gradient(160deg, $plum 0%, $plum-mid 60%, $plum-deep 100%);
     color: $cream;
-    padding: 48px 56px;
+    padding: 32px 56px;
     overflow-y: hidden;
     overflow-x: hidden;
     display: flex;
@@ -146,10 +146,10 @@ $sage: #7a8f5a;
 
   &__brand-headline {
     font-family: 'Instrument Serif', serif;
-    font-size: 60px;
-    line-height: 1.02;
+    font-size: 46px;
+    line-height: 1.05;
     letter-spacing: -0.015em;
-    margin: 18px 0 0;
+    margin: 14px 0 0;
     font-weight: 400;
 
     &--italic {
@@ -162,14 +162,14 @@ $sage: #7a8f5a;
     height: 1px;
     width: 80px;
     background: $champagne;
-    margin-top: 24px;
+    margin-top: 18px;
   }
 
   &__brand-lede {
-    font-size: 15px;
-    line-height: 1.65;
+    font-size: 14px;
+    line-height: 1.6;
     color: rgba(255, 252, 245, 0.78);
-    margin: 22px 0 0;
+    margin: 16px 0 0;
     max-width: 480px;
   }
 
@@ -198,48 +198,45 @@ $sage: #7a8f5a;
 
   &__form-pane {
     background: $cream;
-    padding: 48px 64px 52px;
+    padding: 32px 56px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+
+    &--success {
+      justify-content: center;
+    }
   }
 
   &__form-header {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    align-items: center;
-  }
-
-  &__eyebrow {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    color: $muted;
-    margin: 0;
+    align-items: baseline;
+    gap: 8px 16px;
   }
 
   &__sign-in {
     font-size: 13px;
     color: $ink-soft;
     margin: 0;
-
-    a {
-      color: $plum;
-      font-weight: 500;
-      margin-left: 6px;
-      border-bottom: 1px solid $champagne;
-      padding-bottom: 1px;
-      text-decoration: none;
-    }
   }
 
-  &__title-block {
-    margin-top: 32px;
+  &__sign-in-link {
+    background: transparent;
+    border: none;
+    color: $plum;
+    font: inherit;
+    font-weight: 500;
+    margin-left: 6px;
+    border-bottom: 1px solid $champagne;
+    padding: 0 0 1px;
+    cursor: pointer;
   }
 
   &__title {
     font-family: 'Instrument Serif', serif;
-    font-size: 38px;
+    font-size: 27px;
     line-height: 1;
     letter-spacing: -0.012em;
     margin: 0;
@@ -255,17 +252,17 @@ $sage: #7a8f5a;
     height: 1px;
     width: 56px;
     background: $champagne;
-    margin-top: 16px;
+    margin-top: 20px;
   }
 
   &__form {
     display: flex;
     flex-direction: column;
-    margin-top: 28px;
+    margin-top: 20px;
   }
 
   &__field + &__field {
-    margin-top: 16px;
+    margin-top: 20px;
   }
 
   &__label {
@@ -277,7 +274,7 @@ $sage: #7a8f5a;
 
   &__input {
     margin-top: 8px;
-    padding: 13px 16px;
+    padding: 12px 16px;
     background: $linen;
     border: 1px solid $linen-border;
     border-radius: 10px;
@@ -310,12 +307,16 @@ $sage: #7a8f5a;
   }
 
   &__error-link {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid $champagne;
     color: $plum;
     font-family: 'Instrument Serif', serif;
     font-style: italic;
-    border-bottom: 1px solid $champagne;
-    text-decoration: none;
+    font-size: inherit;
+    padding: 0;
     margin-left: 4px;
+    cursor: pointer;
   }
 
   &__banner {
@@ -377,7 +378,7 @@ $sage: #7a8f5a;
   }
 
   &__strength {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
   &__strength-pills {
@@ -470,8 +471,8 @@ $sage: #7a8f5a;
   }
 
   &__submit {
-    margin-top: 22px;
-    padding: 15px 22px;
+    margin-top: 20px;
+    padding: 13px 22px;
     background: $plum;
     color: $cream;
     border: none;
@@ -495,7 +496,7 @@ $sage: #7a8f5a;
   }
 
   &__fine-print {
-    margin: 14px 0 0;
+    margin: 8px 0 0;
     font-size: 11.5px;
     color: $muted;
     text-align: center;
@@ -521,7 +522,22 @@ $sage: #7a8f5a;
   }
 
   &__submit--link {
+    display: inline-flex;
+    width: auto;
+    background: transparent;
+    color: $plum;
+    border: 1.5px solid $plum;
+    box-shadow: none;
     text-decoration: none;
+
+    .sign-up-page__submit-arrow {
+      color: $plum;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(90, 40, 73, 0.06);
+    }
   }
 
   &__success {
