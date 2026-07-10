@@ -299,14 +299,16 @@ describe('SiteHeader', () => {
       expect(name?.textContent?.trim()).toBe('Eleanor');
     });
 
-    it('should render the unread notification dot when hasUnreadNotifications is true', async () => {
-      const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
+    it('should render the unread notification dot while there are unread mock notifications', async () => {
+      const fixture = await setup({ fullName: 'Eleanor Rigby' });
       const dot = fixture.nativeElement.querySelector('.site-header__notif-dot');
       expect(dot).not.toBeNull();
     });
 
-    it('should not render the unread notification dot when hasUnreadNotifications is false', async () => {
-      const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+    it('should not render the unread notification dot once every notification has been read', async () => {
+      const fixture = await setup({ fullName: 'Eleanor Rigby' });
+      fixture.componentInstance.markAllNotificationsRead();
+      fixture.detectChanges();
       const dot = fixture.nativeElement.querySelector('.site-header__notif-dot');
       expect(dot).toBeNull();
     });
@@ -529,6 +531,36 @@ describe('SiteHeader', () => {
         );
         expect(groups).toEqual(['Earlier']);
         expect(document.body.querySelectorAll('.site-header__notification-item').length).toBe(4);
+        // Nothing left to mark, so the action disappears rather than sitting
+        // there disabled.
+        expect(document.body.querySelector('.site-header__notification-mark-all')).toBeNull();
+      });
+
+      it('shows a toast and closes the popover when View all notifications is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby' });
+        const messages = TestBed.inject(MessageService);
+        const addSpy = vi.spyOn(messages, 'add');
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const viewAll = document.body.querySelector(
+          '.site-header__notification-view-all',
+        ) as HTMLButtonElement;
+        viewAll.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(addSpy).toHaveBeenCalledWith({
+          severity: 'info',
+          summary: 'All notifications',
+          detail: 'Coming soon.',
+        });
+        expect(bell.getAttribute('aria-expanded')).toBe('false');
       });
 
       it('closes when the mobile close button is clicked', async () => {

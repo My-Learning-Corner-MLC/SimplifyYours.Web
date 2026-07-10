@@ -59,13 +59,17 @@
           <div class="site-header__notification-handle" aria-hidden="true"></div>
           <div class="site-header__notification-header">
             <span class="site-header__notification-title">Notifications</span>
-            <button
-              type="button"
-              class="site-header__notification-mark-all"
-              (click)="markAllNotificationsRead()"
-            >
-              Mark all read
-            </button>
+            @if (newNotifications().length > 0) {
+              <button
+                type="button"
+                class="site-header__notification-mark-all"
+                title="Mark all as read"
+                aria-label="Mark all notifications as read"
+                (click)="markAllNotificationsRead()"
+              >
+                <i class="pi pi-check-circle" aria-hidden="true"></i>
+              </button>
+            }
             <button
               type="button"
               class="site-header__notification-close"
@@ -127,7 +131,13 @@
           }
 
           <div class="site-header__notification-footer">
-            <span class="site-header__notification-view-all">View all notifications</span>
+            <button
+              type="button"
+              class="site-header__notification-view-all"
+              (click)="notificationsPopover.hide(); showComingSoonToast('All notifications')"
+            >
+              View all notifications
+            </button>
           </div>
         </p-popover>
         <button

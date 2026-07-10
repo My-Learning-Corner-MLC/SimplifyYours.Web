@@ -767,15 +767,24 @@
   }
 
   .site-header__notification-mark-all {
-    padding: 0 0 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
     border: none;
-    border-bottom: 1px solid #c8a876;
+    border-radius: 8px;
     background: none;
     color: #5a2849;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.08em;
+    font-size: 15px;
     cursor: pointer;
+    transition: background 140ms ease;
+
+    &:hover,
+    &:focus-visible {
+      background: #f5efe6;
+    }
   }
 
   .site-header__notification-group-label {
@@ -868,12 +877,22 @@
   }
 
   .site-header__notification-view-all {
+    padding: 2px 0 1px;
+    border: none;
     border-bottom: 1px solid #c8a876;
+    background: none;
     color: #5a2849;
     font-family: 'Instrument Serif', serif;
     font-style: italic;
     font-size: 14px;
     cursor: pointer;
+    transition: color 140ms ease, border-color 140ms ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: #5a2849;
+      color: #4a1f3b;
+    }
   }
 }
 

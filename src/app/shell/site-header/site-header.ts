@@ -78,7 +78,9 @@ export class SiteHeader {
   readonly fullName = computed(() => this.auth.session()?.fullName ?? '');
   readonly email = computed(() => this.auth.session()?.email ?? '');
 
-  readonly hasUnreadNotifications = computed(() => this.auth.session()?.hasUnreadNotifications ?? false);
+  private readonly notificationItems = signal<readonly NotificationItem[]>(MOCK_NOTIFICATIONS);
+  readonly newNotifications = computed(() => this.notificationItems().filter((item) => item.unread));
+  readonly earlierNotifications = computed(() => this.notificationItems().filter((item) => !item.unread));
 
   readonly notificationsOpen = signal(false);
   // The bell's badge dot clears the moment the popover is opened, not when
@@ -86,12 +88,8 @@ export class SiteHeader {
   // read" note in the design.
   private readonly notificationsBadgeDismissed = signal(false);
   readonly showNotificationsBadge = computed(
-    () => this.hasUnreadNotifications() && !this.notificationsBadgeDismissed(),
+    () => this.newNotifications().length > 0 && !this.notificationsBadgeDismissed(),
   );
-
-  private readonly notificationItems = signal<readonly NotificationItem[]>(MOCK_NOTIFICATIONS);
-  readonly newNotifications = computed(() => this.notificationItems().filter((item) => item.unread));
-  readonly earlierNotifications = computed(() => this.notificationItems().filter((item) => !item.unread));
 
   readonly profileMenuOpen = signal(false);
 
@@ -99,9 +97,9 @@ export class SiteHeader {
     {
       label: 'My Account',
       items: [
-        { label: 'Profile', icon: 'pi pi-user', command: () => this.onProfileAction('Profile') },
-        { label: 'Billing', icon: 'pi pi-wallet', command: () => this.onProfileAction('Billing') },
-        { label: 'Settings', icon: 'pi pi-cog', command: () => this.onProfileAction('Settings') },
+        { label: 'Profile', icon: 'pi pi-user', command: () => this.showComingSoonToast('Profile') },
+        { label: 'Billing', icon: 'pi pi-wallet', command: () => this.showComingSoonToast('Billing') },
+        { label: 'Settings', icon: 'pi pi-cog', command: () => this.showComingSoonToast('Settings') },
       ],
     },
     {
@@ -110,12 +108,12 @@ export class SiteHeader {
         {
           label: 'Change Password',
           icon: 'pi pi-lock',
-          command: () => this.onProfileAction('Change Password'),
+          command: () => this.showComingSoonToast('Change Password'),
         },
         {
           label: 'Two-Factor Auth',
           icon: 'pi pi-shield',
-          command: () => this.onProfileAction('Two-Factor Auth'),
+          command: () => this.showComingSoonToast('Two-Factor Auth'),
         },
       ],
     },
@@ -125,7 +123,7 @@ export class SiteHeader {
         {
           label: 'Add Members',
           icon: 'pi pi-user-plus',
-          command: () => this.onProfileAction('Add Members'),
+          command: () => this.showComingSoonToast('Add Members'),
         },
       ],
     },
@@ -135,7 +133,7 @@ export class SiteHeader {
         {
           label: 'Contact Support',
           icon: 'pi pi-question-circle',
-          command: () => this.onProfileAction('Contact Support'),
+          command: () => this.showComingSoonToast('Contact Support'),
         },
       ],
     },
@@ -203,7 +201,7 @@ export class SiteHeader {
     return notificationTint(item.category, item.unread);
   }
 
-  private onProfileAction(label: string): void {
+  showComingSoonToast(label: string): void {
     this.messages.add({ severity: 'info', summary: label, detail: 'Coming soon.' });
   }
 
