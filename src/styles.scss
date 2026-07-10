@@ -81,6 +81,19 @@ $muted: #7a6b6e;
     opacity: 0.6;
   }
 
+  // Dates before [minDate] (e.g. past days on the event-date picker) — grayed
+  // out and non-interactive rather than just visually identical but clickable.
+  .p-datepicker-day.p-disabled {
+    color: $muted !important;
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+
+    &:hover {
+      background: transparent !important;
+    }
+  }
+
   // timeOnly spinner panel (Starts / Ends pickers)
   .p-datepicker-time-picker {
     background: transparent !important;

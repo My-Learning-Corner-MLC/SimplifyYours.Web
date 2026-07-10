@@ -140,6 +140,7 @@
                     iconDisplay="input"
                     [showIcon]="true"
                     [showClear]="true"
+                    [minDate]="minEventDate"
                     [attr.aria-invalid]="shouldShowTimeError() || hasBackendError('eventDate')"
                   />
                 </div>
@@ -351,14 +352,16 @@
         <button type="button" class="ce-btn ce-btn-ghost" disabled aria-disabled="true">← Back</button>
       }
       <div class="ce-footer-actions">
-        <button
-          type="button"
-          class="ce-btn ce-btn-outline"
-          (click)="onSubmit(true)"
-          [disabled]="submitting()"
-        >
-          Create now, finish later
-        </button>
+        @if (!isSubmit) {
+          <button
+            type="button"
+            class="ce-btn ce-btn-outline"
+            (click)="onSubmit(true)"
+            [disabled]="submitting()"
+          >
+            Create now, finish later
+          </button>
+        }
         @if (isSubmit) {
           <button type="submit" class="ce-btn ce-btn-primary" [disabled]="submitting()">
             @if (submitting()) {
@@ -374,11 +377,13 @@
         }
       </div>
     </div>
-    <div class="ce-footer-meta">
-      <span class="ce-footer-note">
-        “Finish later” publishes the page — add the remaining details anytime.
-      </span>
-    </div>
+    @if (!isSubmit) {
+      <div class="ce-footer-meta">
+        <span class="ce-footer-note">
+          “Finish later” publishes the page — add the remaining details anytime.
+        </span>
+      </div>
+    }
   </div>
 </ng-template>
 

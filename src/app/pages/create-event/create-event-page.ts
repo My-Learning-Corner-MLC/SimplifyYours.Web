@@ -259,7 +259,6 @@ const CANONICAL_TIME_ZONES: readonly string[] = [
   'America/Scoresbysund',
   'Atlantic/Cape_Verde',
   'Atlantic/Azores',
-  'Etc/UTC',
   'Africa/Abidjan',
   'Africa/Bissau',
   'America/Danmarkshavn',
@@ -522,6 +521,9 @@ export class CreateEventPage {
   readonly eventTypeEmoji = EVENT_TYPE_EMOJI;
   readonly steps = WIZARD_STEPS;
   readonly timeZoneOptions: TimeZoneOption[] = buildTimeZoneOptions();
+  // Calendar floor for the event date picker — grays out and blocks selection
+  // of any day before today, matching the "today or in the future" rule.
+  readonly minEventDate = new Date(new Date().setHours(0, 0, 0, 0));
 
   readonly form: FormGroup = this.fb.group(
     {
