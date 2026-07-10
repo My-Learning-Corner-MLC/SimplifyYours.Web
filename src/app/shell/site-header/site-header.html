@@ -63,7 +63,7 @@
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
         </div>
-      } @else {
+      } @else if (!hideAuthActions()) {
         <button type="button" class="site-header__sign-in" (click)="onSignInClick()">Sign in</button>
         <a class="site-header__sign-up" routerLink="/signup" (click)="closeMenu()">
           <span>Sign up</span>
@@ -135,7 +135,7 @@
         >{{ link.label }}</a>
       }
     </div>
-    @if (!isSignedIn()) {
+    @if (!isSignedIn() && !hideAuthActions()) {
       <button
         type="button"
         class="site-header__menu-sign-in"
