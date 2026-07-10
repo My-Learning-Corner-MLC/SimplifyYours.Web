@@ -105,11 +105,23 @@
   color: #5a2849;
   cursor: pointer;
   padding: 0;
-  transition: background 140ms ease;
+  transition: background 140ms ease, color 140ms ease;
 
   &:hover,
   &:focus-visible {
     background: #ece2d2;
+  }
+
+  // Matches the "bell, active" state in the design (Part 05 · 5A): fills
+  // plum and the stroke flips to cream while the popover is open.
+  &.site-header__notif--active {
+    background: #5a2849;
+    color: #fffcf5;
+
+    &:hover,
+    &:focus-visible {
+      background: #4a1f3b;
+    }
   }
 }
 
@@ -718,6 +730,204 @@
       border-radius: 12px;
       font-weight: 500;
       font-size: 14px;
+    }
+  }
+}
+
+// Same CDK-overlay situation as the profile menu — see the comment above —
+// scoped to its own styleClass so the two popovers never bleed into each
+// other.
+::ng-deep .p-popover.site-header-notification-popover {
+  width: 368px;
+  max-width: calc(100vw - 32px);
+  border: 1px solid #ece2d2;
+  border-radius: 14px;
+  background: #fffcf5 !important;
+  box-shadow: 0 12px 32px rgba(42, 31, 45, 0.18);
+  overflow: hidden;
+
+  .site-header__notification-handle,
+  .site-header__notification-close {
+    display: none;
+  }
+
+  .site-header__notification-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid #ece2d2;
+  }
+
+  .site-header__notification-title {
+    flex: 1;
+    color: #2a1f2d;
+    font-family: 'Instrument Serif', serif;
+    font-size: 20px;
+  }
+
+  .site-header__notification-mark-all {
+    padding: 0 0 1px;
+    border: none;
+    border-bottom: 1px solid #c8a876;
+    background: none;
+    color: #5a2849;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+
+  .site-header__notification-group-label {
+    padding: 12px 20px 4px;
+    color: #7a6b6e;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .site-header__notification-divider {
+    height: 1px;
+    margin: 8px 20px;
+    background: #ece2d2;
+  }
+
+  .site-header__notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 20px;
+  }
+
+  .site-header__notification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #f5efe6;
+    color: #5a2849;
+    font-size: 16px;
+
+    &[data-tone='success'] {
+      background: rgba(122, 143, 90, 0.14);
+      color: #7a8f5a;
+    }
+
+    &[data-tone='muted'] {
+      color: #7a6b6e;
+    }
+  }
+
+  .site-header__notification-body {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .site-header__notification-message {
+    color: #2a1f2d;
+    font-size: 13px;
+    line-height: 1.45;
+
+    &.site-header__notification-message--read {
+      color: #4a4045;
+    }
+
+    .site-header__notification-emphasis {
+      color: #2a1f2d;
+      font-weight: 600;
+    }
+  }
+
+  .site-header__notification-time {
+    margin-top: 5px;
+    color: #7a6b6e;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+
+  .site-header__notification-unread-dot {
+    flex-shrink: 0;
+    align-self: flex-start;
+    width: 7px;
+    height: 7px;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: #c8a876;
+  }
+
+  .site-header__notification-footer {
+    padding: 12px 20px 16px;
+    border-top: 1px solid #ece2d2;
+    text-align: center;
+  }
+
+  .site-header__notification-view-all {
+    border-bottom: 1px solid #c8a876;
+    color: #5a2849;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 14px;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 767.98px) {
+  ::ng-deep .p-popover.site-header-notification-popover {
+    position: fixed !important;
+    top: auto !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 32px rgba(42, 31, 45, 0.18);
+
+    .site-header__notification-handle {
+      display: flex;
+      justify-content: center;
+      padding: 10px 0 4px;
+
+      &::after {
+        content: '';
+        width: 36px;
+        height: 4px;
+        border-radius: 99px;
+        background: #ece2d2;
+      }
+    }
+
+    .site-header__notification-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: #f5efe6;
+      color: #2a1f2d;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .site-header__notification-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+    }
+
+    .site-header__notification-message {
+      font-size: 13.5px;
     }
   }
 }

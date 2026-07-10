@@ -11,8 +11,12 @@ import {
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MenuItem, MessageService, PrimeTemplate } from 'primeng/api';
 import { Menu } from 'primeng/menu';
+import { Popover } from 'primeng/popover';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
+import { MOCK_NOTIFICATIONS } from '../../core/notifications/mock-notifications';
+import { NotificationItem } from '../../core/notifications/notification-item.model';
+import { notificationTint } from '../../core/notifications/notification-display';
 
 interface NavLink {
   label: string;
@@ -22,7 +26,7 @@ interface NavLink {
 @Component({
   standalone: true,
   selector: 'app-site-header',
-  imports: [RouterLink, RouterLinkActive, Menu, PrimeTemplate],
+  imports: [RouterLink, RouterLinkActive, Menu, Popover, PrimeTemplate],
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,6 +79,19 @@ export class SiteHeader {
   readonly email = computed(() => this.auth.session()?.email ?? '');
 
   readonly hasUnreadNotifications = computed(() => this.auth.session()?.hasUnreadNotifications ?? false);
+
+  readonly notificationsOpen = signal(false);
+  // The bell's badge dot clears the moment the popover is opened, not when
+  // individual items are read — matches the "BADGE → clears on open, not on
+  // read" note in the design.
+  private readonly notificationsBadgeDismissed = signal(false);
+  readonly showNotificationsBadge = computed(
+    () => this.hasUnreadNotifications() && !this.notificationsBadgeDismissed(),
+  );
+
+  private readonly notificationItems = signal<readonly NotificationItem[]>(MOCK_NOTIFICATIONS);
+  readonly newNotifications = computed(() => this.notificationItems().filter((item) => item.unread));
+  readonly earlierNotifications = computed(() => this.notificationItems().filter((item) => !item.unread));
 
   readonly profileMenuOpen = signal(false);
 
@@ -167,6 +184,23 @@ export class SiteHeader {
 
   onProfileMenuHide(): void {
     this.profileMenuOpen.set(false);
+  }
+
+  onNotificationsShow(): void {
+    this.notificationsOpen.set(true);
+    this.notificationsBadgeDismissed.set(true);
+  }
+
+  onNotificationsHide(): void {
+    this.notificationsOpen.set(false);
+  }
+
+  markAllNotificationsRead(): void {
+    this.notificationItems.update((items) => items.map((item) => ({ ...item, unread: false })));
+  }
+
+  tintFor(item: NotificationItem) {
+    return notificationTint(item.category, item.unread);
   }
 
   private onProfileAction(label: string): void {

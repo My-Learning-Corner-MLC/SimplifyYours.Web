@@ -475,5 +475,82 @@ describe('SiteHeader', () => {
         expect(addSpy).toHaveBeenCalledWith({ severity: 'info', summary: 'Profile', detail: 'Coming soon.' });
       });
     });
+
+    describe('notifications', () => {
+      afterEach(() => {
+        document.body.querySelectorAll('.p-popover').forEach((el) => el.remove());
+      });
+
+      it('opens the popover with New/Earlier grouping and clears the badge dot', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+        expect(fixture.nativeElement.querySelector('.site-header__notif-dot')).not.toBeNull();
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(bell.getAttribute('aria-expanded')).toBe('true');
+        expect(bell.classList).toContain('site-header__notif--active');
+        // The badge clears the moment the popover opens, per the design.
+        expect(fixture.nativeElement.querySelector('.site-header__notif-dot')).toBeNull();
+
+        const groups = Array.from(document.body.querySelectorAll('.site-header__notification-group-label')).map(
+          (el) => el.textContent?.trim(),
+        );
+        expect(groups).toEqual(['New', 'Earlier']);
+
+        const items = document.body.querySelectorAll('.site-header__notification-item');
+        expect(items.length).toBe(4);
+        expect(document.body.querySelectorAll('.site-header__notification-unread-dot').length).toBe(2);
+        expect(document.body.textContent).toContain('Marcus Cole');
+        expect(document.body.textContent).toContain('Priya Nair');
+      });
+
+      it('moves every item to Earlier and clears their unread dots when Mark all read is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const markAll = document.body.querySelector(
+          '.site-header__notification-mark-all',
+        ) as HTMLButtonElement;
+        markAll.click();
+        fixture.detectChanges();
+
+        expect(document.body.querySelector('.site-header__notification-unread-dot')).toBeNull();
+        const groups = Array.from(document.body.querySelectorAll('.site-header__notification-group-label')).map(
+          (el) => el.textContent?.trim(),
+        );
+        expect(groups).toEqual(['Earlier']);
+        expect(document.body.querySelectorAll('.site-header__notification-item').length).toBe(4);
+      });
+
+      it('closes when the mobile close button is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(bell.getAttribute('aria-expanded')).toBe('true');
+
+        const close = document.body.querySelector(
+          '.site-header__notification-close',
+        ) as HTMLButtonElement;
+        close.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(bell.getAttribute('aria-expanded')).toBe('false');
+      });
+    });
   });
 });

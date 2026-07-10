@@ -24,7 +24,11 @@
         <button
           type="button"
           class="site-header__notif"
+          [class.site-header__notif--active]="notificationsOpen()"
+          aria-haspopup="true"
+          [attr.aria-expanded]="notificationsOpen()"
           aria-label="Notifications"
+          (click)="notificationsPopover.toggle($event)"
         >
           <svg
             class="site-header__notif-icon"
@@ -41,10 +45,91 @@
             <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          @if (hasUnreadNotifications()) {
+          @if (showNotificationsBadge()) {
             <span class="site-header__notif-dot" aria-hidden="true"></span>
           }
         </button>
+        <p-popover
+          #notificationsPopover
+          styleClass="site-header-notification-popover"
+          appendTo="body"
+          (onShow)="onNotificationsShow()"
+          (onHide)="onNotificationsHide()"
+        >
+          <div class="site-header__notification-handle" aria-hidden="true"></div>
+          <div class="site-header__notification-header">
+            <span class="site-header__notification-title">Notifications</span>
+            <button
+              type="button"
+              class="site-header__notification-mark-all"
+              (click)="markAllNotificationsRead()"
+            >
+              Mark all read
+            </button>
+            <button
+              type="button"
+              class="site-header__notification-close"
+              aria-label="Close notifications"
+              (click)="notificationsPopover.hide()"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          @if (newNotifications().length > 0) {
+            <div class="site-header__notification-group-label">New</div>
+            @for (item of newNotifications(); track item.id) {
+              <div class="site-header__notification-item">
+                <span class="site-header__notification-icon" [attr.data-tone]="tintFor(item).tone">
+                  <i [class]="tintFor(item).icon" aria-hidden="true"></i>
+                </span>
+                <span class="site-header__notification-body">
+                  <span class="site-header__notification-message" [innerHTML]="item.message"></span>
+                  <span class="site-header__notification-time">{{ item.timestamp }}</span>
+                </span>
+                <span class="site-header__notification-unread-dot" aria-hidden="true"></span>
+              </div>
+            }
+          }
+
+          @if (earlierNotifications().length > 0) {
+            @if (newNotifications().length > 0) {
+              <div class="site-header__notification-divider" aria-hidden="true"></div>
+            }
+            <div class="site-header__notification-group-label">Earlier</div>
+            @for (item of earlierNotifications(); track item.id) {
+              <div class="site-header__notification-item">
+                <span class="site-header__notification-icon" [attr.data-tone]="tintFor(item).tone">
+                  <i [class]="tintFor(item).icon" aria-hidden="true"></i>
+                </span>
+                <span class="site-header__notification-body">
+                  <span
+                    class="site-header__notification-message site-header__notification-message--read"
+                    [innerHTML]="item.message"
+                  ></span>
+                  <span class="site-header__notification-time">{{ item.timestamp }}</span>
+                </span>
+              </div>
+            }
+          }
+
+          <div class="site-header__notification-footer">
+            <span class="site-header__notification-view-all">View all notifications</span>
+          </div>
+        </p-popover>
         <button
           type="button"
           class="site-header__avatar-pill"
