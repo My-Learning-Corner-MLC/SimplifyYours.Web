@@ -1,6 +1,4 @@
 // Typed failure surfaced to the dashboard when the event list cannot be loaded.
-// `kind` lets the UI distinguish an auth problem from a generic server error.
-export interface QueryEventsError {
-  kind: 'unauthorized' | 'server';
-  message: string;
-}
+// `kind` lets the caller distinguish an expired/invalid session (redirect to
+// sign-in) from a generic server error (retry in place, hence the message).
+export type QueryEventsError = { kind: 'unauthorized' } | { kind: 'server'; message: string };

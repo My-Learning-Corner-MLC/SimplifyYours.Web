@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { Countdown, describeCountdown, formatEventWhen } from '../../core/events/event-countdown';
@@ -71,12 +71,13 @@ export const EMPTY_STATE_QUICK_TYPES: readonly QuickType[] = [
 export class DashboardPage implements OnInit {
   private readonly api = inject(EventApiClient);
   private readonly auth = inject(AuthSessionService);
+  private readonly router = inject(Router);
 
   // Captured once so countdown chips stay stable across change detection.
   private readonly now = new Date();
 
   readonly state = signal<DashboardState>('loading');
-  readonly loadError = signal<QueryEventsError | null>(null);
+  readonly loadError = signal<Extract<QueryEventsError, { kind: 'server' }> | null>(null);
   readonly totalCount = signal(0);
   readonly activeFilter = signal<EventFilter>('upcoming');
 
@@ -168,6 +169,11 @@ export class DashboardPage implements OnInit {
           this.state.set(response.totalCount === 0 ? 'empty' : 'ready');
         },
         error: (error: QueryEventsError) => {
+          if (error.kind === 'unauthorized') {
+            this.auth.clearSession();
+            void this.router.navigateByUrl('/home');
+            return;
+          }
           this.loadError.set(error);
           this.state.set('error');
         },
