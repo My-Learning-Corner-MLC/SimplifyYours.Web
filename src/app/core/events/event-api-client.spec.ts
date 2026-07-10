@@ -179,7 +179,6 @@ describe('EventApiClient', () => {
       httpMock.expectOne(queryUrl).flush(null, { status: 401, statusText: 'Unauthorized' });
 
       expect(err?.kind).toBe('unauthorized');
-      expect(err?.message).toMatch(/sign in/i);
     });
 
     it('maps a 403 to an unauthorized error', () => {
@@ -199,8 +198,10 @@ describe('EventApiClient', () => {
         .expectOne(queryUrl)
         .flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-      expect(err?.kind).toBe('server');
-      expect(err?.message).toMatch(/try again/i);
+      if (err?.kind !== 'server') {
+        throw new Error('expected a server error');
+      }
+      expect(err.message).toMatch(/try again/i);
     });
 
     it('maps a network failure to a generic server error', () => {

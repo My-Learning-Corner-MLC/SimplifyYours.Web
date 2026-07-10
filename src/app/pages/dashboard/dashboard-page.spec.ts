@@ -1,6 +1,6 @@
-import { signal } from '@angular/core';
+import { Signal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { AuthSessionService } from '../../core/auth/auth-session.service';
@@ -54,13 +54,21 @@ class ApiStub {
   queryEvents = vi.fn(() => of(makeResponse([])));
 }
 
+class AuthStub {
+  readonly session: Signal<UserSession | null>;
+  readonly clearSession = vi.fn();
+  constructor(session: UserSession | null) {
+    this.session = signal(session);
+  }
+}
+
 function setup(api: ApiStub, session: UserSession | null = null) {
   TestBed.configureTestingModule({
     imports: [DashboardPage],
     providers: [
       provideRouter([]),
       { provide: EventApiClient, useValue: api },
-      { provide: AuthSessionService, useValue: { session: signal(session) } },
+      { provide: AuthSessionService, useValue: new AuthStub(session) },
     ],
   });
   const fixture = TestBed.createComponent(DashboardPage);
@@ -229,6 +237,30 @@ describe('DashboardPage', () => {
     expect(api.queryEvents).toHaveBeenCalledTimes(2);
     expect(host.querySelector('[data-testid="dashboard-error"]')).toBeNull();
     expect(host.querySelectorAll('[data-testid="event-card"]').length).toBe(1);
+  });
+
+  it('clears the session and redirects to /home on an unauthorized query error, without rendering an error state', () => {
+    const api = new ApiStub();
+    api.queryEvents.mockReturnValue(throwError(() => ({ kind: 'unauthorized' })));
+    const auth = new AuthStub(null);
+    TestBed.configureTestingModule({
+      imports: [DashboardPage],
+      providers: [
+        provideRouter([]),
+        { provide: EventApiClient, useValue: api },
+        { provide: AuthSessionService, useValue: auth },
+      ],
+    });
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    const fixture = TestBed.createComponent(DashboardPage);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('[data-testid="dashboard-error"]')).toBeNull();
+    expect(auth.clearSession).toHaveBeenCalledTimes(1);
+    expect(navigateSpy).toHaveBeenCalledWith('/home');
   });
 
   it('requests all events with a bounded page size', () => {

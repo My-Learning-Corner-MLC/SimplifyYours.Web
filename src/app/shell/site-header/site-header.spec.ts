@@ -1,6 +1,7 @@
 import { Signal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { MessageService } from 'primeng/api';
 
 function flushMicrotasks(): Promise<void> {
   return new Promise((resolve) => queueMicrotask(resolve));
@@ -13,6 +14,7 @@ import { SiteHeader } from './site-header';
 
 class FakeAuthSessionService {
   readonly session: Signal<UserSession | null>;
+  readonly clearSession = vi.fn();
   constructor(initial: UserSession | null) {
     this.session = signal(initial);
   }
@@ -40,6 +42,7 @@ async function setup(partial: Partial<UserSession> | null = null) {
       provideRouter([{ path: '**', children: [] }]),
       { provide: AuthSessionService, useValue: new FakeAuthSessionService(session) },
       { provide: OidcRedirectService, useValue: fakeOidc },
+      MessageService,
     ],
   }).compileComponents();
   const fixture = TestBed.createComponent(SiteHeader);
@@ -67,12 +70,12 @@ describe('SiteHeader', () => {
       expect(wordmark?.textContent).toContain('Yours');
     });
 
-    it('should render the four primary nav links', async () => {
+    it('should render the five primary nav links', async () => {
       const fixture = await setup();
       const links = fixture.nativeElement.querySelectorAll('.site-header__nav-link');
-      expect(links.length).toBe(4);
+      expect(links.length).toBe(5);
       const labels = Array.from(links).map((el) => (el as HTMLElement).textContent?.trim());
-      expect(labels).toEqual(['How it works', 'Themes', 'Pricing', 'Stories']);
+      expect(labels).toEqual(['Home', 'Blogs', 'Pricing', 'How it works', 'About Us']);
     });
 
     it('should render sign-in as a button that calls OidcRedirectService.startAuthorization, and sign-up as a routerLink to /signup', async () => {
@@ -165,12 +168,12 @@ describe('SiteHeader', () => {
       expect(fakeOidc.startAuthorization).toHaveBeenCalledTimes(1);
     });
 
-    it('should render four mobile menu nav links in the design order', async () => {
+    it('should render five mobile menu nav links in the design order', async () => {
       const fixture = await setup();
       const links = fixture.nativeElement.querySelectorAll('.site-header__menu-link');
-      expect(links.length).toBe(4);
+      expect(links.length).toBe(5);
       const labels = Array.from(links).map((el) => (el as HTMLElement).textContent?.trim());
-      expect(labels).toEqual(['How it works', 'Themes', 'Pricing', 'Stories']);
+      expect(labels).toEqual(['Home', 'Blogs', 'Pricing', 'How it works', 'About Us']);
     });
 
     it('should close the menu when any menu link is clicked', async () => {
@@ -291,7 +294,7 @@ describe('SiteHeader', () => {
       const links = fixture.nativeElement.querySelectorAll('.site-header__nav-link');
       expect(links.length).toBe(4);
       const labels = Array.from(links).map((el) => (el as HTMLElement).textContent?.trim());
-      expect(labels).toEqual(['Dashboard', 'Guests', 'Themes', 'Vendors']);
+      expect(labels).toEqual(['Dashboard', 'Events', 'Tasks', 'Vendors']);
       expect((links[0] as HTMLElement).classList).toContain('site-header__nav-link--active');
     });
 
@@ -313,14 +316,16 @@ describe('SiteHeader', () => {
       expect(name?.textContent?.trim()).toBe('Eleanor');
     });
 
-    it('should render the unread notification dot when hasUnreadNotifications is true', async () => {
-      const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
+    it('should render the unread notification dot while there are unread mock notifications', async () => {
+      const fixture = await setup({ fullName: 'Eleanor Rigby' });
       const dot = fixture.nativeElement.querySelector('.site-header__notif-dot');
       expect(dot).not.toBeNull();
     });
 
-    it('should not render the unread notification dot when hasUnreadNotifications is false', async () => {
-      const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+    it('should not render the unread notification dot once every notification has been read', async () => {
+      const fixture = await setup({ fullName: 'Eleanor Rigby' });
+      fixture.componentInstance.markAllNotificationsRead();
+      fixture.detectChanges();
       const dot = fixture.nativeElement.querySelector('.site-header__notif-dot');
       expect(dot).toBeNull();
     });
@@ -340,7 +345,7 @@ describe('SiteHeader', () => {
 
       const menuLinks = fixture.nativeElement.querySelectorAll('.site-header__menu-link');
       const labels = Array.from(menuLinks).map((el) => (el as HTMLElement).textContent?.trim());
-      expect(labels).toEqual(['Dashboard', 'Guests', 'Themes', 'Vendors']);
+      expect(labels).toEqual(['Dashboard', 'Events', 'Tasks', 'Vendors']);
 
       expect(fixture.nativeElement.querySelector('.site-header__menu-sign-in')).toBeNull();
       expect(fixture.nativeElement.querySelector('.site-header__menu-cta')).toBeNull();
@@ -370,6 +375,231 @@ describe('SiteHeader', () => {
       const initial = fixture.nativeElement.querySelector('.site-header__avatar-initial') as HTMLElement;
       expect(name.textContent?.trim()).toBe('Madonna');
       expect(initial.textContent?.trim()).toBe('M');
+    });
+
+    describe('profile menu', () => {
+      afterEach(() => {
+        document.body.querySelectorAll('.p-menu').forEach((el) => el.remove());
+      });
+
+      it('should expose aria-haspopup and start with aria-expanded false', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const pill = fixture.nativeElement.querySelector('.site-header__avatar-pill') as HTMLButtonElement;
+        expect(pill.getAttribute('aria-haspopup')).toBe('menu');
+        expect(pill.getAttribute('aria-expanded')).toBe('false');
+      });
+
+      it('should open the grouped menu with the requested sections and items when the avatar pill is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const pill = fixture.nativeElement.querySelector('.site-header__avatar-pill') as HTMLButtonElement;
+
+        pill.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(pill.getAttribute('aria-expanded')).toBe('true');
+        expect(pill.classList).toContain('site-header__avatar-pill--active');
+
+        const groups = Array.from(document.body.querySelectorAll('.p-menu-submenu-label')).map((el) =>
+          el.textContent?.trim(),
+        );
+        expect(groups).toEqual(['My Account', 'Security', 'Tenant', 'SimplifyYours']);
+
+        const items = Array.from(document.body.querySelectorAll('.p-menu-item-label')).map((el) =>
+          el.textContent?.trim(),
+        );
+        expect(items).toEqual([
+          'Profile',
+          'Billing',
+          'Settings',
+          'Change Password',
+          'Two-Factor Auth',
+          'Add Members',
+          'Contact Support',
+        ]);
+      });
+
+      it('should show the full name and email in the identity header', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', email: 'eleanor@example.com' });
+        const pill = fixture.nativeElement.querySelector('.site-header__avatar-pill') as HTMLButtonElement;
+
+        pill.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const name = document.body.querySelector('.site-header__profile-menu-name');
+        const email = document.body.querySelector('.site-header__profile-menu-email');
+        expect(name?.textContent?.trim()).toBe('Eleanor Rigby');
+        expect(email?.textContent?.trim()).toBe('eleanor@example.com');
+      });
+
+      it('should clear the active state and aria-expanded when the menu closes', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const pill = fixture.nativeElement.querySelector('.site-header__avatar-pill') as HTMLButtonElement;
+
+        pill.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(pill.classList).toContain('site-header__avatar-pill--active');
+
+        pill.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(pill.getAttribute('aria-expanded')).toBe('false');
+        expect(pill.classList).not.toContain('site-header__avatar-pill--active');
+      });
+
+      it('should clear the session and redirect to /home when Sign Out is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const auth = TestBed.inject(AuthSessionService) as unknown as FakeAuthSessionService;
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        const pill = fixture.nativeElement.querySelector('.site-header__avatar-pill') as HTMLButtonElement;
+
+        pill.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const signOut = document.body.querySelector(
+          '.site-header__profile-menu-signout-btn',
+        ) as HTMLButtonElement;
+        signOut.click();
+
+        expect(auth.clearSession).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledWith('/home');
+      });
+
+      it('should show a "coming soon" toast when a not-yet-built item like Profile is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const messages = TestBed.inject(MessageService);
+        const addSpy = vi.spyOn(messages, 'add');
+        const pill = fixture.nativeElement.querySelector('.site-header__avatar-pill') as HTMLButtonElement;
+
+        pill.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const profile = Array.from(document.body.querySelectorAll('.p-menu-item-link')).find((el) =>
+          el.textContent?.includes('Profile'),
+        ) as HTMLElement;
+        profile.click();
+
+        expect(addSpy).toHaveBeenCalledWith({ severity: 'info', summary: 'Profile', detail: 'Coming soon.' });
+      });
+    });
+
+    describe('notifications', () => {
+      afterEach(() => {
+        document.body.querySelectorAll('.p-popover').forEach((el) => el.remove());
+      });
+
+      it('opens the popover with New/Earlier grouping and clears the badge dot', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: true });
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+        expect(fixture.nativeElement.querySelector('.site-header__notif-dot')).not.toBeNull();
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(bell.getAttribute('aria-expanded')).toBe('true');
+        expect(bell.classList).toContain('site-header__notif--active');
+        // The badge clears the moment the popover opens, per the design.
+        expect(fixture.nativeElement.querySelector('.site-header__notif-dot')).toBeNull();
+
+        const groups = Array.from(document.body.querySelectorAll('.site-header__notification-group-label')).map(
+          (el) => el.textContent?.trim(),
+        );
+        expect(groups).toEqual(['New', 'Earlier']);
+
+        const items = document.body.querySelectorAll('.site-header__notification-item');
+        expect(items.length).toBe(4);
+        expect(document.body.querySelectorAll('.site-header__notification-unread-dot').length).toBe(2);
+        expect(document.body.textContent).toContain('Marcus Cole');
+        expect(document.body.textContent).toContain('Priya Nair');
+      });
+
+      it('moves every item to Earlier and clears their unread dots when Mark all read is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const markAll = document.body.querySelector(
+          '.site-header__notification-mark-all',
+        ) as HTMLButtonElement;
+        markAll.click();
+        fixture.detectChanges();
+
+        expect(document.body.querySelector('.site-header__notification-unread-dot')).toBeNull();
+        const groups = Array.from(document.body.querySelectorAll('.site-header__notification-group-label')).map(
+          (el) => el.textContent?.trim(),
+        );
+        expect(groups).toEqual(['Earlier']);
+        expect(document.body.querySelectorAll('.site-header__notification-item').length).toBe(4);
+        // Nothing left to mark, so the action disappears rather than sitting
+        // there disabled.
+        expect(document.body.querySelector('.site-header__notification-mark-all')).toBeNull();
+      });
+
+      it('shows a toast and closes the popover when View all notifications is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby' });
+        const messages = TestBed.inject(MessageService);
+        const addSpy = vi.spyOn(messages, 'add');
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const viewAll = document.body.querySelector(
+          '.site-header__notification-view-all',
+        ) as HTMLButtonElement;
+        viewAll.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(addSpy).toHaveBeenCalledWith({
+          severity: 'info',
+          summary: 'All notifications',
+          detail: 'Coming soon.',
+        });
+        expect(bell.getAttribute('aria-expanded')).toBe('false');
+      });
+
+      it('closes when the mobile close button is clicked', async () => {
+        const fixture = await setup({ fullName: 'Eleanor Rigby', hasUnreadNotifications: false });
+        const bell = fixture.nativeElement.querySelector('.site-header__notif') as HTMLButtonElement;
+
+        bell.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(bell.getAttribute('aria-expanded')).toBe('true');
+
+        const close = document.body.querySelector(
+          '.site-header__notification-close',
+        ) as HTMLButtonElement;
+        close.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(bell.getAttribute('aria-expanded')).toBe('false');
+      });
     });
   });
 });
