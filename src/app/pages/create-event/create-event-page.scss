@@ -17,42 +17,104 @@ $coral: #b05540;
 $coral-ink: #7a3a24;
 $sage: #5a6b3a;
 
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: $canvas;
+}
+
 .ce-page {
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 2.5rem 1.25rem 4rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   font-family: 'DM Sans', system-ui, sans-serif;
   color: $ink;
 }
 
-.ce-steplabel {
+/* ===== action bar: breadcrumb + page actions ===== */
+.ce-actionbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1.1rem 3.5rem;
+  background: $cream;
+  border-bottom: 1px solid $linen-border;
+
+  @media (max-width: 48rem) {
+    padding: 1rem 1.5rem;
+  }
+}
+
+.ce-eyebrow-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: $muted;
-  margin-bottom: 0.9rem;
+
+  a {
+    color: $muted;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      color: $plum;
+    }
+  }
 }
 
-.ce-live-region .ce-page-error {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.6rem;
-  background: #fbeae4;
-  border: 1px solid #eac6b8;
-  color: $coral-ink;
+.ce-eyebrow-current {
+  color: $ink;
+}
+
+.ce-actionbar-actions {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+
+.ce-action {
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0.9rem;
+
+  &:focus-visible {
+    outline: 2px solid $plum;
+    outline-offset: 2px;
+  }
+
+  &--ghost {
+    background: transparent;
+    color: $plum;
+    border: 1px solid $plum;
+
+    &:hover {
+      background: $plum;
+      color: $cream;
+    }
+  }
 }
 
 .ce-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   background: $linen;
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
   overflow: hidden;
 }
 
 .ce-card-grid {
   display: grid;
   grid-template-columns: 280px 1fr;
+  flex: 1;
 
   @media (max-width: 48rem) {
     grid-template-columns: 1fr;
@@ -70,13 +132,6 @@ $sage: #5a6b3a;
     border-right: 0;
     border-bottom: 1px solid $linen-border;
   }
-}
-
-.ce-rail-kicker {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  color: $muted;
 }
 
 .ce-rail-title {
@@ -268,14 +323,84 @@ $sage: #5a6b3a;
   letter-spacing: -0.012em;
 }
 
+// iconDisplay="input" renders a single full-width input with the trigger and
+// clear glyphs layered inside on the right — so each picker matches the plain
+// text inputs in size and border-radius (no split input-group).
+:host ::ng-deep p-datepicker.ce-datepicker {
+  display: block;
+  width: 100%;
+  position: relative;
+
+  .p-datepicker-input.ce-input {
+    width: 100%;
+    background: $cream !important;
+    color: $ink !important;
+    border-color: $linen-border !important;
+    border-radius: 10px !important;
+    padding-right: 2.6rem;
+
+    &:focus {
+      border-color: $plum !important;
+      box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08) !important;
+    }
+  }
+
+  .p-datepicker-input-icon,
+  .p-datepicker-clear-icon,
+  .pi {
+    color: $muted;
+    cursor: pointer;
+
+    &:hover {
+      color: $plum;
+    }
+  }
+}
+
+// Body-appended popup panels (calendar + timezone dropdown) are themed in the
+// global styles.scss — CDK renders them at document.body, outside this host.
+
 .ce-textarea {
   resize: vertical;
   min-height: 5.5rem;
   line-height: 1.55;
 }
 
-.ce-select {
-  appearance: auto;
+// timezone <p-select> — re-skinned to the parchment palette (Aura defaults to a
+// dark control). The `.p-select` class sits on the p-select host element itself
+// in PrimeNG 21, so the control styling targets the host directly.
+:host ::ng-deep p-select.ce-select-tz {
+  width: 100%;
+  margin-top: 0.6rem;
+  background: $cream !important;
+  border: 1px solid $linen-border !important;
+  border-radius: 10px !important;
+
+  &.p-focus {
+    border-color: $plum !important;
+    box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08) !important;
+  }
+
+  .p-select-label {
+    padding: 0.8rem 1.1rem;
+    color: $ink !important;
+    font-size: 0.9rem;
+
+    &.p-placeholder {
+      color: $muted !important;
+    }
+  }
+
+  .p-select-dropdown,
+  .p-select-clear-icon {
+    color: $muted !important;
+  }
+}
+
+// The .p-select-overlay dropdown and its .tz-* rows are themed globally too —
+// PrimeNG appends the overlay to document.body.
+.tz-selected .tz-offset {
+  margin-left: 0.4rem;
 }
 
 .ce-type-fieldset {
@@ -336,16 +461,22 @@ $sage: #5a6b3a;
   }
 }
 
+.ce-field-col {
+  display: flex;
+  flex-direction: column;
+}
+
 .ce-field-col .ce-input {
   margin-top: 0.5rem;
 }
 
-.ce-minilabel {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: $muted;
+// Per-column label inside the date/time row — same weight/size as .ce-label so
+// "Date / Starts / Ends" read consistently with "A note for your guests".
+.ce-sublabel {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: $ink;
 }
 
 .ce-divider {
@@ -396,25 +527,6 @@ $sage: #5a6b3a;
 .ce-footer-note {
   font-size: 0.72rem;
   color: $muted;
-}
-
-.ce-cancel {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: $plum;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: $champagne;
-  text-underline-offset: 3px;
-
-  &:focus-visible {
-    outline: 2px solid $plum;
-    outline-offset: 2px;
-  }
 }
 
 /* ===== buttons ===== */

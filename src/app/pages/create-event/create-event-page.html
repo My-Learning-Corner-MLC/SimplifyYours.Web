@@ -1,25 +1,25 @@
 <main class="ce-page">
-  <div class="ce-steplabel">
-    Step {{ step() }} of 2 · {{ step() === 1 ? 'The basics' : 'Where & when' }}
-  </div>
-
-  <div class="ce-live-region" aria-live="assertive" role="alert">
-    @if (pageError()) {
-      <p class="ce-page-error">{{ pageError() }}</p>
-    }
+  <div class="ce-actionbar">
+    <nav class="ce-eyebrow-nav" aria-label="Breadcrumb">
+      <a routerLink="/dashboard">Events</a>
+      <span aria-hidden="true">›</span>
+      <span class="ce-eyebrow-current">New occasion</span>
+    </nav>
+    <div class="ce-actionbar-actions">
+      <button type="button" class="ce-action ce-action--ghost" (click)="requestCancel()">Cancel</button>
+    </div>
   </div>
 
   <div class="ce-card">
     <div class="ce-card-grid">
       <!-- ===== left step rail ===== -->
       <aside class="ce-rail" aria-label="Create occasion progress">
-        <div class="ce-rail-kicker">STEP {{ step() }} OF 2</div>
         @if (step() === 1) {
           <h1 class="ce-rail-title">The <span>basics</span></h1>
-          <p class="ce-rail-lede">A name, a date, a flavor. We’ll get to the location and the rest in a minute.</p>
+          <p class="ce-rail-lede">A name, a date, a flavor. We’ll get to the venue and the rest in a minute.</p>
         } @else {
-          <h1 class="ce-rail-title">Where <span>&amp; when</span></h1>
-          <p class="ce-rail-lede">A place, a window of time, a few notes about how to find you.</p>
+          <h1 class="ce-rail-title">The <span>details</span></h1>
+          <p class="ce-rail-lede">A venue guests can find, and the right timezone so every invite shows the correct time.</p>
         }
 
         <ol class="ce-rail-steps">
@@ -122,8 +122,78 @@
               </p>
             </fieldset>
 
-            <!-- date / starts / ends -->
-            <ng-container [ngTemplateOutlet]="dateTimeRow"></ng-container>
+            <!-- when: date / starts / ends -->
+            <div class="ce-field">
+              <label class="ce-label" for="ce-event-date">When is it?</label>
+              <p class="ce-help">A date you’ve half-decided on is enough. You can move it from the occasion page.</p>
+              <div class="ce-datetime" [formGroup]="form">
+                <div class="ce-field-col">
+                  <label class="ce-sublabel" for="ce-event-date">Date</label>
+                  <p-datepicker
+                    inputId="ce-event-date"
+                    formControlName="eventDate"
+                    dataType="string"
+                    dateFormat="yy-mm-dd"
+                    placeholder="Select a date"
+                    styleClass="ce-datepicker"
+                    inputStyleClass="ce-input"
+                    iconDisplay="input"
+                    [showIcon]="true"
+                    [showClear]="true"
+                    [attr.aria-invalid]="shouldShowTimeError() || hasBackendError('eventDate')"
+                  />
+                </div>
+                <div class="ce-field-col">
+                  <label class="ce-sublabel" for="ce-start-time">Starts <span class="ce-optional">Optional</span></label>
+                  <p-datepicker
+                    inputId="ce-start-time"
+                    formControlName="startTime"
+                    dataType="string"
+                    hourFormat="24"
+                    placeholder="Select a time"
+                    styleClass="ce-datepicker"
+                    inputStyleClass="ce-input"
+                    iconDisplay="input"
+                    [timeOnly]="true"
+                    [showIcon]="true"
+                    [showClear]="true"
+                  >
+                    <ng-template pTemplate="inputicon">
+                      <i class="pi pi-clock"></i>
+                    </ng-template>
+                  </p-datepicker>
+                </div>
+                <div class="ce-field-col">
+                  <label class="ce-sublabel" for="ce-end-time">Ends <span class="ce-optional">Optional</span></label>
+                  <p-datepicker
+                    inputId="ce-end-time"
+                    formControlName="endTime"
+                    dataType="string"
+                    hourFormat="24"
+                    placeholder="Select a time"
+                    styleClass="ce-datepicker"
+                    inputStyleClass="ce-input"
+                    iconDisplay="input"
+                    [timeOnly]="true"
+                    [showIcon]="true"
+                    [showClear]="true"
+                  >
+                    <ng-template pTemplate="inputicon">
+                      <i class="pi pi-clock"></i>
+                    </ng-template>
+                  </p-datepicker>
+                </div>
+              </div>
+              <p class="ce-error" aria-live="polite">
+                @if (shouldShowTimeError()) {
+                  {{ timeErrorMessage() }}
+                } @else if (hasBackendError('eventDate')) {
+                  {{ backendErrorMessage('eventDate') }}
+                } @else if (hasBackendError('eventEndTime')) {
+                  {{ backendErrorMessage('eventEndTime') }}
+                }
+              </p>
+            </div>
 
             <!-- description -->
             <div class="ce-field">
@@ -151,33 +221,38 @@
 
             <ng-container
               [ngTemplateOutlet]="footer"
-              [ngTemplateOutletContext]="{ back: false, primaryLabel: 'Next step · Where & when →', isSubmit: false }"
+              [ngTemplateOutletContext]="{ back: false, primaryLabel: 'Next step · The details →', isSubmit: false }"
             ></ng-container>
           } @else {
-            <!-- when -->
-            <div class="ce-field">
-              <label class="ce-label" for="ce-event-date">When is it?</label>
-              <p class="ce-help">A date you’ve half-decided on is enough. You can move it from the occasion page.</p>
-              <ng-container [ngTemplateOutlet]="dateTimeRow"></ng-container>
-            </div>
-
             <!-- timezone -->
             <div class="ce-field">
               <label class="ce-label" for="ce-time-zone">Timezone <span class="ce-optional">Optional</span></label>
               <p class="ce-help">
                 We’ll show the right time on every invitation, automatically — whatever timezone the guest is in.
               </p>
-              <select
-                id="ce-time-zone"
-                class="ce-input ce-select"
+              <p-select
+                inputId="ce-time-zone"
                 formControlName="timeZoneId"
+                styleClass="ce-select-tz"
+                [options]="timeZoneOptions"
+                optionLabel="city"
+                optionValue="value"
+                placeholder="Use my current timezone"
+                [filter]="true"
+                filterBy="city,offset"
+                [showClear]="true"
                 [attr.aria-invalid]="hasBackendError('timeZoneId')"
               >
-                <option value="">Use my current timezone</option>
-                @for (zone of timeZones; track zone) {
-                  <option [value]="zone">{{ zone }}</option>
-                }
-              </select>
+                <ng-template let-tz pTemplate="selectedItem">
+                  <span class="tz-selected">{{ tz.city }} <span class="tz-offset">{{ tz.offset }}</span></span>
+                </ng-template>
+                <ng-template let-tz pTemplate="item">
+                  <div class="tz-option">
+                    <span class="tz-city">{{ tz.city }}</span>
+                    <span class="tz-offset">{{ tz.offset }}</span>
+                  </div>
+                </ng-template>
+              </p-select>
               <p class="ce-error" aria-live="polite">
                 @if (hasBackendError('timeZoneId')) {
                   {{ backendErrorMessage('timeZoneId') }}
@@ -266,33 +341,6 @@
   </div>
 </main>
 
-<!-- ===== shared date/starts/ends row ===== -->
-<ng-template #dateTimeRow>
-  <div class="ce-datetime" [formGroup]="form">
-    <div class="ce-field-col">
-      <span class="ce-minilabel">DATE</span>
-      <input id="ce-event-date" class="ce-input" type="date" formControlName="eventDate" />
-    </div>
-    <div class="ce-field-col">
-      <span class="ce-minilabel">STARTS <span class="ce-optional">Optional</span></span>
-      <input id="ce-start-time" class="ce-input" type="time" formControlName="startTime" />
-    </div>
-    <div class="ce-field-col">
-      <span class="ce-minilabel">ENDS <span class="ce-optional">Optional</span></span>
-      <input id="ce-end-time" class="ce-input" type="time" formControlName="endTime" />
-    </div>
-  </div>
-  <p class="ce-error" aria-live="polite">
-    @if (shouldShowTimeError()) {
-      {{ timeErrorMessage() }}
-    } @else if (hasBackendError('eventDate')) {
-      {{ backendErrorMessage('eventDate') }}
-    } @else if (hasBackendError('eventEndTime')) {
-      {{ backendErrorMessage('eventEndTime') }}
-    }
-  </p>
-</ng-template>
-
 <!-- ===== shared footer ===== -->
 <ng-template #footer let-back="back" let-primaryLabel="primaryLabel" let-isSubmit="isSubmit">
   <div class="ce-footer">
@@ -327,7 +375,6 @@
       </div>
     </div>
     <div class="ce-footer-meta">
-      <button type="button" class="ce-cancel" (click)="requestCancel()">Cancel</button>
       <span class="ce-footer-note">
         “Finish later” publishes the page — add the remaining details anytime.
       </span>

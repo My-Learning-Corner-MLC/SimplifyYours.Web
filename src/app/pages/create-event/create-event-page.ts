@@ -14,9 +14,11 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
+import { SelectModule } from 'primeng/select';
 
 import { CreateEventError } from '../../core/events/create-event-error.model';
 import { CreateEventRequest } from '../../core/events/create-event-request.model';
@@ -36,8 +38,8 @@ interface WizardStep {
 }
 
 export const WIZARD_STEPS: readonly WizardStep[] = [
-  { index: 1, title: 'The basics', subtitle: 'Name, type, date' },
-  { index: 2, title: 'Where and when', subtitle: 'Venue, schedule, link' },
+  { index: 1, title: 'The basics', subtitle: 'Name, type, date & time' },
+  { index: 2, title: 'The details', subtitle: 'Venue, address, timezone' },
 ];
 
 const STEP_1_CONTROLS = ['eventName', 'eventType', 'eventDate', 'startTime', 'endTime', 'eventDescription'];
@@ -114,17 +116,411 @@ function endAfterStart(group: AbstractControl): ValidationErrors | null {
   return endMinutes >= startMinutes ? null : { endBeforeStart: true };
 }
 
-function supportedTimeZones(): readonly string[] {
+// Canonical IANA identifiers only (Status = "Canonical"), per
+// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones — deliberately
+// not sourced from `Intl.supportedValuesOf('timeZone')`, whose "canonical" set
+// varies by browser/ICU build (e.g. some builds fold Asia/Ho_Chi_Minh into
+// Asia/Bangkok as an alias even though tzdata keeps them distinct).
+const CANONICAL_TIME_ZONES: readonly string[] = [
+  'Etc/GMT+12',
+  'Etc/GMT+11',
+  'Pacific/Niue',
+  'Pacific/Pago_Pago',
+  'Etc/GMT+10',
+  'Pacific/Honolulu',
+  'Pacific/Rarotonga',
+  'Pacific/Tahiti',
+  'America/Adak',
+  'Pacific/Marquesas',
+  'Etc/GMT+9',
+  'Pacific/Gambier',
+  'America/Anchorage',
+  'America/Juneau',
+  'America/Metlakatla',
+  'America/Nome',
+  'America/Sitka',
+  'America/Yakutat',
+  'Etc/GMT+8',
+  'Pacific/Pitcairn',
+  'America/Los_Angeles',
+  'America/Tijuana',
+  'Etc/GMT+7',
+  'America/Dawson_Creek',
+  'America/Dawson',
+  'America/Fort_Nelson',
+  'America/Hermosillo',
+  'America/Mazatlan',
+  'America/Phoenix',
+  'America/Vancouver',
+  'America/Whitehorse',
+  'America/Boise',
+  'America/Cambridge_Bay',
+  'America/Ciudad_Juarez',
+  'America/Denver',
+  'America/Inuvik',
+  'Etc/GMT+6',
+  'America/Bahia_Banderas',
+  'America/Belize',
+  'America/Chihuahua',
+  'America/Costa_Rica',
+  'America/Edmonton',
+  'America/El_Salvador',
+  'Pacific/Galapagos',
+  'America/Guatemala',
+  'America/Managua',
+  'America/Merida',
+  'America/Mexico_City',
+  'America/Monterrey',
+  'America/Regina',
+  'America/Swift_Current',
+  'America/Tegucigalpa',
+  'America/North_Dakota/Beulah',
+  'America/North_Dakota/Center',
+  'America/Chicago',
+  'Pacific/Easter',
+  'America/Indiana/Knox',
+  'America/Matamoros',
+  'America/Menominee',
+  'America/North_Dakota/New_Salem',
+  'America/Ojinaga',
+  'America/Rankin_Inlet',
+  'America/Resolute',
+  'America/Indiana/Tell_City',
+  'America/Winnipeg',
+  'Etc/GMT+5',
+  'America/Bogota',
+  'America/Cancun',
+  'America/Eirunepe',
+  'America/Guayaquil',
+  'America/Jamaica',
+  'America/Lima',
+  'America/Panama',
+  'America/Rio_Branco',
+  'America/Detroit',
+  'America/Grand_Turk',
+  'America/Havana',
+  'America/Indiana/Indianapolis',
+  'America/Iqaluit',
+  'America/Kentucky/Louisville',
+  'America/Indiana/Marengo',
+  'America/Kentucky/Monticello',
+  'America/New_York',
+  'America/Indiana/Petersburg',
+  'America/Port-au-Prince',
+  'America/Toronto',
+  'America/Indiana/Vevay',
+  'America/Indiana/Vincennes',
+  'America/Indiana/Winamac',
+  'Etc/GMT+4',
+  'America/Barbados',
+  'America/Boa_Vista',
+  'America/Campo_Grande',
+  'America/Caracas',
+  'America/Cuiaba',
+  'America/Guyana',
+  'America/La_Paz',
+  'America/Manaus',
+  'America/Martinique',
+  'America/Porto_Velho',
+  'America/Puerto_Rico',
+  'America/Santo_Domingo',
+  'Atlantic/Bermuda',
+  'America/Glace_Bay',
+  'America/Goose_Bay',
+  'America/Halifax',
+  'America/Moncton',
+  'America/Santiago',
+  'America/Thule',
+  'America/St_Johns',
+  'Etc/GMT+3',
+  'America/Araguaina',
+  'America/Asuncion',
+  'America/Bahia',
+  'America/Belem',
+  'America/Argentina/Buenos_Aires',
+  'America/Argentina/Catamarca',
+  'America/Cayenne',
+  'America/Argentina/Cordoba',
+  'America/Coyhaique',
+  'America/Fortaleza',
+  'America/Argentina/Jujuy',
+  'America/Argentina/La_Rioja',
+  'America/Maceio',
+  'America/Argentina/Mendoza',
+  'America/Montevideo',
+  'Antarctica/Palmer',
+  'America/Paramaribo',
+  'America/Punta_Arenas',
+  'America/Recife',
+  'America/Argentina/Rio_Gallegos',
+  'Antarctica/Rothera',
+  'America/Argentina/Salta',
+  'America/Argentina/San_Juan',
+  'America/Argentina/San_Luis',
+  'America/Santarem',
+  'America/Sao_Paulo',
+  'Atlantic/Stanley',
+  'America/Argentina/Tucuman',
+  'America/Argentina/Ushuaia',
+  'America/Miquelon',
+  'Etc/GMT+2',
+  'America/Noronha',
+  'Atlantic/South_Georgia',
+  'America/Nuuk',
+  'America/Scoresbysund',
+  'Etc/GMT+1',
+  'Atlantic/Cape_Verde',
+  'Atlantic/Azores',
+  'Etc/GMT',
+  'Etc/UTC',
+  'Africa/Abidjan',
+  'Africa/Bissau',
+  'America/Danmarkshavn',
+  'Africa/Monrovia',
+  'Africa/Sao_Tome',
+  'Atlantic/Canary',
+  'Europe/Dublin',
+  'Atlantic/Faroe',
+  'Europe/Lisbon',
+  'Europe/London',
+  'Atlantic/Madeira',
+  'Antarctica/Troll',
+  'Etc/GMT-1',
+  'Africa/Algiers',
+  'Africa/Casablanca',
+  'Africa/El_Aaiun',
+  'Africa/Lagos',
+  'Africa/Malabo',
+  'Africa/Ndjamena',
+  'Africa/Niamey',
+  'Europe/Amsterdam',
+  'Europe/Andorra',
+  'Europe/Belgrade',
+  'Europe/Berlin',
+  'Europe/Bratislava',
+  'Europe/Brussels',
+  'Europe/Budapest',
+  'Europe/Busingen',
+  'Europe/Chisinau',
+  'Europe/Copenhagen',
+  'Europe/Gibraltar',
+  'Europe/Guernsey',
+  'Europe/Helsinki',
+  'Europe/Isle_of_Man',
+  'Europe/Istanbul',
+  'Europe/Jersey',
+  'Europe/Kaliningrad',
+  'Europe/Kyiv',
+  'Europe/Ljubljana',
+  'Europe/Luxembourg',
+  'Europe/Madrid',
+  'Europe/Malta',
+  'Europe/Mariehamn',
+  'Europe/Minsk',
+  'Europe/Monaco',
+  'Europe/Moscow',
+  'Europe/Oslo',
+  'Europe/Paris',
+  'Europe/Prague',
+  'Europe/Riga',
+  'Europe/Rome',
+  'Europe/Samara',
+  'Europe/San_Marino',
+  'Europe/Sarajevo',
+  'Europe/Saratov',
+  'Europe/Sofia',
+  'Europe/Stockholm',
+  'Europe/Tallinn',
+  'Europe/Tirane',
+  'Europe/Ulyanovsk',
+  'Europe/Vaduz',
+  'Europe/Vienna',
+  'Europe/Vilnius',
+  'Europe/Volgograd',
+  'Europe/Warsaw',
+  'Europe/Zagreb',
+  'Europe/Zurich',
+  'Africa/Cairo',
+  'Africa/Johannesburg',
+  'Africa/Khartoum',
+  'Africa/Nairobi',
+  'Asia/Aden',
+  'Asia/Amman',
+  'Asia/Anadyr',
+  'Asia/Aqtau',
+  'Asia/Aqtobe',
+  'Asia/Ashgabat',
+  'Asia/Atyrau',
+  'Asia/Baghdad',
+  'Asia/Bahrain',
+  'Asia/Baku',
+  'Asia/Bangkok',
+  'Asia/Barnaul',
+  'Asia/Beirut',
+  'Asia/Bishkek',
+  'Asia/Brunei',
+  'Asia/Chita',
+  'Asia/Choibalsan',
+  'Asia/Colombo',
+  'Asia/Damascus',
+  'Asia/Dhaka',
+  'Asia/Dili',
+  'Asia/Dubai',
+  'Asia/Dushanbe',
+  'Asia/Famagusta',
+  'Asia/Gaza',
+  'Asia/Hebron',
+  'Asia/Ho_Chi_Minh',
+  'Asia/Hong_Kong',
+  'Asia/Hovd',
+  'Asia/Irkutsk',
+  'Asia/Jakarta',
+  'Asia/Jayapura',
+  'Asia/Jerusalem',
+  'Asia/Kabul',
+  'Asia/Kamchatka',
+  'Asia/Karachi',
+  'Asia/Kathmandu',
+  'Asia/Khandyga',
+  'Asia/Kolkata',
+  'Asia/Krasnoyarsk',
+  'Asia/Kuala_Lumpur',
+  'Asia/Kuching',
+  'Asia/Kuwait',
+  'Asia/Macau',
+  'Asia/Magadan',
+  'Asia/Makassar',
+  'Asia/Manila',
+  'Asia/Muscat',
+  'Asia/Nicosia',
+  'Asia/Novokuznetsk',
+  'Asia/Novosibirsk',
+  'Asia/Omsk',
+  'Asia/Oral',
+  'Asia/Phnom_Penh',
+  'Asia/Pontianak',
+  'Asia/Pyongyang',
+  'Asia/Qatar',
+  'Asia/Qostanay',
+  'Asia/Qyzylorda',
+  'Asia/Riyadh',
+  'Asia/Sakhalin',
+  'Asia/Samarkand',
+  'Asia/Seoul',
+  'Asia/Shanghai',
+  'Asia/Singapore',
+  'Asia/Srednekolymsk',
+  'Asia/Taipei',
+  'Asia/Tashkent',
+  'Asia/Tbilisi',
+  'Asia/Tehran',
+  'Asia/Thimphu',
+  'Asia/Tokyo',
+  'Asia/Tomsk',
+  'Asia/Ulaanbaatar',
+  'Asia/Urumqi',
+  'Asia/Ust-Nera',
+  'Asia/Vladivostok',
+  'Asia/Yakutsk',
+  'Asia/Yangon',
+  'Asia/Yekaterinburg',
+  'Asia/Yerevan',
+  'Australia/Adelaide',
+  'Australia/Brisbane',
+  'Australia/Broken_Hill',
+  'Australia/Currie',
+  'Australia/Darwin',
+  'Australia/Eucla',
+  'Australia/Hobart',
+  'Australia/Lindeman',
+  'Australia/Lord_Howe',
+  'Australia/Melbourne',
+  'Australia/Perth',
+  'Australia/Sydney',
+  'Etc/GMT-12',
+  'Pacific/Apia',
+  'Pacific/Auckland',
+  'Pacific/Bougainville',
+  'Pacific/Chatham',
+  'Pacific/Chuuk',
+  'Pacific/Efate',
+  'Pacific/Enderbury',
+  'Pacific/Fakaofo',
+  'Pacific/Fiji',
+  'Pacific/Funafuti',
+  'Pacific/Guadalcanal',
+  'Pacific/Guam',
+  'Pacific/Kiritimati',
+  'Pacific/Kosrae',
+  'Pacific/Kwajalein',
+  'Pacific/Majuro',
+  'Pacific/Nauru',
+  'Pacific/Norfolk',
+  'Pacific/Noumea',
+  'Pacific/Palau',
+  'Pacific/Pohnpei',
+  'Pacific/Port_Moresby',
+  'Pacific/Saipan',
+  'Pacific/Tarawa',
+  'Pacific/Tongatapu',
+  'Pacific/Wake',
+  'Pacific/Wallis',
+];
+
+export interface TimeZoneOption {
+  readonly value: string;
+  readonly city: string;
+  readonly offset: string;
+}
+
+// Short GMT-offset label for an IANA zone, e.g. "GMT+7" / "GMT-05:30".
+function timeZoneOffsetLabel(zone: string, now: Date): string {
   try {
-    return Intl.supportedValuesOf('timeZone');
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone,
+      timeZoneName: 'shortOffset',
+    }).formatToParts(now);
+    return parts.find((part) => part.type === 'timeZoneName')?.value ?? 'GMT';
   } catch {
-    return ['UTC'];
+    return 'GMT';
   }
+}
+
+// Signed minutes-from-UTC parsed out of a "GMT±h[:mm]" label, for ordering.
+function offsetToMinutes(offset: string): number {
+  const match = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(offset);
+  if (!match) {
+    return 0;
+  }
+  const sign = match[1] === '-' ? -1 : 1;
+  return sign * (Number(match[2]) * 60 + Number(match[3] ?? '0'));
+}
+
+// City/offset options for the timezone <p-select>, ordered west-to-east so the
+// list reads predictably. City is the trailing IANA segment ("Ho Chi Minh").
+function buildTimeZoneOptions(): TimeZoneOption[] {
+  const now = new Date();
+  return CANONICAL_TIME_ZONES
+    .map((zone) => ({
+      value: zone,
+      city: zone.split('/').pop()?.replace(/_/g, ' ') ?? zone,
+      offset: timeZoneOffsetLabel(zone, now),
+    }))
+    .sort(
+      (a, b) => offsetToMinutes(a.offset) - offsetToMinutes(b.offset) || a.city.localeCompare(b.city),
+    );
 }
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, DialogModule, NgTemplateOutlet],
+  imports: [
+    ReactiveFormsModule,
+    DialogModule,
+    DatePickerModule,
+    SelectModule,
+    NgTemplateOutlet,
+    RouterLink,
+  ],
   selector: 'app-create-event-page',
   templateUrl: './create-event-page.html',
   styleUrl: './create-event-page.scss',
@@ -140,13 +536,13 @@ export class CreateEventPage {
   readonly eventTypeLabels = EVENT_TYPE_LABELS;
   readonly eventTypeEmoji = EVENT_TYPE_EMOJI;
   readonly steps = WIZARD_STEPS;
-  readonly timeZones = supportedTimeZones();
+  readonly timeZoneOptions: TimeZoneOption[] = buildTimeZoneOptions();
 
   readonly form: FormGroup = this.fb.group(
     {
       eventName: ['', [Validators.required, trimmedMinLength(3), Validators.maxLength(200)]],
       eventType: ['', [Validators.required]],
-      eventDate: [''],
+      eventDate: ['', [Validators.required]],
       startTime: [''],
       endTime: [''],
       eventDescription: ['', [Validators.maxLength(5000)]],
@@ -240,14 +636,18 @@ export class CreateEventPage {
   }
 
   shouldShowTimeError(): boolean {
-    const hasError =
+    const hasGroupError =
       this.form.hasError('pastEventDate') ||
       this.form.hasError('invalidEventDate') ||
       this.form.hasError('endBeforeStart');
-    return hasError && (this.stepAttempted() || this.submitted() || !!this.form.get('eventDate')?.touched);
+    const attempted = this.stepAttempted() || this.submitted() || !!this.form.get('eventDate')?.touched;
+    return this.shouldShowError('eventDate') || (hasGroupError && attempted);
   }
 
   timeErrorMessage(): string {
+    if (this.form.get('eventDate')?.hasError('required')) {
+      return 'Pick a date for your occasion.';
+    }
     if (this.form.hasError('endBeforeStart')) {
       return 'The end time needs to be after the start time.';
     }
@@ -284,14 +684,10 @@ export class CreateEventPage {
         this.form.markAsPristine();
         if (finishLater) {
           this.finishedLater.set(true);
-          this.messages.add({
-            severity: 'success',
-            summary: 'Occasion created',
-            detail: `“${response.eventName}” created — view it anytime from your dashboard.`,
-          });
-          void this.router.navigate(['/dashboard']);
-          return;
         }
+        // Both "Create occasion" and "Create now, finish later" land on the
+        // same success dialog — it already covers the "created" feedback, so
+        // no separate toast is shown.
         this.successEvent.set(response);
       },
       error: (error: CreateEventError) => {
@@ -367,7 +763,7 @@ export class CreateEventPage {
       startTime: string;
       endTime: string;
       eventDescription: string;
-      timeZoneId: string;
+      timeZoneId: string | null;
       location: { venueName: string; address: string; notes: string };
     };
 
@@ -389,7 +785,7 @@ export class CreateEventPage {
     if (description.length > 0) {
       request.eventDescription = description;
     }
-    const timeZoneId = raw.timeZoneId.trim();
+    const timeZoneId = (raw.timeZoneId ?? '').trim();
     if (timeZoneId.length > 0) {
       request.timeZoneId = timeZoneId;
     }

@@ -44,6 +44,7 @@ describe('CreateEventPage', () => {
   const fillStepOne = (): void => {
     component.form.get('eventName')?.setValue('Mateo turns five');
     component.form.get('eventType')?.setValue('birthday');
+    component.form.get('eventDate')?.setValue(futureDate());
   };
 
   beforeEach(async () => {
@@ -97,6 +98,15 @@ describe('CreateEventPage', () => {
       expect(component.step()).toBe(1);
     });
 
+    it('blocks Next and shows a required error when the date is left blank', () => {
+      component.form.get('eventName')?.setValue('Mateo turns five');
+      component.form.get('eventType')?.setValue('birthday');
+      component.nextStep();
+      fixture.detectChanges();
+      expect(component.step()).toBe(1);
+      expect(fixture.nativeElement.textContent).toContain('Pick a date for your occasion.');
+    });
+
     it('advances to step 2 when step 1 is valid', () => {
       fillStepOne();
       component.nextStep();
@@ -135,11 +145,13 @@ describe('CreateEventPage', () => {
     });
 
     it('stays submittable when step 2 is left empty', () => {
+      const eventDate = component.form.get('eventDate')?.value;
       component.onSubmit();
       const req = httpMock.expectOne(url);
       expect(req.request.body).toEqual({
         eventName: 'Mateo turns five',
         eventType: 'birthday',
+        eventDate,
       });
       req.flush(createdResponse(), { status: 201, statusText: 'Created' });
       expect(component.successEvent()).not.toBeNull();
@@ -188,16 +200,14 @@ describe('CreateEventPage', () => {
       expect(recap?.typeLabel).toBe('Birthday');
     });
 
-    it('shows the finish-later toast and navigates to the dashboard', () => {
+    it('shows the success dialog for finish later, without a toast or navigation', () => {
       component.onSubmit(true);
 
       httpMock.expectOne(url).flush(createdResponse(), { status: 201, statusText: 'Created' });
 
-      expect(component.successEvent()).toBeNull();
-      expect(messageAdd).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'success', summary: 'Occasion created' }),
-      );
-      expect(navigateSpy).toHaveBeenCalledWith(['/dashboard']);
+      expect(component.successEvent()).toEqual(createdResponse());
+      expect(messageAdd).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }));
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/dashboard']);
     });
 
     it('maps server field errors onto the matching controls', () => {
@@ -233,7 +243,6 @@ describe('CreateEventPage', () => {
       fixture.detectChanges();
 
       expect(component.pageError()).toMatch(/something went wrong/i);
-      expect(fixture.nativeElement.querySelector('.ce-page-error')).not.toBeNull();
       expect(messageAdd).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error' }));
     });
   });
