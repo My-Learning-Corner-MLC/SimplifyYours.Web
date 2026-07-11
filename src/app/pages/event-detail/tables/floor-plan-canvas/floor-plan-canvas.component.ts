@@ -1,7 +1,16 @@
 import { CdkDrag, CdkDragEnd, DragDropModule } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
 
+import { NgStyle } from '@angular/common';
+import { SeatingArea } from '../../../../core/seating/seating-area.model';
 import { SeatingTable } from '../../../../core/seating/seating-table.model';
+
+export interface AreaMoveIntent {
+  readonly areaId: string;
+  readonly positionX: number;
+  readonly positionY: number;
+  readonly rotation: number;
+}
 
 export interface TableMoveIntent {
   readonly tableId: string;
@@ -14,6 +23,17 @@ interface TableVm {
   readonly table: SeatingTable;
   readonly x: number;
   readonly y: number;
+}
+
+// 1 metre ≈ 40px at the default canvas zoom level.
+const METRE_PX = 40;
+
+interface AreaVm {
+  readonly area: SeatingArea;
+  readonly x: number;
+  readonly y: number;
+  readonly widthPx: number;
+  readonly heightPx: number;
 }
 
 // Auto-arrange fallback for tables that haven't been placed on the floor plan
@@ -34,17 +54,19 @@ const GRID_SIZE = 20;
 @Component({
   standalone: true,
   selector: 'app-floor-plan-canvas',
-  imports: [DragDropModule],
+  imports: [DragDropModule, NgStyle],
   templateUrl: './floor-plan-canvas.component.html',
   styleUrl: './floor-plan-canvas.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FloorPlanCanvasComponent {
   readonly tables = input.required<readonly SeatingTable[]>();
+  readonly areas = input<readonly SeatingArea[]>([]);
   readonly selectedTableId = input<string | null>(null);
 
   @Output() readonly tableSelected = new EventEmitter<string>();
   @Output() readonly tableMoved = new EventEmitter<TableMoveIntent>();
+  @Output() readonly areaMoved = new EventEmitter<AreaMoveIntent>();
 
   readonly snapToGrid = signal(false);
   readonly zeroOffset = { x: 0, y: 0 };
@@ -54,6 +76,16 @@ export class FloorPlanCanvasComponent {
       table,
       x: table.positionX ?? FALLBACK_ORIGIN + (index % FALLBACK_COLUMN_COUNT) * FALLBACK_SPACING,
       y: table.positionY ?? FALLBACK_ORIGIN + Math.floor(index / FALLBACK_COLUMN_COUNT) * FALLBACK_SPACING,
+    })),
+  );
+
+  readonly areaVms = computed<AreaVm[]>(() =>
+    this.areas().map((area, index) => ({
+      area,
+      x: area.positionX ?? FALLBACK_ORIGIN + (index % FALLBACK_COLUMN_COUNT) * FALLBACK_SPACING,
+      y: area.positionY ?? FALLBACK_ORIGIN + Math.floor(index / FALLBACK_COLUMN_COUNT) * FALLBACK_SPACING,
+      widthPx: area.width * METRE_PX,
+      heightPx: area.height * METRE_PX,
     })),
   );
 
@@ -74,5 +106,16 @@ export class FloorPlanCanvasComponent {
     }
     event.source.reset();
     this.tableMoved.emit({ tableId: vm.table.id, positionX: x, positionY: y, rotation: vm.table.rotation });
+  }
+
+  onAreaDragEnded(vm: AreaVm, event: CdkDragEnd<unknown> & { source: CdkDrag }): void {
+    let x = vm.x + event.distance.x;
+    let y = vm.y + event.distance.y;
+    if (this.snapToGrid()) {
+      x = Math.round(x / GRID_SIZE) * GRID_SIZE;
+      y = Math.round(y / GRID_SIZE) * GRID_SIZE;
+    }
+    event.source.reset();
+    this.areaMoved.emit({ areaId: vm.area.id, positionX: x, positionY: y, rotation: vm.area.rotation });
   }
 }

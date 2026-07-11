@@ -1,0 +1,271 @@
+// Occasion theme tokens
+$plum: #5a2849;
+$plum-hover: #4a1f3b;
+$plum-ink: #2a1f2d;
+$champagne: #c8a876;
+$coral: #e07b5a;
+$parchment: #f5efe6;
+$linen: #fffcf5;
+$muted: #7a6b6e;
+$body-text: #4a4045;
+$hairline: #ece2d2;
+
+:host { display: contents; }
+
+// --- p-dialog host overrides (scoped via ::ng-deep to avoid SCSS leak) ---
+:host ::ng-deep .area-modal.p-dialog {
+  border-radius: 16px;
+  border: 1px solid $hairline;
+  background: $linen;
+  box-shadow: 0 24px 64px rgba(42, 31, 45, 0.22);
+  max-width: 520px;
+  width: 100%;
+
+  .p-dialog-header { display: none; }
+  .p-dialog-content { padding: 0; overflow: visible; }
+  .p-dialog-footer { padding: 0; border: none; }
+}
+
+.area-modal {
+  &__header {
+    padding: 24px 28px 0;
+  }
+
+  &__label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: $muted;
+    text-transform: uppercase;
+  }
+
+  &__title {
+    margin: 4px 0 0;
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: $plum-ink;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 28px 0;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  &__field-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  &__input {
+    padding: 9px 12px;
+    background: $parchment;
+    border: 1px solid $hairline;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13.5px;
+    color: $plum-ink;
+    width: 100%;
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 1px;
+    }
+
+    &--sm {
+      max-width: 110px;
+    }
+  }
+
+  &__row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  &__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__preset {
+    padding: 5px 12px;
+    border-radius: 99px;
+    border: 1px solid $hairline;
+    background: $parchment;
+    font: inherit;
+    font-size: 12px;
+    color: $body-text;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $champagne;
+    }
+
+    &--selected {
+      background: $plum;
+      border-color: $plum;
+      color: $linen;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+
+  &__shape-toggle {
+    display: inline-flex;
+    border: 1px solid $hairline;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__shape-btn {
+    padding: 7px 14px;
+    background: $parchment;
+    border: none;
+    font: inherit;
+    font-size: 12.5px;
+    color: $body-text;
+    cursor: pointer;
+
+    &--active {
+      background: $plum;
+      color: $linen;
+      font-weight: 500;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: -2px;
+    }
+  }
+
+  &__swatches {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 100ms;
+
+    &--selected {
+      border-color: $plum-ink;
+      transform: scale(1.15);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+
+  &__preview-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    border-radius: 8px;
+    border: 2px solid;
+    font-family: 'Instrument Serif', serif;
+    font-size: 15px;
+    font-style: italic;
+    color: $plum-ink;
+
+    &--round {
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      margin: 0 auto;
+    }
+  }
+
+  &__error {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(224, 123, 90, 0.1);
+    border: 1px solid rgba(224, 123, 90, 0.3);
+    color: $coral;
+    font-size: 12.5px;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px 28px 24px;
+    border-top: 1px solid $hairline;
+    margin-top: 20px;
+  }
+
+  &__btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+
+    &--ghost {
+      background: transparent;
+      border-color: $hairline;
+      color: $muted;
+
+      &:hover {
+        background: $parchment;
+        color: $plum-ink;
+      }
+    }
+
+    &--primary {
+      background: $plum;
+      color: $linen;
+      border-color: $plum;
+
+      &:hover:not(:disabled) {
+        background: $plum-hover;
+      }
+
+      &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+}

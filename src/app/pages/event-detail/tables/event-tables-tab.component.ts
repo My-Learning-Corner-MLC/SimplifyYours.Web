@@ -19,10 +19,12 @@ import { SeatingStore } from '../../../core/seating/seating-store';
 import { SeatingTable } from '../../../core/seating/seating-table.model';
 import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
 import { FloatingGuestsPanelComponent } from './floating-guests-panel/floating-guests-panel.component';
-import { FloorPlanCanvasComponent, TableMoveIntent } from './floor-plan-canvas/floor-plan-canvas.component';
+import { AreaMoveIntent, FloorPlanCanvasComponent, TableMoveIntent } from './floor-plan-canvas/floor-plan-canvas.component';
 import { SeatDropIntent, SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
 import { SelectedTablePanelComponent } from './selected-table-panel/selected-table-panel.component';
 import { TableFormModalComponent } from './table-form-modal/table-form-modal.component';
+import { CustomAreaModalComponent } from './custom-area-modal/custom-area-modal.component';
+import { SeatingArea } from '../../../core/seating/seating-area.model';
 
 export type TablesView = 'grid' | 'floor';
 
@@ -42,6 +44,7 @@ export type TablesView = 'grid' | 'floor';
     TableFormModalComponent,
     FloorPlanCanvasComponent,
     SelectedTablePanelComponent,
+    CustomAreaModalComponent,
     CdkDropListGroup,
   ],
   templateUrl: './event-tables-tab.component.html',
@@ -58,6 +61,8 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
   readonly view = signal<TablesView>('grid');
   readonly formModalOpen = signal(false);
   readonly editingTable = signal<SeatingTable | null>(null);
+  readonly areaModalOpen = signal(false);
+  readonly editingArea = signal<SeatingArea | null>(null);
   readonly assigningGuestId = signal<string | null>(null);
   readonly announcement = signal('');
   readonly selectedTableId = signal<string | null>(null);
@@ -112,6 +117,20 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
     this.formModalOpen.set(false);
   }
 
+  openCreateAreaModal(): void {
+    this.editingArea.set(null);
+    this.areaModalOpen.set(true);
+  }
+
+  openEditAreaModal(area: SeatingArea): void {
+    this.editingArea.set(area);
+    this.areaModalOpen.set(true);
+  }
+
+  closeAreaModal(): void {
+    this.areaModalOpen.set(false);
+  }
+
   toggleFull(table: SeatingTable): void {
     this.store
       .updateTable(table.id, {
@@ -157,6 +176,10 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
 
   onTableMoved(intent: TableMoveIntent): void {
     this.store.moveTable(intent.tableId, intent.positionX, intent.positionY, intent.rotation);
+  }
+
+  onAreaMoved(intent: AreaMoveIntent): void {
+    this.store.moveArea(intent.areaId, intent.positionX, intent.positionY, intent.rotation);
   }
 
   editSelectedTable(): void {

@@ -107,15 +107,18 @@
             <div class="tables-tab__floor-layout" data-testid="tables-tab-floor">
               <app-floor-plan-canvas
                 [tables]="store.tables()"
+                [areas]="store.areas()"
                 [selectedTableId]="selectedTableId()"
                 (tableSelected)="selectTable($event)"
                 (tableMoved)="onTableMoved($event)"
+                (areaMoved)="onAreaMoved($event)"
               />
               <app-selected-table-panel
                 [table]="selectedTable()"
                 (editTable)="editSelectedTable()"
                 (markFull)="toggleFullSelectedTable()"
                 (deleteTable)="deleteSelectedTable()"
+                (addArea)="openCreateAreaModal()"
               />
             </div>
           }
@@ -130,5 +133,11 @@
     [visible]="formModalOpen()"
     [table]="editingTable()"
     (closed)="closeModal()"
+  />
+
+  <app-custom-area-modal
+    [visible]="areaModalOpen()"
+    [area]="editingArea()"
+    (closed)="closeAreaModal()"
   />
 </div>

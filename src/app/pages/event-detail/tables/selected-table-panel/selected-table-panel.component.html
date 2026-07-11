@@ -42,4 +42,16 @@
   } @else {
     <p class="selected-panel__empty">Select a table on the floor plan to see its details.</p>
   }
+
+  <div class="selected-panel__palette">
+    <span class="selected-panel__palette-label">Room elements</span>
+    <button
+      type="button"
+      class="selected-panel__add-area-btn"
+      data-testid="add-area-btn"
+      (click)="addArea.emit()"
+    >
+      + Add a custom area
+    </button>
+  </div>
 </aside>

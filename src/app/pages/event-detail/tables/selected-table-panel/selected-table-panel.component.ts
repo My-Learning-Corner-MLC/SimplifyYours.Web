@@ -23,6 +23,7 @@ export class SelectedTablePanelComponent {
   @Output() readonly editTable = new EventEmitter<void>();
   @Output() readonly markFull = new EventEmitter<void>();
   @Output() readonly deleteTable = new EventEmitter<void>();
+  @Output() readonly addArea = new EventEmitter<void>();
 
   readonly seatedGuests = computed(() => this.table()?.seats.filter((seat) => seat.guestId !== null) ?? []);
 }

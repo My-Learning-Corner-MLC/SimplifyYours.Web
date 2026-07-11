@@ -12,6 +12,25 @@
   </div>
 
   <div class="floor-plan__room" [class.floor-plan__room--grid]="snapToGrid()">
+    @for (vm of areaVms(); track vm.area.id) {
+      <div
+        class="floor-plan__area"
+        [class.floor-plan__area--round]="vm.area.shape === 'Round'"
+        data-testid="floor-plan-area"
+        [attr.aria-label]="vm.area.name"
+        [style.left.px]="vm.x"
+        [style.top.px]="vm.y"
+        [style.width.px]="vm.widthPx"
+        [style.height.px]="vm.heightPx"
+        [ngStyle]="vm.area.color ? { 'background-color': vm.area.color + '33', 'border-color': vm.area.color } : {}"
+        cdkDrag
+        [cdkDragFreeDragPosition]="zeroOffset"
+        (cdkDragEnded)="onAreaDragEnded(vm, $event)"
+      >
+        <span class="floor-plan__area-label">{{ vm.area.name }}</span>
+      </div>
+    }
+
     @for (vm of tableVms(); track vm.table.id) {
       <div
         class="floor-plan__table"
