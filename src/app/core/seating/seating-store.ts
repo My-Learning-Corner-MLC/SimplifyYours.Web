@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Observable, forkJoin, tap } from 'rxjs';
 
 import { GuestApiClient } from '../guests/guest-api-client';
 import { Guest } from '../guests/guest.model';
@@ -7,6 +7,8 @@ import { SeatingApiClient } from './seating-api-client';
 import { SeatingError } from './seating-error.model';
 import { SeatingLayout } from './seating-layout.model';
 import { SeatingSummary } from './seating-summary.model';
+import { SeatingTable } from './seating-table.model';
+import { CreateTablesInput, UpdateTableInput } from './table-input.model';
 
 export type SeatingLoadState = 'loading' | 'error' | 'ready';
 
@@ -49,15 +51,8 @@ export class SeatingStore {
     this.state.set('loading');
     this.loadError.set(null);
 
-    forkJoin({
-      layout: this.api.getLayout(eventId),
-      guests: this.guestApi.listGuests(eventId),
-    }).subscribe({
-      next: ({ layout, guests }) => {
-        this.layout.set(layout);
-        this.guests.set(guests);
-        this.state.set('ready');
-      },
+    this.fetchLayoutAndGuests().subscribe({
+      next: () => this.state.set('ready'),
       error: (error: SeatingError | { kind: string; message: string }) => {
         this.loadError.set({ kind: this.normalizeErrorKind(error.kind), message: error.message });
         this.state.set('error');
@@ -69,6 +64,38 @@ export class SeatingStore {
     if (this.eventId) {
       this.load(this.eventId);
     }
+  }
+
+  // Immediate (non-batched) table mutations — create/edit/delete are rare
+  // and need the server-assigned id, unlike the high-frequency seat-assignment
+  // and position drags that go through the debounced batch queue (Slice 4/5).
+  createTables(input: CreateTablesInput): Observable<SeatingTable[]> {
+    return this.api.createTables(this.eventId, input).pipe(tap(() => this.silentReload()));
+  }
+
+  updateTable(tableId: string, input: UpdateTableInput): Observable<SeatingTable> {
+    return this.api.updateTable(this.eventId, tableId, input).pipe(tap(() => this.silentReload()));
+  }
+
+  deleteTable(tableId: string): Observable<void> {
+    return this.api.deleteTable(this.eventId, tableId).pipe(tap(() => this.silentReload()));
+  }
+
+  /** Refreshes layout/guests signals in place without disturbing `state` (no loading skeleton flash). */
+  private silentReload(): void {
+    this.fetchLayoutAndGuests().subscribe();
+  }
+
+  private fetchLayoutAndGuests(): Observable<{ layout: SeatingLayout; guests: Guest[] }> {
+    return forkJoin({
+      layout: this.api.getLayout(this.eventId),
+      guests: this.guestApi.listGuests(this.eventId),
+    }).pipe(
+      tap(({ layout, guests }) => {
+        this.layout.set(layout);
+        this.guests.set(guests);
+      }),
+    );
   }
 
   private normalizeErrorKind(kind: string): SeatingError['kind'] {

@@ -120,4 +120,71 @@ describe('SeatingStore', () => {
 
     expect(getLayout).toHaveBeenCalledWith('e1');
   });
+
+  const table = (overrides: Partial<SeatingLayout['tables'][number]> = {}): SeatingLayout['tables'][number] => ({
+    id: 't1',
+    name: 'Table 1',
+    shape: 'Round',
+    seatCount: 8,
+    isFull: false,
+    positionX: null,
+    positionY: null,
+    rotation: 0,
+    seats: [],
+    ...overrides,
+  });
+
+  it('createTables calls the API and silently reloads the layout on success', () => {
+    const getLayout = vi.fn(() => of(layout()));
+    const createTables = vi.fn(() => of([table()]));
+    const store = createStore({ getLayout, createTables });
+    store.load('e1');
+    getLayout.mockClear();
+
+    let result: unknown;
+    store.createTables({ name: 'Table', shape: 'Round', seatCount: 8, count: 1 }).subscribe((r) => (result = r));
+
+    expect(createTables).toHaveBeenCalledWith('e1', { name: 'Table', shape: 'Round', seatCount: 8, count: 1 });
+    expect(result).toEqual([table()]);
+    expect(getLayout).toHaveBeenCalledWith('e1');
+    expect(store.state()).toBe('ready');
+  });
+
+  it('updateTable calls the API and silently reloads', () => {
+    const getLayout = vi.fn(() => of(layout({ tables: [table()] })));
+    const updateTable = vi.fn(() => of(table({ name: 'Renamed' })));
+    const store = createStore({ getLayout, updateTable });
+    store.load('e1');
+    getLayout.mockClear();
+
+    store.updateTable('t1', { name: 'Renamed', shape: 'Round', seatCount: 8, isFull: false }).subscribe();
+
+    expect(updateTable).toHaveBeenCalledWith('e1', 't1', { name: 'Renamed', shape: 'Round', seatCount: 8, isFull: false });
+    expect(getLayout).toHaveBeenCalledWith('e1');
+  });
+
+  it('deleteTable calls the API and silently reloads', () => {
+    const getLayout = vi.fn(() => of(layout()));
+    const deleteTable = vi.fn(() => of(undefined));
+    const store = createStore({ getLayout, deleteTable });
+    store.load('e1');
+    getLayout.mockClear();
+
+    store.deleteTable('t1').subscribe();
+
+    expect(deleteTable).toHaveBeenCalledWith('e1', 't1');
+    expect(getLayout).toHaveBeenCalledWith('e1');
+  });
+
+  it('does not touch state (no loading flash) when a mutation reloads the layout', () => {
+    const store = createStore({
+      getLayout: () => of(layout()),
+      createTables: () => of([table()]),
+    });
+    store.load('e1');
+
+    store.createTables({ name: 'Table', shape: 'Round', seatCount: 8, count: 1 }).subscribe();
+
+    expect(store.state()).toBe('ready');
+  });
 });

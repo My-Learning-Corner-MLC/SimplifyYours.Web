@@ -1,0 +1,200 @@
+// Occasion theme tokens (shared with the dashboard — see "SimplifyYours Occasion").
+$plum: #5a2849;
+$plum-hover: #4a1f3b;
+$plum-ink: #2a1f2d;
+$coral: #e07b5a;
+$parchment: #f5efe6;
+$linen: #fffcf5;
+$muted: #7a6b6e;
+$body-text: #4a4045;
+$hairline: #ece2d2;
+
+:host ::ng-deep .table-form-dialog .p-dialog-content {
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+:host ::ng-deep .table-form-dialog .p-dialog {
+  border-radius: 14px;
+}
+
+.table-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: $linen;
+  color: $plum-ink;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+  }
+
+  &__close {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: $muted;
+    cursor: pointer;
+    padding: 4px;
+
+    &:hover {
+      color: $plum-ink;
+    }
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label,
+    span:first-child {
+      font-size: 12px;
+      font-weight: 600;
+      color: $body-text;
+    }
+
+    input {
+      padding: 9px 12px;
+      border: 1px solid $hairline;
+      border-radius: 8px;
+      background: $parchment;
+      font: inherit;
+      font-size: 13.5px;
+      color: $plum-ink;
+
+      &:focus-visible {
+        outline: 2px solid $plum;
+        outline-offset: 1px;
+      }
+
+      &[aria-invalid='true'] {
+        border-color: $coral;
+      }
+    }
+  }
+
+  &__shape-toggle {
+    display: inline-flex;
+    border-radius: 8px;
+    border: 1px solid $hairline;
+    overflow: hidden;
+    width: fit-content;
+  }
+
+  &__shape-btn {
+    padding: 8px 16px;
+    background: $parchment;
+    border: none;
+    font: inherit;
+    font-size: 12.5px;
+    color: $body-text;
+    cursor: pointer;
+
+    &--active {
+      background: $plum;
+      color: $linen;
+      font-weight: 500;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: -2px;
+    }
+  }
+
+  &__preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__preview-chip {
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: $parchment;
+    border: 1px solid $hairline;
+    font-size: 11.5px;
+    color: $body-text;
+  }
+
+  &__error {
+    font-size: 12px;
+    color: $coral;
+
+    &--form {
+      margin: 0;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  &__spacer {
+    flex: 1;
+  }
+
+  &__btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &--primary {
+      background: $plum;
+      color: $linen;
+
+      &:hover:not(:disabled) {
+        background: $plum-hover;
+      }
+    }
+
+    &--ghost {
+      background: transparent;
+      border-color: $hairline;
+      color: $body-text;
+
+      &:hover:not(:disabled) {
+        background: $parchment;
+      }
+    }
+
+    &--danger {
+      background: transparent;
+      border-color: $coral;
+      color: $coral;
+
+      &:hover:not(:disabled) {
+        background: rgba(224, 123, 90, 0.1);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+}

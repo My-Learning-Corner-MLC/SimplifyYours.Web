@@ -23,6 +23,7 @@
           variant="tables"
           [confirmedCount]="confirmedGuestCount"
           (seeGuestList)="seeGuestList.emit()"
+          (addFirstTable)="openCreateModal()"
         />
       } @else {
         <div class="tables-tab__body" data-testid="tables-tab-ready">
@@ -33,24 +34,29 @@
               <li>{{ store.summary().seatedCount }} seated</li>
               <li>{{ store.summary().floatingCount }} floating</li>
             </ul>
-            <div class="tables-tab__view-toggle" role="group" aria-label="Switch view">
-              <button
-                type="button"
-                class="tables-tab__view-btn"
-                [class.tables-tab__view-btn--active]="view() === 'grid'"
-                [attr.aria-pressed]="view() === 'grid'"
-                (click)="setView('grid')"
-              >
-                Grid
-              </button>
-              <button
-                type="button"
-                class="tables-tab__view-btn"
-                [class.tables-tab__view-btn--active]="view() === 'floor'"
-                [attr.aria-pressed]="view() === 'floor'"
-                (click)="setView('floor')"
-              >
-                Floor plan
+            <div class="tables-tab__toolbar-actions">
+              <div class="tables-tab__view-toggle" role="group" aria-label="Switch view">
+                <button
+                  type="button"
+                  class="tables-tab__view-btn"
+                  [class.tables-tab__view-btn--active]="view() === 'grid'"
+                  [attr.aria-pressed]="view() === 'grid'"
+                  (click)="setView('grid')"
+                >
+                  Grid
+                </button>
+                <button
+                  type="button"
+                  class="tables-tab__view-btn"
+                  [class.tables-tab__view-btn--active]="view() === 'floor'"
+                  [attr.aria-pressed]="view() === 'floor'"
+                  (click)="setView('floor')"
+                >
+                  Floor plan
+                </button>
+              </div>
+              <button type="button" class="tables-tab__add-btn" data-testid="add-table-button" (click)="openCreateModal()">
+                + Add table
               </button>
             </div>
           </div>
@@ -59,7 +65,12 @@
             <div class="tables-tab__grid-layout">
               <div class="tables-tab__grid" data-testid="tables-tab-grid">
                 @for (table of store.tables(); track table.id) {
-                  <app-seating-table-card [table]="table" />
+                  <app-seating-table-card
+                    [table]="table"
+                    (editTable)="openEditModal(table)"
+                    (markFull)="toggleFull(table)"
+                    (deleteTable)="quickDelete(table)"
+                  />
                 }
               </div>
               <app-floating-guests-panel [guests]="store.floatingGuests()" />
@@ -73,4 +84,10 @@
       }
     }
   }
+
+  <app-table-form-modal
+    [visible]="formModalOpen()"
+    [table]="editingTable()"
+    (closed)="closeModal()"
+  />
 </div>

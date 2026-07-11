@@ -99,11 +99,38 @@ $hairline: #ece2d2;
     }
   }
 
+  &__toolbar-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   &__view-toggle {
     display: inline-flex;
     border-radius: 8px;
     border: 1px solid $hairline;
     overflow: hidden;
+  }
+
+  &__add-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: $plum;
+    color: $linen;
+    border: 1px solid $plum;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      background: $plum-hover;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
   }
 
   &__view-btn {

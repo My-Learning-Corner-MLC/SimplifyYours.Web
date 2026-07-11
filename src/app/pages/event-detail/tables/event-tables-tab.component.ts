@@ -12,9 +12,11 @@ import {
 } from '@angular/core';
 
 import { SeatingStore } from '../../../core/seating/seating-store';
+import { SeatingTable } from '../../../core/seating/seating-table.model';
 import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
 import { FloatingGuestsPanelComponent } from './floating-guests-panel/floating-guests-panel.component';
 import { SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
+import { TableFormModalComponent } from './table-form-modal/table-form-modal.component';
 
 export type TablesView = 'grid' | 'floor';
 
@@ -27,7 +29,7 @@ export type TablesView = 'grid' | 'floor';
 @Component({
   standalone: true,
   selector: 'app-event-tables-tab',
-  imports: [EventEmptyTabComponent, SeatingTableCardComponent, FloatingGuestsPanelComponent],
+  imports: [EventEmptyTabComponent, SeatingTableCardComponent, FloatingGuestsPanelComponent, TableFormModalComponent],
   providers: [SeatingStore],
   templateUrl: './event-tables-tab.component.html',
   styleUrl: './event-tables-tab.component.scss',
@@ -41,6 +43,8 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
 
   protected readonly store = inject(SeatingStore);
   readonly view = signal<TablesView>('grid');
+  readonly formModalOpen = signal(false);
+  readonly editingTable = signal<SeatingTable | null>(null);
 
   ngOnInit(): void {
     this.store.load(this.eventId);
@@ -59,5 +63,37 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
 
   setView(view: TablesView): void {
     this.view.set(view);
+  }
+
+  openCreateModal(): void {
+    this.editingTable.set(null);
+    this.formModalOpen.set(true);
+  }
+
+  openEditModal(table: SeatingTable): void {
+    this.editingTable.set(table);
+    this.formModalOpen.set(true);
+  }
+
+  closeModal(): void {
+    this.formModalOpen.set(false);
+  }
+
+  toggleFull(table: SeatingTable): void {
+    this.store
+      .updateTable(table.id, {
+        name: table.name,
+        shape: table.shape,
+        seatCount: table.seatCount,
+        isFull: !table.isFull,
+      })
+      .subscribe();
+  }
+
+  quickDelete(table: SeatingTable): void {
+    if (!confirm(`Delete "${table.name}"? Any seated guests will be unseated.`)) {
+      return;
+    }
+    this.store.deleteTable(table.id).subscribe();
   }
 }

@@ -1,0 +1,112 @@
+<p-dialog
+  [visible]="visible"
+  [modal]="true"
+  [closable]="false"
+  [showHeader]="false"
+  [style]="{ width: '28rem', maxWidth: '92vw' }"
+  styleClass="table-form-dialog"
+  (visibleChange)="!$event && close()"
+>
+  <form class="table-form" [formGroup]="form" (ngSubmit)="submit()" data-testid="table-form-modal">
+    <header class="table-form__head">
+      <h2 class="table-form__title">{{ isEditMode ? 'Edit table' : 'Add a table' }}</h2>
+      <button type="button" class="table-form__close" aria-label="Close" (click)="close()">&times;</button>
+    </header>
+
+    <div class="table-form__field">
+      <label for="table-name">Name</label>
+      <input
+        id="table-name"
+        type="text"
+        formControlName="name"
+        placeholder="e.g. Head table"
+        [attr.aria-invalid]="form.controls.name.invalid && form.controls.name.touched"
+        aria-describedby="table-name-error"
+      />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <span id="table-name-error" class="table-form__error" role="alert">Name is required.</span>
+      }
+    </div>
+
+    <div class="table-form__field">
+      <span id="table-shape-label">Shape</span>
+      <div class="table-form__shape-toggle" role="group" aria-labelledby="table-shape-label">
+        @for (shape of shapes; track shape) {
+          <button
+            type="button"
+            class="table-form__shape-btn"
+            [class.table-form__shape-btn--active]="form.controls.shape.value === shape"
+            [attr.aria-pressed]="form.controls.shape.value === shape"
+            (click)="form.controls.shape.setValue(shape)"
+          >
+            {{ shape }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="table-form__field">
+      <label for="table-seat-count">Seats</label>
+      <input
+        id="table-seat-count"
+        type="number"
+        formControlName="seatCount"
+        min="1"
+        max="20"
+        [attr.aria-invalid]="form.controls.seatCount.invalid && form.controls.seatCount.touched"
+      />
+    </div>
+
+    @if (!isEditMode) {
+      <div class="table-form__field">
+        <label for="table-bulk-count">How many tables?</label>
+        <input id="table-bulk-count" type="number" formControlName="bulkCount" min="1" max="20" />
+      </div>
+    }
+
+    @if (previewNames().length > 0) {
+      <div class="table-form__preview" aria-label="Tables to be created">
+        @for (name of previewNames(); track name) {
+          <span class="table-form__preview-chip">{{ name }}</span>
+        }
+      </div>
+    }
+
+    @if (error()) {
+      <p class="table-form__error table-form__error--form" role="alert">{{ error() }}</p>
+    }
+
+    <footer class="table-form__actions">
+      @if (confirmingDelete()) {
+        <button type="button" class="table-form__btn table-form__btn--ghost" (click)="cancelDelete()">
+          Never mind
+        </button>
+        <span class="table-form__spacer"></span>
+        <button
+          type="button"
+          class="table-form__btn table-form__btn--danger"
+          (click)="requestDelete()"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Deleting…' : 'Click again to confirm' }}
+        </button>
+      } @else {
+        @if (isEditMode) {
+          <button
+            type="button"
+            class="table-form__btn table-form__btn--danger"
+            (click)="requestDelete()"
+            [disabled]="saving()"
+          >
+            Delete table
+          </button>
+        }
+        <span class="table-form__spacer"></span>
+        <button type="button" class="table-form__btn table-form__btn--ghost" (click)="close()">Cancel</button>
+        <button type="submit" class="table-form__btn table-form__btn--primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : isEditMode ? 'Save changes' : 'Add table' }}
+        </button>
+      }
+    </footer>
+  </form>
+</p-dialog>
