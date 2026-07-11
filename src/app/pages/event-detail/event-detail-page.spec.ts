@@ -5,7 +5,17 @@ import { of, throwError } from 'rxjs';
 import { EventApiClient } from '../../core/events/event-api-client';
 import { EventDetail } from '../../core/events/event-detail.model';
 import { EventDetailError } from '../../core/events/event-detail-error.model';
+import { GuestApiClient } from '../../core/guests/guest-api-client';
+import { SeatingApiClient } from '../../core/seating/seating-api-client';
+import { SeatingLayout } from '../../core/seating/seating-layout.model';
 import { EventDetailPage } from './event-detail-page';
+
+const emptyLayout: SeatingLayout = {
+  eventId: 'e1',
+  tables: [],
+  areas: [],
+  summary: { tableCount: 0, seatCount: 0, seatedCount: 0, floatingCount: 0 },
+};
 
 const makeDetail = (overrides: Partial<EventDetail> = {}): EventDetail => ({
   id: 'e1',
@@ -32,6 +42,8 @@ function setup(api: ApiStub, id: string | null = 'e1') {
     imports: [EventDetailPage],
     providers: [
       { provide: EventApiClient, useValue: api },
+      { provide: SeatingApiClient, useValue: { getLayout: () => of(emptyLayout) } },
+      { provide: GuestApiClient, useValue: { listGuests: () => of([]) } },
       {
         provide: ActivatedRoute,
         useValue: { paramMap: of(convertToParamMap(id === null ? {} : { id })) },

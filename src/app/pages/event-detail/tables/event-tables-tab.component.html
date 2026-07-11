@@ -1,0 +1,78 @@
+<div class="tables-tab" data-testid="event-tables-tab" role="tabpanel">
+  @switch (store.state()) {
+    @case ('loading') {
+      <div class="tables-tab__loading" data-testid="tables-tab-loading" aria-busy="true" aria-live="polite">
+        <span class="sr-only">Loading table management…</span>
+        <div class="tables-tab__skeleton"></div>
+        <div class="tables-tab__skeleton"></div>
+        <div class="tables-tab__skeleton"></div>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="tables-tab__notice" data-testid="tables-tab-error" role="alert">
+        <span class="tables-tab__notice-glyph" aria-hidden="true">⚠️</span>
+        <p class="tables-tab__notice-title">{{ store.loadError()?.message }}</p>
+        <button type="button" class="tables-tab__retry" (click)="retry()">Try again</button>
+      </div>
+    }
+
+    @case ('ready') {
+      @if (store.isEmpty()) {
+        <app-event-empty-tab
+          variant="tables"
+          [confirmedCount]="confirmedGuestCount"
+          (seeGuestList)="seeGuestList.emit()"
+        />
+      } @else {
+        <div class="tables-tab__body" data-testid="tables-tab-ready">
+          <div class="tables-tab__toolbar">
+            <ul class="tables-tab__summary" role="list" aria-label="Table summary">
+              <li>{{ store.summary().tableCount }} tables</li>
+              <li>{{ store.summary().seatCount }} seats</li>
+              <li>{{ store.summary().seatedCount }} seated</li>
+              <li>{{ store.summary().floatingCount }} floating</li>
+            </ul>
+            <div class="tables-tab__view-toggle" role="group" aria-label="Switch view">
+              <button
+                type="button"
+                class="tables-tab__view-btn"
+                [class.tables-tab__view-btn--active]="view() === 'grid'"
+                [attr.aria-pressed]="view() === 'grid'"
+                (click)="setView('grid')"
+              >
+                Grid
+              </button>
+              <button
+                type="button"
+                class="tables-tab__view-btn"
+                [class.tables-tab__view-btn--active]="view() === 'floor'"
+                [attr.aria-pressed]="view() === 'floor'"
+                (click)="setView('floor')"
+              >
+                Floor plan
+              </button>
+            </div>
+          </div>
+
+          @if (view() === 'grid') {
+            <div class="tables-tab__grid" data-testid="tables-tab-grid">
+              @for (table of store.tables(); track table.id) {
+                <article class="tables-tab__table-stub" data-testid="table-card">
+                  <span class="tables-tab__table-name">{{ table.name }}</span>
+                  <span class="tables-tab__table-count">
+                    {{ seatedCount(table) }} / {{ table.seatCount }} seated
+                  </span>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="tables-tab__floor-stub" data-testid="tables-tab-floor">
+              Floor plan view is coming in a later slice.
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+</div>

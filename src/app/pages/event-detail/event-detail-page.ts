@@ -14,6 +14,7 @@ import { EventDetail } from '../../core/events/event-detail.model';
 import { EventDetailError } from '../../core/events/event-detail-error.model';
 import { EventTypeTint, eventTypeLabel, eventTypeTint } from '../../core/events/event-type-display';
 import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
+import { EventTablesTabComponent } from './tables/event-tables-tab.component';
 import {
   BUDGET_SUGGESTIONS_MOCK,
   BUDGET_SUMMARY_MOCK,
@@ -55,7 +56,7 @@ const WEEKS_THRESHOLD_DAYS = 21;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, EventEmptyTabComponent],
+  imports: [RouterLink, EventEmptyTabComponent, EventTablesTabComponent],
   selector: 'app-event-detail-page',
   templateUrl: './event-detail-page.html',
   styleUrl: './event-detail-page.scss',
@@ -68,7 +69,7 @@ export class EventDetailPage implements OnInit {
   // Captured once so the countdown stays stable across change detection.
   private readonly now = new Date();
 
-  private eventId = '';
+  protected eventId = '';
 
   readonly state = signal<DetailState>('loading');
   readonly loadError = signal<EventDetailError | null>(null);

@@ -67,4 +67,14 @@ describe('bearerTokenInterceptor', () => {
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
+
+  it('attaches the bearer token to guest-management-service requests', () => {
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.guestManagementBaseUrl}/seating`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.guestManagementBaseUrl}/seating`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
+    req.flush({});
+  });
 });
