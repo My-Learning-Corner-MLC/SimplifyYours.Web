@@ -12,8 +12,9 @@ import {
 } from '@angular/core';
 
 import { SeatingStore } from '../../../core/seating/seating-store';
-import { SeatingTable } from '../../../core/seating/seating-table.model';
 import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
+import { FloatingGuestsPanelComponent } from './floating-guests-panel/floating-guests-panel.component';
+import { SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
 
 export type TablesView = 'grid' | 'floor';
 
@@ -26,7 +27,7 @@ export type TablesView = 'grid' | 'floor';
 @Component({
   standalone: true,
   selector: 'app-event-tables-tab',
-  imports: [EventEmptyTabComponent],
+  imports: [EventEmptyTabComponent, SeatingTableCardComponent, FloatingGuestsPanelComponent],
   providers: [SeatingStore],
   templateUrl: './event-tables-tab.component.html',
   styleUrl: './event-tables-tab.component.scss',
@@ -58,9 +59,5 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
 
   setView(view: TablesView): void {
     this.view.set(view);
-  }
-
-  seatedCount(table: SeatingTable): number {
-    return table.seats.filter((seat) => seat.guestId !== null).length;
   }
 }

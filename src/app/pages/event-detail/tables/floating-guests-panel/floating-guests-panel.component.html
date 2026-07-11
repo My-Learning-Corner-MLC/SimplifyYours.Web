@@ -1,0 +1,33 @@
+<aside class="floating-panel" data-testid="floating-guests-panel">
+  <header class="floating-panel__head">
+    <h3 class="floating-panel__title">Still floating</h3>
+    <span class="floating-panel__count" data-testid="floating-guests-count">{{ guests.length }}</span>
+  </header>
+
+  <label class="floating-panel__search">
+    <span class="sr-only">Search floating guests</span>
+    <input
+      type="search"
+      placeholder="Find a guest…"
+      [value]="search()"
+      (input)="onSearchInput($any($event.target).value)"
+    />
+  </label>
+
+  @if (filteredGuests().length === 0) {
+    <p class="floating-panel__empty">
+      {{ guests.length === 0 ? 'Everyone has a seat.' : 'No guests match your search.' }}
+    </p>
+  } @else {
+    <ul class="floating-panel__list" role="list">
+      @for (guest of filteredGuests(); track guest.id) {
+        <li class="floating-panel__row" data-testid="floating-guest-row" tabindex="0">
+          <span class="floating-panel__avatar" aria-hidden="true">
+            {{ guestFullName(guest).charAt(0).toUpperCase() }}
+          </span>
+          <span class="floating-panel__name">{{ guestFullName(guest) }}</span>
+        </li>
+      }
+    </ul>
+  }
+</aside>

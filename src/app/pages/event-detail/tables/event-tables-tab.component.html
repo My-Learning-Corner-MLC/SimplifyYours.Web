@@ -56,15 +56,13 @@
           </div>
 
           @if (view() === 'grid') {
-            <div class="tables-tab__grid" data-testid="tables-tab-grid">
-              @for (table of store.tables(); track table.id) {
-                <article class="tables-tab__table-stub" data-testid="table-card">
-                  <span class="tables-tab__table-name">{{ table.name }}</span>
-                  <span class="tables-tab__table-count">
-                    {{ seatedCount(table) }} / {{ table.seatCount }} seated
-                  </span>
-                </article>
-              }
+            <div class="tables-tab__grid-layout">
+              <div class="tables-tab__grid" data-testid="tables-tab-grid">
+                @for (table of store.tables(); track table.id) {
+                  <app-seating-table-card [table]="table" />
+                }
+              </div>
+              <app-floating-guests-panel [guests]="store.floatingGuests()" />
             </div>
           } @else {
             <div class="tables-tab__floor-stub" data-testid="tables-tab-floor">

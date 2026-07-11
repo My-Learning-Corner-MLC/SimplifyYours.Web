@@ -1,0 +1,60 @@
+<article
+  class="table-card"
+  data-testid="table-card"
+  [attr.aria-label]="table.name"
+>
+  <header class="table-card__head">
+    <span class="table-card__name">{{ table.name }}</span>
+    <span class="table-card__menu-wrap">
+      <button
+        type="button"
+        class="table-card__menu-btn"
+        aria-haspopup="true"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-label]="'Actions for ' + table.name"
+        (click)="toggleMenu()"
+      >
+        &hellip;
+      </button>
+      @if (menuOpen()) {
+        <div class="table-card__menu" role="menu">
+          <button type="button" role="menuitem" (click)="onEdit()">Edit table</button>
+          <button type="button" role="menuitem" (click)="onMarkFull()">
+            {{ table.isFull ? 'Mark as not full' : 'Mark as full' }}
+          </button>
+          <button type="button" role="menuitem" class="table-card__menu-danger" (click)="onDelete()">
+            Delete table
+          </button>
+        </div>
+      }
+    </span>
+  </header>
+
+  <div
+    class="table-card__ring"
+    [class.table-card__ring--round]="table.shape === 'Round'"
+    [class.table-card__ring--long]="table.shape === 'Long'"
+    [class.table-card__ring--square]="table.shape === 'Square'"
+  >
+    <span class="table-card__surface" aria-hidden="true">{{ table.shape }}</span>
+    @for (seatVm of seats(); track seatVm.seat.seatIndex) {
+      <span
+        class="table-card__seat"
+        [class.table-card__seat--filled]="seatVm.seat.guestId !== null"
+        [style.left.%]="seatVm.xPercent"
+        [style.top.%]="seatVm.yPercent"
+        [attr.aria-label]="seatLabel(seatVm.seat)"
+        [attr.title]="seatVm.seat.guestName ?? 'Empty seat'"
+      >
+        {{ seatVm.seat.guestId !== null ? seatVm.initial : '+' }}
+      </span>
+    }
+  </div>
+
+  <footer class="table-card__foot">
+    <span>{{ seatedCount() }} / {{ table.seatCount }} seated</span>
+    @if (table.isFull) {
+      <span class="table-card__full-badge">Full</span>
+    }
+  </footer>
+</article>
