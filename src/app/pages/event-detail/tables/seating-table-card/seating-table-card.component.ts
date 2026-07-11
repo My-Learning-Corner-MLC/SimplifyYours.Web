@@ -1,15 +1,26 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
+import { NgStyle } from '@angular/common';
 
 import { computeSeatPositions } from '../../../../core/seating/seat-geometry';
 import { SeatingSeat } from '../../../../core/seating/seating-seat.model';
 import { SeatingTable } from '../../../../core/seating/seating-table.model';
+
+// Deterministic pastel tint per guest — stable across re-renders.
+const SEAT_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c9', '#e5c9c0', '#d7c7e0'];
+
+function guestTint(guestId: string): string {
+  let h = 0;
+  for (const c of guestId) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return SEAT_TINTS[h % SEAT_TINTS.length];
+}
 
 interface SeatVm {
   readonly seat: SeatingSeat;
   readonly xPercent: number;
   readonly yPercent: number;
   readonly initial: string;
+  readonly tint: string | null;
   readonly dropListId: string;
 }
 
@@ -35,7 +46,7 @@ export interface SeatDropIntent {
 @Component({
   standalone: true,
   selector: 'app-seating-table-card',
-  imports: [DragDropModule],
+  imports: [DragDropModule, NgStyle],
   templateUrl: './seating-table-card.component.html',
   styleUrl: './seating-table-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,7 +60,11 @@ export class SeatingTableCardComponent {
   @Output() readonly deleteTable = new EventEmitter<void>();
   @Output() readonly seatDrop = new EventEmitter<SeatDropIntent>();
 
-  readonly menuOpen = signal(false);
+  // Drop-receiving counter — tracks when any seat on this card is actively
+  // being dragged over (multiple cdkDropList enter/exit events fire as the
+  // user moves between adjacent seat slots without leaving the card area).
+  private dropEnterCount = 0;
+  readonly receivingDrop = signal(false);
 
   readonly seats = computed<SeatVm[]>(() => {
     const table = this.table();
@@ -59,6 +74,7 @@ export class SeatingTableCardComponent {
       xPercent: positions[index]?.xPercent ?? 50,
       yPercent: positions[index]?.yPercent ?? 50,
       initial: seat.guestName ? seat.guestName.trim().charAt(0).toUpperCase() : '',
+      tint: seat.guestId ? guestTint(seat.guestId) : null,
       dropListId: `seat-drop_${table.id}_${seat.seatIndex}`,
     }));
   });
@@ -71,27 +87,16 @@ export class SeatingTableCardComponent {
     return drop.data.guestId === null || drop.data.guestId === drag.data;
   };
 
-  toggleMenu(): void {
-    this.menuOpen.update((open) => !open);
+  onSeatEnter(): void {
+    this.dropEnterCount++;
+    this.receivingDrop.set(true);
   }
 
-  closeMenu(): void {
-    this.menuOpen.set(false);
-  }
-
-  onEdit(): void {
-    this.closeMenu();
-    this.editTable.emit();
-  }
-
-  onMarkFull(): void {
-    this.closeMenu();
-    this.markFull.emit();
-  }
-
-  onDelete(): void {
-    this.closeMenu();
-    this.deleteTable.emit();
+  onSeatExit(): void {
+    this.dropEnterCount = Math.max(0, this.dropEnterCount - 1);
+    if (this.dropEnterCount === 0) {
+      this.receivingDrop.set(false);
+    }
   }
 
   onSeatDropped(event: CdkDragDrop<SeatingSeat, SeatingSeat, string>, seatIndex: number): void {

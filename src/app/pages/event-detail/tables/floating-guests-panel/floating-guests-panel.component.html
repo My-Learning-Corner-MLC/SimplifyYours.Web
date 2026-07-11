@@ -26,7 +26,7 @@
       [id]="dropListId"
       (cdkDropListDropped)="onDropped($event)"
     >
-      @for (guest of filteredGuests(); track guest.id) {
+      @for (guest of filteredGuests(); track guest.id; let i = $index) {
         <li
           [class]="assigningGuestId() === guest.id ? 'floating-panel__row floating-panel__row--selected' : 'floating-panel__row'"
           data-testid="floating-guest-row"
@@ -39,12 +39,25 @@
           (click)="onRowClick(guest.id)"
           (keydown.enter)="onRowClick(guest.id)"
         >
-          <span class="floating-panel__avatar" aria-hidden="true">
-            {{ guestFullName(guest).charAt(0).toUpperCase() }}
+          <span class="floating-panel__handle" aria-hidden="true">&#8942;&#8942;</span>
+          <span
+            class="floating-panel__avatar"
+            [ngStyle]="{ background: avatarTint(i) }"
+            aria-hidden="true"
+          >{{ guestFullName(guest).charAt(0).toUpperCase() }}</span>
+          <span class="floating-panel__info">
+            <span class="floating-panel__name">{{ guestFullName(guest) }}</span>
+            @if (guestDetail(guest)) {
+              <span class="floating-panel__detail">{{ guestDetail(guest) }}</span>
+            }
           </span>
-          <span class="floating-panel__name">{{ guestFullName(guest) }}</span>
+          <span class="floating-panel__status" aria-label="RSVP status: Awaiting">&#9675; Awaiting</span>
         </li>
       }
     </ul>
   }
+
+  <footer class="floating-panel__footer" aria-hidden="true">
+    <span class="floating-panel__tip-label">Tip</span> · drag a name onto any seat
+  </footer>
 </aside>

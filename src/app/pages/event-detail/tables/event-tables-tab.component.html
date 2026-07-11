@@ -29,10 +29,22 @@
         <div class="tables-tab__body" data-testid="tables-tab-ready">
           <div class="tables-tab__toolbar">
             <ul class="tables-tab__summary" role="list" aria-label="Table summary">
-              <li>{{ store.summary().tableCount }} tables</li>
-              <li>{{ store.summary().seatCount }} seats</li>
-              <li>{{ store.summary().seatedCount }} seated</li>
-              <li>{{ store.summary().floatingCount }} floating</li>
+              <li class="tables-tab__chip tables-tab__chip--tables">
+                <span class="tables-tab__chip-num">{{ store.summary().tableCount }}</span>
+                <span class="tables-tab__chip-label">tables</span>
+              </li>
+              <li class="tables-tab__chip tables-tab__chip--seats">
+                <span class="tables-tab__chip-num">{{ store.summary().seatCount }}</span>
+                <span class="tables-tab__chip-label">seats</span>
+              </li>
+              <li class="tables-tab__chip tables-tab__chip--seated">
+                <span class="tables-tab__chip-num">{{ store.summary().seatedCount }}</span>
+                <span class="tables-tab__chip-label">seated</span>
+              </li>
+              <li class="tables-tab__chip tables-tab__chip--floating">
+                <span class="tables-tab__chip-num">{{ store.summary().floatingCount }}</span>
+                <span class="tables-tab__chip-label">floating</span>
+              </li>
             </ul>
             <div class="tables-tab__toolbar-actions">
               <div class="tables-tab__view-toggle" role="group" aria-label="Switch view">

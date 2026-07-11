@@ -1,6 +1,7 @@
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
 
+import { NgStyle } from '@angular/common';
 import { Guest, guestFullName } from '../../../../core/guests/guest.model';
 
 export const FLOATING_GUESTS_DROP_LIST_ID = 'floating-guests-drop-list';
@@ -18,10 +19,12 @@ export const FLOATING_GUESTS_DROP_LIST_ID = 'floating-guests-drop-list';
  * a plain `@Input() guests` field would silently freeze the filtered list
  * at whatever it was on the first render.
  */
+const AVATAR_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c9', '#e5c9c0', '#d7c7e0'];
+
 @Component({
   standalone: true,
   selector: 'app-floating-guests-panel',
-  imports: [DragDropModule],
+  imports: [DragDropModule, NgStyle],
   templateUrl: './floating-guests-panel.component.html',
   styleUrl: './floating-guests-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,6 +49,21 @@ export class FloatingGuestsPanelComponent {
   });
 
   readonly guestFullName = guestFullName;
+
+  avatarTint(index: number): string {
+    return AVATAR_TINTS[index % AVATAR_TINTS.length];
+  }
+
+  guestDetail(guest: Guest): string {
+    const parts: string[] = [];
+    if (guest.plusOnes > 0) {
+      parts.push(`+${guest.plusOnes}`);
+    }
+    if (guest.dietaryNotes?.trim()) {
+      parts.push(guest.dietaryNotes.trim());
+    }
+    return parts.join(' · ');
+  }
 
   onSearchInput(value: string): void {
     this.search.set(value);

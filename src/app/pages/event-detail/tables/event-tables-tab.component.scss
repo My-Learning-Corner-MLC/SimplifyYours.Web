@@ -90,15 +90,37 @@ $hairline: #ece2d2;
     list-style: none;
     margin: 0;
     padding: 0;
+  }
 
-    li {
-      padding: 7px 14px;
-      border-radius: 99px;
-      background: $linen;
-      border: 1px solid $hairline;
-      color: $body-text;
-      font-size: 12px;
-    }
+  &__chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 99px;
+    border: 1px solid $hairline;
+
+    &--tables { background: rgba(122, 143, 90, 0.10); }
+    &--seats  { background: rgba(200, 168, 118, 0.15); }
+    &--seated { background: rgba(90, 40, 73, 0.08); }
+    &--floating { background: rgba(224, 123, 90, 0.10); }
+  }
+
+  &__chip-num {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 20px;
+    line-height: 1;
+    color: $plum-ink;
+  }
+
+  &__chip-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: $muted;
+    margin-top: 2px;
   }
 
   &__toolbar-actions {

@@ -1,33 +1,14 @@
 <article
   class="table-card"
   data-testid="table-card"
+  [class.table-card--receiving]="receivingDrop()"
   [attr.aria-label]="table().name"
 >
   <header class="table-card__head">
     <span class="table-card__name">{{ table().name }}</span>
-    <span class="table-card__menu-wrap">
-      <button
-        type="button"
-        class="table-card__menu-btn"
-        aria-haspopup="true"
-        [attr.aria-expanded]="menuOpen()"
-        [attr.aria-label]="'Actions for ' + table().name"
-        (click)="toggleMenu()"
-      >
-        &hellip;
-      </button>
-      @if (menuOpen()) {
-        <div class="table-card__menu" role="menu">
-          <button type="button" role="menuitem" (click)="onEdit()">Edit table</button>
-          <button type="button" role="menuitem" (click)="onMarkFull()">
-            {{ table().isFull ? 'Mark as not full' : 'Mark as full' }}
-          </button>
-          <button type="button" role="menuitem" class="table-card__menu-danger" (click)="onDelete()">
-            Delete table
-          </button>
-        </div>
-      }
-    </span>
+    @if (table().isFull) {
+      <span class="table-card__full-badge">Full</span>
+    }
   </header>
 
   <div
@@ -45,6 +26,8 @@
         [cdkDropListData]="seatVm.seat"
         [cdkDropListEnterPredicate]="seatEnterPredicate"
         (cdkDropListDropped)="onSeatDropped($event, seatVm.seat.seatIndex)"
+        (cdkDropListEntered)="onSeatEnter()"
+        (cdkDropListExited)="onSeatExit()"
         [style.left.%]="seatVm.xPercent"
         [style.top.%]="seatVm.yPercent"
       >
@@ -53,6 +36,7 @@
           class="table-card__seat"
           [class.table-card__seat--filled]="seatVm.seat.guestId !== null"
           [class.table-card__seat--targetable]="assigningGuestId() && seatVm.seat.guestId === null"
+          [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
           cdkDrag
           [cdkDragDisabled]="seatVm.seat.guestId === null"
           [cdkDragData]="seatVm.seat.guestId"
@@ -67,9 +51,33 @@
   </div>
 
   <footer class="table-card__foot">
-    <span>{{ seatedCount() }} / {{ table().seatCount }} seated</span>
-    @if (table().isFull) {
-      <span class="table-card__full-badge">Full</span>
+    <span class="table-card__tally">{{ seatedCount() }} / {{ table().seatCount }} seated</span>
+    @if (receivingDrop()) {
+      <span class="table-card__drop-hint" aria-hidden="true">DROP TO SEAT</span>
+    } @else {
+      <div class="table-card__actions" role="group" [attr.aria-label]="'Actions for ' + table().name">
+        <button
+          type="button"
+          class="table-card__action-btn"
+          title="Edit table"
+          [attr.aria-label]="'Edit ' + table().name"
+          (click)="editTable.emit()"
+        >&#9998;</button>
+        <button
+          type="button"
+          class="table-card__action-btn"
+          [title]="table().isFull ? 'Mark as not full' : 'Mark as full'"
+          [attr.aria-label]="(table().isFull ? 'Mark as not full: ' : 'Mark as full: ') + table().name"
+          (click)="markFull.emit()"
+        >&#10003;</button>
+        <button
+          type="button"
+          class="table-card__action-btn table-card__action-btn--danger"
+          title="Delete table"
+          [attr.aria-label]="'Delete ' + table().name"
+          (click)="deleteTable.emit()"
+        >&#9003;</button>
+      </div>
     }
   </footer>
 </article>

@@ -54,3 +54,16 @@ export function withTableMoved(
     tables: layout.tables.map((table) => (table.id !== tableId ? table : { ...table, positionX, positionY, rotation })),
   };
 }
+
+export function withAreaMoved(
+  layout: SeatingLayout,
+  areaId: string,
+  positionX: number,
+  positionY: number,
+  rotation: number,
+): SeatingLayout {
+  return {
+    ...layout,
+    areas: layout.areas.map((area) => (area.id !== areaId ? area : { ...area, positionX, positionY, rotation })),
+  };
+}

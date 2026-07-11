@@ -44,7 +44,6 @@ export type TablesView = 'grid' | 'floor';
     SelectedTablePanelComponent,
     CdkDropListGroup,
   ],
-  providers: [SeatingStore],
   templateUrl: './event-tables-tab.component.html',
   styleUrl: './event-tables-tab.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

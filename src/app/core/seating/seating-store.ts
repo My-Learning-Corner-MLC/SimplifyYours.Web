@@ -3,13 +3,15 @@ import { Observable, Subject, debounceTime, forkJoin, tap } from 'rxjs';
 
 import { GuestApiClient } from '../guests/guest-api-client';
 import { Guest } from '../guests/guest.model';
-import { withGuestAssigned, withGuestUnassigned, withTableMoved } from './seating-layout-mutations';
+import { withAreaMoved, withGuestAssigned, withGuestUnassigned, withTableMoved } from './seating-layout-mutations';
 import { SeatingApiClient } from './seating-api-client';
-import { SeatingBatchOp, TablePositionInput } from './seating-batch.model';
+import { AreaPositionInput, SeatingBatchOp, TablePositionInput } from './seating-batch.model';
+import { CreateAreaInput, UpdateAreaInput } from './area-input.model';
 import { SeatingError } from './seating-error.model';
 import { SeatingLayout } from './seating-layout.model';
 import { SeatingSummary } from './seating-summary.model';
 import { SeatingTable } from './seating-table.model';
+import { SeatingArea } from './seating-area.model';
 import { CreateTablesInput, UpdateTableInput } from './table-input.model';
 
 export type SeatingLoadState = 'loading' | 'error' | 'ready';
@@ -45,15 +47,19 @@ export class SeatingStore implements OnDestroy {
 
   private readonly pendingAssignOps = new Map<string, SeatingBatchOp>();
   private readonly pendingPositionOps = new Map<string, TablePositionInput>();
+  private readonly pendingAreaPositionOps = new Map<string, AreaPositionInput>();
   private assignSnapshot: SeatingLayout | null = null;
   private positionSnapshot: SeatingLayout | null = null;
+  private areaPositionSnapshot: SeatingLayout | null = null;
 
   private readonly assignFlush$ = new Subject<void>();
   private readonly positionFlush$ = new Subject<void>();
+  private readonly areaPositionFlush$ = new Subject<void>();
 
   constructor() {
     this.assignFlush$.pipe(debounceTime(FLUSH_DEBOUNCE_MS)).subscribe(() => this.flushAssignments());
     this.positionFlush$.pipe(debounceTime(FLUSH_DEBOUNCE_MS)).subscribe(() => this.flushPositions());
+    this.areaPositionFlush$.pipe(debounceTime(FLUSH_DEBOUNCE_MS)).subscribe(() => this.flushAreaPositions());
   }
 
   readonly tables = computed(() => this.layout()?.tables ?? []);
@@ -90,6 +96,11 @@ export class SeatingStore implements OnDestroy {
   });
 
   load(eventId: string): void {
+    // Skip redundant fetches caused by tab-switch re-mounting when the store is
+    // scoped to the parent (EventDetailPage) and the data is already fresh.
+    if (eventId === this.eventId && this.state() === 'ready') {
+      return;
+    }
     this.eventId = eventId;
     this.state.set('loading');
     this.loadError.set(null);
@@ -97,6 +108,7 @@ export class SeatingStore implements OnDestroy {
     this.actionError.set(null);
     this.pendingAssignOps.clear();
     this.pendingPositionOps.clear();
+    this.pendingAreaPositionOps.clear();
 
     this.fetchLayoutAndGuests().subscribe({
       next: () => this.state.set('ready'),
@@ -159,6 +171,19 @@ export class SeatingStore implements OnDestroy {
     this.queuePositionFlush();
   }
 
+  moveArea(areaId: string, positionX: number, positionY: number, rotation: number): void {
+    const current = this.layout();
+    if (!current) {
+      return;
+    }
+    if (this.pendingAreaPositionOps.size === 0) {
+      this.areaPositionSnapshot = current;
+    }
+    this.layout.set(withAreaMoved(current, areaId, positionX, positionY, rotation));
+    this.pendingAreaPositionOps.set(areaId, { areaId, positionX, positionY, rotation });
+    this.queueAreaPositionFlush();
+  }
+
   /** Captures the pre-batch layout the first time a new pending assignment batch starts. */
   private captureAssignSnapshotIfNeeded(current: SeatingLayout): void {
     if (this.pendingAssignOps.size === 0) {
@@ -166,10 +191,11 @@ export class SeatingStore implements OnDestroy {
     }
   }
 
-  /** Force-flush both queues now. Call on Grid⇄Floor switch, leaving the tab, beforeunload. */
+  /** Force-flush all queues now. Call on Grid⇄Floor switch, leaving the tab, beforeunload. */
   forceFlush(): void {
     this.flushAssignments();
     this.flushPositions();
+    this.flushAreaPositions();
   }
 
   private queueAssignFlush(): void {
@@ -188,6 +214,15 @@ export class SeatingStore implements OnDestroy {
       return;
     }
     this.positionFlush$.next();
+  }
+
+  private queueAreaPositionFlush(): void {
+    this.saveState.set('unsaved');
+    if (this.pendingAreaPositionOps.size >= MAX_PENDING_OPS) {
+      this.flushAreaPositions();
+      return;
+    }
+    this.areaPositionFlush$.next();
   }
 
   private flushAssignments(): void {
@@ -265,6 +300,42 @@ export class SeatingStore implements OnDestroy {
     });
   }
 
+  private flushAreaPositions(): void {
+    if (this.pendingAreaPositionOps.size === 0) {
+      return;
+    }
+    const positions = Array.from(this.pendingAreaPositionOps.values());
+    this.pendingAreaPositionOps.clear();
+    this.saveState.set('saving');
+
+    this.api.applyAreaPositionsBatch(this.eventId, positions).subscribe({
+      next: (results) => {
+        this.areaPositionSnapshot = null;
+        const hasConflict = results.some((result) => result.status !== 'Applied');
+        if (hasConflict) {
+          this.actionError.set('Some area positions could not be saved. The layout has been refreshed.');
+          this.saveState.set('error');
+          this.silentReload();
+        } else {
+          this.saveState.set('saved');
+        }
+      },
+      error: () => {
+        if (this.areaPositionSnapshot) {
+          this.layout.set(this.areaPositionSnapshot);
+        }
+        for (const position of positions) {
+          if (!this.pendingAreaPositionOps.has(position.areaId)) {
+            this.pendingAreaPositionOps.set(position.areaId, position);
+          }
+        }
+        this.actionError.set("We couldn't save the area positions. Retrying shortly.");
+        this.saveState.set('error');
+        this.areaPositionFlush$.next();
+      },
+    });
+  }
+
   // Immediate (non-batched) table mutations — create/edit/delete are rare
   // and need the server-assigned id, unlike the high-frequency seat-assignment
   // and position drags that go through the debounced batch queue (Slice 4/5).
@@ -278,6 +349,18 @@ export class SeatingStore implements OnDestroy {
 
   deleteTable(tableId: string): Observable<void> {
     return this.api.deleteTable(this.eventId, tableId).pipe(tap(() => this.silentReload()));
+  }
+
+  createArea(input: CreateAreaInput): Observable<SeatingArea> {
+    return this.api.createArea(this.eventId, input).pipe(tap(() => this.silentReload()));
+  }
+
+  updateArea(areaId: string, input: UpdateAreaInput): Observable<SeatingArea> {
+    return this.api.updateArea(this.eventId, areaId, input).pipe(tap(() => this.silentReload()));
+  }
+
+  deleteArea(areaId: string): Observable<void> {
+    return this.api.deleteArea(this.eventId, areaId).pipe(tap(() => this.silentReload()));
   }
 
   /** Refreshes layout/guests signals in place without disturbing `state` (no loading skeleton flash). */

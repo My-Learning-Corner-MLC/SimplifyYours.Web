@@ -26,6 +26,7 @@ function setup(seatingApi: Partial<SeatingApiClient>, guestApi: Partial<GuestApi
   TestBed.configureTestingModule({
     imports: [EventTablesTabComponent],
     providers: [
+      SeatingStore,
       { provide: SeatingApiClient, useValue: seatingApiWithDefaults },
       { provide: GuestApiClient, useValue: guestApi },
     ],
@@ -128,7 +129,6 @@ describe('EventTablesTabComponent', () => {
             lastName: 'Okoye',
             phoneNumber: '',
             emailAddress: null,
-            gender: 'Female',
             relationship: null,
             side: null,
             plusOnes: 0,

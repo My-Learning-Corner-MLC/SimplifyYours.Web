@@ -16,6 +16,7 @@ import { EventTypeTint, eventTypeLabel, eventTypeTint } from '../../core/events/
 import { GuestApiClient } from '../../core/guests/guest-api-client';
 import { Guest } from '../../core/guests/guest.model';
 import { ListGuestsError } from '../../core/guests/guest-error.model';
+import { SeatingStore } from '../../core/seating/seating-store';
 import { AddGuestModalComponent } from './add-guest/add-guest-modal.component';
 import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
 import { EventTablesTabComponent } from './tables/event-tables-tab.component';
@@ -80,6 +81,7 @@ const WEEKS_THRESHOLD_DAYS = 21;
 @Component({
   standalone: true,
   imports: [RouterLink, EventEmptyTabComponent, EventTablesTabComponent, AddGuestModalComponent],
+  providers: [SeatingStore],
   selector: 'app-event-detail-page',
   templateUrl: './event-detail-page.html',
   styleUrl: './event-detail-page.scss',
