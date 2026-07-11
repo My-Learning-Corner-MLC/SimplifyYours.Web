@@ -39,14 +39,29 @@
     <span class="table-card__surface" aria-hidden="true">{{ table.shape }}</span>
     @for (seatVm of seats(); track seatVm.seat.seatIndex) {
       <span
-        class="table-card__seat"
-        [class.table-card__seat--filled]="seatVm.seat.guestId !== null"
+        class="table-card__seat-slot"
+        cdkDropList
+        [id]="seatVm.dropListId"
+        [cdkDropListData]="seatVm.seat"
+        [cdkDropListEnterPredicate]="seatEnterPredicate"
+        (cdkDropListDropped)="onSeatDropped($event, seatVm.seat.seatIndex)"
         [style.left.%]="seatVm.xPercent"
         [style.top.%]="seatVm.yPercent"
-        [attr.aria-label]="seatLabel(seatVm.seat)"
-        [attr.title]="seatVm.seat.guestName ?? 'Empty seat'"
       >
-        {{ seatVm.seat.guestId !== null ? seatVm.initial : '+' }}
+        <button
+          type="button"
+          class="table-card__seat"
+          [class.table-card__seat--filled]="seatVm.seat.guestId !== null"
+          [class.table-card__seat--targetable]="assigningGuestId && seatVm.seat.guestId === null"
+          cdkDrag
+          [cdkDragDisabled]="seatVm.seat.guestId === null"
+          [cdkDragData]="seatVm.seat.guestId"
+          [attr.aria-label]="seatLabel(seatVm.seat)"
+          [attr.title]="seatVm.seat.guestName ?? 'Empty seat'"
+          (click)="onSeatClick(seatVm.seat)"
+        >
+          {{ seatVm.seat.guestId !== null ? seatVm.initial : '+' }}
+        </button>
       </span>
     }
   </div>

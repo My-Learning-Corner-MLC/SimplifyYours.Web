@@ -65,4 +65,32 @@ describe('FloatingGuestsPanelComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('No guests match your search.');
   });
+
+  it('emits guestSelected when a row is clicked', () => {
+    const fixture = setup([makeGuest({ id: 'g1' })]);
+    const spy = vi.fn();
+    fixture.componentInstance.guestSelected.subscribe(spy);
+
+    fixture.nativeElement.querySelector('[data-testid="floating-guest-row"]').click();
+
+    expect(spy).toHaveBeenCalledWith('g1');
+  });
+
+  it('marks the row selected when it matches assigningGuestId', () => {
+    const fixture = setup([makeGuest({ id: 'g1' })]);
+    fixture.componentRef.setInput('assigningGuestId', 'g1');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.floating-panel__row--selected')).toBeTruthy();
+  });
+
+  it('emits guestUnseated when a seated-guest chip is dropped onto the list', () => {
+    const fixture = setup([makeGuest({ id: 'g1' })]);
+    const spy = vi.fn();
+    fixture.componentInstance.guestUnseated.subscribe(spy);
+
+    fixture.componentInstance.onDropped({ item: { data: 'g2' } } as never);
+
+    expect(spy).toHaveBeenCalledWith('g2');
+  });
 });

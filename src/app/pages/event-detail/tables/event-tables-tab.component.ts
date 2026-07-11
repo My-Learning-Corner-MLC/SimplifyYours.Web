@@ -1,7 +1,9 @@
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  HostListener,
   Input,
   OnChanges,
   OnInit,
@@ -11,11 +13,12 @@ import {
   signal,
 } from '@angular/core';
 
+import { guestFullName } from '../../../core/guests/guest.model';
 import { SeatingStore } from '../../../core/seating/seating-store';
 import { SeatingTable } from '../../../core/seating/seating-table.model';
 import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
 import { FloatingGuestsPanelComponent } from './floating-guests-panel/floating-guests-panel.component';
-import { SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
+import { SeatDropIntent, SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
 import { TableFormModalComponent } from './table-form-modal/table-form-modal.component';
 
 export type TablesView = 'grid' | 'floor';
@@ -29,7 +32,13 @@ export type TablesView = 'grid' | 'floor';
 @Component({
   standalone: true,
   selector: 'app-event-tables-tab',
-  imports: [EventEmptyTabComponent, SeatingTableCardComponent, FloatingGuestsPanelComponent, TableFormModalComponent],
+  imports: [
+    EventEmptyTabComponent,
+    SeatingTableCardComponent,
+    FloatingGuestsPanelComponent,
+    TableFormModalComponent,
+    CdkDropListGroup,
+  ],
   providers: [SeatingStore],
   templateUrl: './event-tables-tab.component.html',
   styleUrl: './event-tables-tab.component.scss',
@@ -45,6 +54,8 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
   readonly view = signal<TablesView>('grid');
   readonly formModalOpen = signal(false);
   readonly editingTable = signal<SeatingTable | null>(null);
+  readonly assigningGuestId = signal<string | null>(null);
+  readonly announcement = signal('');
 
   ngOnInit(): void {
     this.store.load(this.eventId);
@@ -57,12 +68,25 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
     }
   }
 
-  retry(): void {
-    this.store.retry();
+  // Grid<->Floor is a strong force-flush trigger — don't leave a view with
+  // in-flight drag changes still sitting in the debounce window.
+  setView(view: TablesView): void {
+    this.store.forceFlush();
+    this.view.set(view);
   }
 
-  setView(view: TablesView): void {
-    this.view.set(view);
+  @HostListener('window:beforeunload')
+  onBeforeUnload(): void {
+    this.store.forceFlush();
+  }
+
+  @HostListener('window:keydown.escape')
+  onEscape(): void {
+    this.assigningGuestId.set(null);
+  }
+
+  retry(): void {
+    this.store.retry();
   }
 
   openCreateModal(): void {
@@ -95,5 +119,34 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
       return;
     }
     this.store.deleteTable(table.id).subscribe();
+  }
+
+  // ---- Seat assignment: drag-and-drop + the click/keyboard fallback ----
+
+  onSeatDrop(table: SeatingTable, intent: SeatDropIntent): void {
+    this.assigningGuestId.set(null);
+    const guestName = this.guestDisplayName(intent.guestId);
+    this.store.assignGuest(intent.guestId, table.id, intent.seatIndex);
+    this.announcement.set(`${guestName} seated at ${table.name}, seat ${intent.seatIndex + 1}.`);
+  }
+
+  onGuestSelected(guestId: string): void {
+    this.assigningGuestId.update((current) => (current === guestId ? null : guestId));
+  }
+
+  onGuestUnseated(guestId: string): void {
+    const guestName = this.guestDisplayName(guestId);
+    this.store.unassignGuest(guestId);
+    this.announcement.set(`${guestName} moved back to the floating list.`);
+  }
+
+  private guestDisplayName(guestId: string): string {
+    const table = this.store.tables().find((t) => t.seats.some((seat) => seat.guestId === guestId));
+    const seatName = table?.seats.find((s) => s.guestId === guestId)?.guestName;
+    if (seatName) {
+      return seatName;
+    }
+    const floatingGuest = this.store.floatingGuests().find((g) => g.id === guestId);
+    return floatingGuest ? guestFullName(floatingGuest) : 'Guest';
   }
 }

@@ -61,19 +61,35 @@
             </div>
           </div>
 
+          <div class="tables-tab__save-status" data-testid="save-status" [attr.data-state]="store.saveState()">
+            @switch (store.saveState()) {
+              @case ('unsaved') { <span>Unsaved changes</span> }
+              @case ('saving') { <span>Saving…</span> }
+              @case ('saved') { <span>Saved</span> }
+              @case ('error') { <span role="alert">{{ store.actionError() || "Couldn't save — retrying" }}</span> }
+            }
+          </div>
+
           @if (view() === 'grid') {
-            <div class="tables-tab__grid-layout">
+            <div class="tables-tab__grid-layout" cdkDropListGroup>
               <div class="tables-tab__grid" data-testid="tables-tab-grid">
                 @for (table of store.tables(); track table.id) {
                   <app-seating-table-card
                     [table]="table"
+                    [assigningGuestId]="assigningGuestId()"
                     (editTable)="openEditModal(table)"
                     (markFull)="toggleFull(table)"
                     (deleteTable)="quickDelete(table)"
+                    (seatDrop)="onSeatDrop(table, $event)"
                   />
                 }
               </div>
-              <app-floating-guests-panel [guests]="store.floatingGuests()" />
+              <app-floating-guests-panel
+                [guests]="store.floatingGuests()"
+                [assigningGuestId]="assigningGuestId()"
+                (guestSelected)="onGuestSelected($event)"
+                (guestUnseated)="onGuestUnseated($event)"
+              />
             </div>
           } @else {
             <div class="tables-tab__floor-stub" data-testid="tables-tab-floor">
@@ -84,6 +100,8 @@
       }
     }
   }
+
+  <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
 
   <app-table-form-modal
     [visible]="formModalOpen()"

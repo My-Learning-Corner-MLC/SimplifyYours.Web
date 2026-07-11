@@ -91,4 +91,84 @@ describe('SeatingTableCardComponent', () => {
 
     expect(fixture.nativeElement.querySelectorAll('.table-card__seat').length).toBe(6);
   });
+
+  it('emits seatDrop with the seat index and dropped guest id', () => {
+    const fixture = setup(makeTable());
+    const spy = vi.fn();
+    fixture.componentInstance.seatDrop.subscribe(spy);
+
+    fixture.componentInstance.onSeatDropped(
+      { item: { data: 'g2' } } as never,
+      1,
+    );
+
+    expect(spy).toHaveBeenCalledWith({ seatIndex: 1, guestId: 'g2' });
+  });
+
+  it('ignores a drop with no guest id', () => {
+    const fixture = setup(makeTable());
+    const spy = vi.fn();
+    fixture.componentInstance.seatDrop.subscribe(spy);
+
+    fixture.componentInstance.onSeatDropped({ item: { data: '' } } as never, 1);
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  describe('click-to-assign fallback', () => {
+    it('emits seatDrop when an empty seat is clicked while a guest is being assigned', () => {
+      const fixture = setup(makeTable());
+      fixture.componentInstance.assigningGuestId = 'g2';
+      const spy = vi.fn();
+      fixture.componentInstance.seatDrop.subscribe(spy);
+
+      fixture.componentInstance.onSeatClick({ seatIndex: 1, guestId: null, guestName: null });
+
+      expect(spy).toHaveBeenCalledWith({ seatIndex: 1, guestId: 'g2' });
+    });
+
+    it('does nothing when clicking a seat with no guest being assigned', () => {
+      const fixture = setup(makeTable());
+      const spy = vi.fn();
+      fixture.componentInstance.seatDrop.subscribe(spy);
+
+      fixture.componentInstance.onSeatClick({ seatIndex: 1, guestId: null, guestName: null });
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when clicking an already-occupied seat', () => {
+      const fixture = setup(makeTable());
+      fixture.componentInstance.assigningGuestId = 'g2';
+      const spy = vi.fn();
+      fixture.componentInstance.seatDrop.subscribe(spy);
+
+      fixture.componentInstance.onSeatClick({ seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' });
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('seatEnterPredicate', () => {
+    it('allows dropping onto an empty seat', () => {
+      const fixture = setup(makeTable());
+      const drop = { data: { seatIndex: 1, guestId: null, guestName: null } } as never;
+
+      expect(fixture.componentInstance.seatEnterPredicate({ data: 'g2' } as never, drop)).toBe(true);
+    });
+
+    it('rejects dropping onto a seat occupied by someone else', () => {
+      const fixture = setup(makeTable());
+      const drop = { data: { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' } } as never;
+
+      expect(fixture.componentInstance.seatEnterPredicate({ data: 'g2' } as never, drop)).toBe(false);
+    });
+
+    it('allows a guest to re-enter the seat they already occupy', () => {
+      const fixture = setup(makeTable());
+      const drop = { data: { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' } } as never;
+
+      expect(fixture.componentInstance.seatEnterPredicate({ data: 'g1' } as never, drop)).toBe(true);
+    });
+  });
 });

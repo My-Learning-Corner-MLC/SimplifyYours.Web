@@ -3,6 +3,8 @@ $plum: #5a2849;
 $plum-hover: #4a1f3b;
 $plum-ink: #2a1f2d;
 $champagne: #c8a876;
+$coral: #e07b5a;
+$olive: #7a8f5a;
 $parchment: #f5efe6;
 $linen: #fffcf5;
 $muted: #7a6b6e;
@@ -151,6 +153,23 @@ $hairline: #ece2d2;
     &:focus-visible {
       outline: 2px solid $plum;
       outline-offset: -2px;
+    }
+  }
+
+  &__save-status {
+    margin-bottom: 12px;
+    font-size: 11.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.04em;
+    color: $muted;
+    min-height: 14px;
+
+    &[data-state='saved'] {
+      color: $olive;
+    }
+
+    &[data-state='error'] {
+      color: $coral;
     }
   }
 

@@ -19,9 +19,26 @@
       {{ guests.length === 0 ? 'Everyone has a seat.' : 'No guests match your search.' }}
     </p>
   } @else {
-    <ul class="floating-panel__list" role="list">
+    <ul
+      class="floating-panel__list"
+      role="list"
+      cdkDropList
+      [id]="dropListId"
+      (cdkDropListDropped)="onDropped($event)"
+    >
       @for (guest of filteredGuests(); track guest.id) {
-        <li class="floating-panel__row" data-testid="floating-guest-row" tabindex="0">
+        <li
+          [class]="assigningGuestId === guest.id ? 'floating-panel__row floating-panel__row--selected' : 'floating-panel__row'"
+          data-testid="floating-guest-row"
+          tabindex="0"
+          role="button"
+          cdkDrag
+          [cdkDragData]="guest.id"
+          [attr.aria-pressed]="assigningGuestId === guest.id"
+          [attr.aria-label]="guestFullName(guest) + (assigningGuestId === guest.id ? ', selected. Click a seat to place them.' : '')"
+          (click)="onRowClick(guest.id)"
+          (keydown.enter)="onRowClick(guest.id)"
+        >
           <span class="floating-panel__avatar" aria-hidden="true">
             {{ guestFullName(guest).charAt(0).toUpperCase() }}
           </span>

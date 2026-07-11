@@ -88,6 +88,7 @@ $hairline: #ece2d2;
     padding: 8px;
     border-radius: 8px;
     cursor: grab;
+    border: 1.5px solid transparent;
 
     &:hover {
       background: $parchment;
@@ -96,6 +97,16 @@ $hairline: #ece2d2;
     &:focus-visible {
       outline: 2px solid $plum;
       outline-offset: -2px;
+    }
+
+    &--selected {
+      border-color: $plum;
+      background: rgba(90, 40, 73, 0.06);
+    }
+
+    &.cdk-drag-preview {
+      box-shadow: 0 8px 20px rgba(42, 31, 45, 0.2);
+      background: $linen;
     }
   }
 
