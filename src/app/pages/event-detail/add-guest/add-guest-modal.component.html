@@ -1,0 +1,243 @@
+<!-- The backdrop is a mouse convenience; keyboard users close via the ×/Cancel
+     buttons or the Escape key (handled on the host). -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<div class="ag-overlay" (click)="onBackdrop($event)">
+  <div
+    class="ag-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="ag-title"
+    data-testid="add-guest-modal"
+  >
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <!-- Header -->
+      <div class="ag-head">
+        <div class="ag-head-row">
+          <div>
+            <div class="ag-eyebrow">ADD GUEST</div>
+            <div class="ag-title" id="ag-title">Room for one <span class="ag-italic">more.</span></div>
+          </div>
+          <button
+            type="button"
+            class="ag-close"
+            aria-label="Close"
+            [disabled]="status() === 'submitting'"
+            (click)="cancel()"
+          >
+            ×
+          </button>
+        </div>
+        <div class="ag-rule"></div>
+      </div>
+
+      @if (status() === 'submitting') {
+        <div class="ag-progress" aria-hidden="true"><span class="ag-progress-bar"></span></div>
+      }
+
+      <!-- Body -->
+      <div class="ag-body" [class.ag-body--locked]="status() === 'submitting'">
+        @if (serverError()) {
+          <div class="ag-banner ag-banner--error" role="alert" data-testid="add-guest-server-error">
+            <span class="ag-banner-glyph" aria-hidden="true">⚠</span>
+            <div class="ag-banner-body">
+              <div class="ag-banner-title">Something went wrong on our end</div>
+              <div class="ag-banner-text">
+                Your details are still here — give it another try.
+              </div>
+            </div>
+            <button type="submit" class="ag-banner-action">Retry</button>
+          </div>
+        }
+
+        @if (duplicate()) {
+          <div class="ag-banner ag-banner--warn" role="alert" data-testid="add-guest-duplicate">
+            <span class="ag-banner-glyph ag-banner-glyph--warn" aria-hidden="true">◆</span>
+            <div class="ag-banner-text">
+              A guest with this name, email, or phone is already on this list. Adjust their details to add them anyway.
+            </div>
+          </div>
+        }
+
+        <!-- First name -->
+        <div class="ag-field">
+          <label class="ag-label" for="ag-first-name">First name</label>
+          <div class="ag-help">As it should appear on the place card.</div>
+          <input
+            id="ag-first-name"
+            type="text"
+            class="ag-input"
+            [class.ag-input--error]="showError('firstName')"
+            formControlName="firstName"
+            placeholder="First name…"
+            autocomplete="off"
+          />
+          @if (showError('firstName')) {
+            <div class="ag-error"><span class="ag-error-mark">!</span>First name is required</div>
+          }
+        </div>
+
+        <!-- Last name -->
+        <div class="ag-field">
+          <label class="ag-label" for="ag-last-name">Last name</label>
+          <input
+            id="ag-last-name"
+            type="text"
+            class="ag-input"
+            [class.ag-input--error]="showError('lastName')"
+            formControlName="lastName"
+            placeholder="Last name…"
+            autocomplete="off"
+          />
+          @if (showError('lastName')) {
+            <div class="ag-error"><span class="ag-error-mark">!</span>Last name is required</div>
+          }
+        </div>
+
+        <!-- Email -->
+        <div class="ag-field">
+          <label class="ag-label" for="ag-email">Email address</label>
+          <div class="ag-help">We'll send the invite here.</div>
+          <input
+            id="ag-email"
+            type="email"
+            class="ag-input ag-input--mono"
+            [class.ag-input--error]="showError('email')"
+            formControlName="email"
+            placeholder="name@example.com"
+            autocomplete="off"
+          />
+          @if (showError('email')) {
+            <div class="ag-error">
+              <span class="ag-error-mark">!</span>Enter a valid email, like name@example.com
+            </div>
+          }
+        </div>
+
+        <!-- Phone -->
+        <div class="ag-field">
+          <label class="ag-label" for="ag-phone">Phone number</label>
+          <div class="ag-help">For day-of coordination.</div>
+          <input
+            id="ag-phone"
+            type="tel"
+            class="ag-input ag-input--mono"
+            [class.ag-input--error]="showError('phone')"
+            formControlName="phone"
+            placeholder="+1 555 123 4567"
+            autocomplete="off"
+          />
+          @if (showError('phone')) {
+            <div class="ag-error"><span class="ag-error-mark">!</span>Enter a valid phone number</div>
+          }
+        </div>
+
+        <!-- Relationship -->
+        <div class="ag-field">
+          <span class="ag-label">Relationship</span>
+          <div class="ag-segment" role="group" aria-label="Relationship">
+            @for (option of relationships; track option) {
+              <button
+                type="button"
+                class="ag-segment-item"
+                [class.ag-segment-item--active]="form.get('relationship')?.value === option"
+                (click)="selectRelationship(option)"
+              >
+                {{ option }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Whose side? (wedding only) -->
+        @if (isWedding) {
+          <div class="ag-field" data-testid="add-guest-side">
+            <span class="ag-label">Whose side?</span>
+            <div class="ag-segment" role="group" aria-label="Whose side">
+              @for (option of sides; track option) {
+                <button
+                  type="button"
+                  class="ag-segment-item"
+                  [class.ag-segment-item--active]="form.get('side')?.value === option"
+                  (click)="selectSide(option)"
+                >
+                  {{ option }}'s side
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Plus-ones -->
+        <div class="ag-field">
+          <span class="ag-label">Plus-ones</span>
+          <div class="ag-stepper" role="group" aria-label="Plus-ones">
+            <button
+              type="button"
+              class="ag-stepper-btn"
+              aria-label="Decrease plus-ones"
+              [disabled]="plusOnes === 0"
+              (click)="changePlusOnes(-1)"
+            >
+              −
+            </button>
+            <div class="ag-stepper-value" aria-live="polite">{{ plusOnes }}</div>
+            <button
+              type="button"
+              class="ag-stepper-btn"
+              aria-label="Increase plus-ones"
+              (click)="changePlusOnes(1)"
+            >
+              +
+            </button>
+          </div>
+          <div class="ag-help ag-help--tight">Extra seats for their party — kids, partners, dates.</div>
+        </div>
+
+        <!-- Dietary notes -->
+        <div class="ag-field">
+          <label class="ag-label" for="ag-dietary">Dietary notes <span class="ag-optional">(optional)</span></label>
+          <textarea
+            id="ag-dietary"
+            class="ag-input ag-textarea"
+            formControlName="dietaryNotes"
+            rows="2"
+            placeholder="Allergies, preferences, anything the kitchen should know."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="ag-foot">
+        @if (status() === 'submitting') {
+          <div class="ag-foot-note">Please don't close this window…</div>
+        } @else if (submitted() && invalidCount() > 0) {
+          <div class="ag-foot-note ag-foot-note--error">{{ invalidCount() }} field{{ invalidCount() === 1 ? '' : 's' }} need attention</div>
+        } @else {
+          <div class="ag-foot-note">* Required fields</div>
+        }
+        <div class="ag-foot-actions">
+          <button
+            type="button"
+            class="ag-btn ag-btn--ghost"
+            [disabled]="status() === 'submitting'"
+            (click)="cancel()"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="ag-btn ag-btn--primary"
+            data-testid="add-guest-submit"
+            [disabled]="status() === 'submitting' || (submitted() && form.invalid)"
+          >
+            @if (status() === 'submitting') {
+              <span class="ag-spinner" aria-hidden="true"></span>Adding guest…
+            } @else {
+              + Add guest
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

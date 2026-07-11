@@ -5,10 +5,8 @@ import { environment } from '../../../environments/environment';
 import { TokenStorageService } from '../auth/token-storage.service';
 
 export const bearerTokenInterceptor: HttpInterceptorFn = (request, next) => {
-  const isAuthenticatedServiceRequest =
-    request.url.startsWith(`${environment.eventBaseUrl}/`) ||
-    request.url.startsWith(`${environment.guestManagementBaseUrl}/`);
-  if (!isAuthenticatedServiceRequest) {
+  const protectedOrigins = [environment.eventBaseUrl, environment.guestManagementBaseUrl];
+  if (!protectedOrigins.some((origin) => request.url.startsWith(`${origin}/`))) {
     return next(request);
   }
 

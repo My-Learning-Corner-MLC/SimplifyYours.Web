@@ -1,0 +1,438 @@
+// Occasion theme tokens (shared with event-detail-page.scss / the design).
+$plum: #5a2849;
+$plum-ink: #2a1f2d;
+$champagne: #c8a876;
+$linen: #fffcf5;
+$parchment: #f5efe6;
+$hairline: #ece2d2;
+$muted: #7a6b6e;
+$body-text: #4a4045;
+$footer-bg: #fbf6eb;
+$error: #b05540;
+$warn-bg: #f6ece0;
+$warn-border: #e8cfa3;
+$warn-ink: #6b4a1f;
+$err-bg: #f4e2dd;
+$err-border: #e3b9ac;
+$err-ink: #8a3a25;
+
+.ag-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 40px 16px;
+  background: linear-gradient(180deg, rgba(90, 40, 73, 0.4), rgba(42, 31, 45, 0.55));
+  backdrop-filter: blur(2px);
+}
+
+.ag-modal {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: $linen;
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(42, 31, 45, 0.32);
+  overflow: hidden;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: $plum-ink;
+}
+
+// ---- Header ------------------------------------------------------------
+.ag-head {
+  padding: 28px 32px 0;
+}
+
+.ag-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ag-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: $muted;
+}
+
+.ag-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 28px;
+  line-height: 1.1;
+  color: $plum-ink;
+  margin-top: 8px;
+  white-space: nowrap;
+}
+
+.ag-italic {
+  font-style: italic;
+  color: $plum;
+}
+
+.ag-close {
+  border: none;
+  background: transparent;
+  color: $muted;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+
+  &:disabled {
+    color: #d6cdb8;
+    cursor: default;
+  }
+}
+
+.ag-rule {
+  height: 1px;
+  width: 48px;
+  background: $champagne;
+  margin-top: 14px;
+}
+
+// ---- Loading progress bar ---------------------------------------------
+.ag-progress {
+  height: 2px;
+  background: $hairline;
+  margin-top: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ag-progress-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  background: $plum;
+  animation: ag-progress-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes ag-progress-slide {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+// ---- Body --------------------------------------------------------------
+.ag-body {
+  padding: 22px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &--locked {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.ag-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.ag-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: $plum-ink;
+}
+
+.ag-optional {
+  color: $muted;
+  font-weight: 400;
+}
+
+.ag-help {
+  font-size: 12px;
+  color: $muted;
+  margin-top: 3px;
+
+  &--tight {
+    margin-top: 8px;
+    font-size: 11.5px;
+  }
+}
+
+.ag-input {
+  margin-top: 10px;
+  padding: 14px 16px;
+  background: $linen;
+  border: 1px solid $hairline;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: $plum-ink;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: #b7aca0;
+    font-weight: 400;
+  }
+
+  &:focus {
+    border-color: $plum;
+    box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
+  }
+
+  &--mono {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  &--error {
+    border-color: $error;
+    box-shadow: 0 0 0 3px rgba(176, 85, 64, 0.1);
+
+    &:focus {
+      border-color: $error;
+      box-shadow: 0 0 0 3px rgba(176, 85, 64, 0.16);
+    }
+  }
+}
+
+.ag-textarea {
+  resize: vertical;
+  min-height: 52px;
+  line-height: 1.55;
+  font-weight: 400;
+  font-size: 13.5px;
+  color: $body-text;
+}
+
+.ag-error {
+  font-size: 11.5px;
+  color: $error;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ag-error-mark {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid $error;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  font-weight: 700;
+  flex: none;
+}
+
+// ---- Segmented control -------------------------------------------------
+.ag-segment {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px;
+  background: $parchment;
+  border-radius: 10px;
+}
+
+.ag-segment-item {
+  flex: 1;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  color: $muted;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &--active {
+    background: $linen;
+    color: $plum-ink;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(90, 40, 73, 0.06);
+  }
+}
+
+// ---- Plus-ones stepper -------------------------------------------------
+.ag-stepper {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.ag-stepper-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid $hairline;
+  border-radius: 8px;
+  background: $linen;
+  color: $plum;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:disabled {
+    color: #cbc0ae;
+    cursor: default;
+  }
+}
+
+.ag-stepper-value {
+  flex: 1;
+  padding: 9px 16px;
+  background: $linen;
+  border: 1px solid $hairline;
+  border-radius: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  color: $plum-ink;
+}
+
+// ---- Banners -----------------------------------------------------------
+.ag-banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+
+  &--warn {
+    background: $warn-bg;
+    border: 1px solid $warn-border;
+    color: $warn-ink;
+  }
+
+  &--error {
+    background: $err-bg;
+    border: 1px solid $err-border;
+    color: $err-ink;
+    padding: 14px 16px;
+  }
+}
+
+.ag-banner-glyph {
+  font-size: 15px;
+  line-height: 1.3;
+  color: $err-ink;
+
+  &--warn {
+    color: #8a5a25;
+  }
+}
+
+.ag-banner-body {
+  flex: 1;
+}
+
+.ag-banner-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: $err-ink;
+}
+
+.ag-banner-text {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ag-banner-action {
+  flex: none;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: $err-ink;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+// ---- Footer ------------------------------------------------------------
+.ag-foot {
+  padding: 18px 32px;
+  border-top: 1px solid $hairline;
+  background: $footer-bg;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ag-foot-note {
+  font-size: 11.5px;
+  color: $muted;
+
+  &--error {
+    color: $error;
+  }
+}
+
+.ag-foot-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ag-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &--ghost {
+    background: transparent;
+    color: $plum;
+
+    &:disabled {
+      color: #c7bdae;
+      cursor: default;
+    }
+  }
+
+  &--primary {
+    padding: 10px 20px;
+    background: $plum;
+    color: $linen;
+    box-shadow: 0 2px 8px rgba(90, 40, 73, 0.18);
+
+    &:disabled {
+      background: #e4dcc8;
+      color: #a69b85;
+      box-shadow: none;
+      cursor: default;
+    }
+  }
+}
+
+.ag-spinner {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 252, 245, 0.35);
+  border-top-color: $linen;
+  flex: none;
+  animation: ag-spin 0.7s linear infinite;
+}
+
+@keyframes ag-spin {
+  to { transform: rotate(360deg); }
+}

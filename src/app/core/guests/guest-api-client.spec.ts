@@ -6,27 +6,26 @@ import {
 import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
+import { AddGuestError, ListGuestsError } from './guest-error.model';
+import { AddGuestRequest } from './add-guest-request.model';
 import { GuestApiClient } from './guest-api-client';
-import { Guest } from './guest.model';
 
 describe('GuestApiClient', () => {
   let client: GuestApiClient;
   let httpMock: HttpTestingController;
-  const base = environment.guestManagementBaseUrl;
-  const eventId = 'e1';
 
-  const guest = (): Guest => ({
-    id: 'g1',
-    firstName: 'Amara',
-    lastName: 'Okoye',
-    phoneNumber: '+1 555 0100',
-    emailAddress: 'amara@example.com',
-    gender: 'Female',
-    relationship: 'Friend',
-    side: 'Bride',
-    plusOnes: 1,
-    dietaryNotes: null,
-    createdAt: '2026-07-01T10:00:00+00:00',
+  const addRequest = (): AddGuestRequest => ({
+    eventId: 'e1',
+    guestInfo: {
+      firstName: 'Ada',
+      lastName: 'Tester',
+      phoneNumber: '+15551234567',
+      emailAddress: 'ada@example.com',
+      relationship: 'Family',
+      side: 'Bride',
+      plusOnes: 1,
+      dietaryNotes: 'Vegan',
+    },
   });
 
   beforeEach(() => {
@@ -39,32 +38,124 @@ describe('GuestApiClient', () => {
 
   afterEach(() => httpMock.verify());
 
-  it('lists guests for an event', () => {
-    let result: Guest[] | undefined;
-    client.listGuests(eventId).subscribe((guests) => (result = guests));
+  describe('listGuests', () => {
+    it('GETs the guests for an event and maps the payload', () => {
+      let result: unknown;
+      client.listGuests('e1').subscribe((guests) => (result = guests));
 
-    const req = httpMock.expectOne(`${base}/guests?eventId=${eventId}`);
-    expect(req.request.method).toBe('GET');
-    req.flush({ eventId, guests: [guest()] });
+      const req = httpMock.expectOne(
+        `${environment.guestManagementBaseUrl}/guests?eventId=e1`,
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        eventId: 'e1',
+        guests: [
+          {
+            id: 'g1',
+            firstName: 'Ada',
+            lastName: 'Tester',
+            phoneNumber: '+15551234567',
+            emailAddress: 'ada@example.com',
+            gender: 'preferNotToSay',
+            relationship: 'Family',
+            side: 'Bride',
+            plusOnes: 1,
+            dietaryNotes: 'Vegan',
+            createdAt: '2026-06-02T10:00:00+00:00',
+          },
+        ],
+      });
 
-    expect(result).toEqual([guest()]);
+      expect(result).toEqual([
+        expect.objectContaining({ id: 'g1', firstName: 'Ada', side: 'Bride' }),
+      ]);
+    });
+
+    it('maps a 404 to a notFound error', () => {
+      let error: ListGuestsError | undefined;
+      client.listGuests('missing').subscribe({ error: (e: ListGuestsError) => (error = e) });
+
+      httpMock
+        .expectOne(`${environment.guestManagementBaseUrl}/guests?eventId=missing`)
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      expect(error?.kind).toBe('notFound');
+    });
+
+    it('maps a 500 to a server error', () => {
+      let error: ListGuestsError | undefined;
+      client.listGuests('e1').subscribe({ error: (e: ListGuestsError) => (error = e) });
+
+      httpMock
+        .expectOne(`${environment.guestManagementBaseUrl}/guests?eventId=e1`)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      expect(error?.kind).toBe('server');
+    });
   });
 
-  it('maps a 404 to a notFound error', () => {
-    let error: { kind: string } | undefined;
-    client.listGuests(eventId).subscribe({ error: (e) => (error = e) });
+  describe('addGuest', () => {
+    it('POSTs the guest and maps the created response', () => {
+      let result: unknown;
+      client.addGuest(addRequest()).subscribe((guest) => (result = guest));
 
-    httpMock.expectOne(`${base}/guests?eventId=${eventId}`).flush(null, { status: 404, statusText: 'Not Found' });
+      const req = httpMock.expectOne(`${environment.guestManagementBaseUrl}/guest`);
+      expect(req.request.method).toBe('POST');
+      req.flush({
+        id: 'g1',
+        eventId: 'e1',
+        guestInfo: {
+          firstName: 'Ada',
+          lastName: 'Tester',
+          phoneNumber: '+15551234567',
+          emailAddress: 'ada@example.com',
+          gender: 'preferNotToSay',
+          relationship: 'Family',
+          side: 'Bride',
+          plusOnes: 1,
+          dietaryNotes: 'Vegan',
+        },
+        createdAt: '2026-06-02T10:00:00+00:00',
+      });
 
-    expect(error?.kind).toBe('notFound');
-  });
+      expect(result).toEqual(
+        expect.objectContaining({ id: 'g1', firstName: 'Ada', plusOnes: 1 }),
+      );
+    });
 
-  it('maps a 401 to an unauthorized error', () => {
-    let error: { kind: string } | undefined;
-    client.listGuests(eventId).subscribe({ error: (e) => (error = e) });
+    it('maps a 409 to a duplicate error', () => {
+      let error: AddGuestError | undefined;
+      client.addGuest(addRequest()).subscribe({ error: (e: AddGuestError) => (error = e) });
 
-    httpMock.expectOne(`${base}/guests?eventId=${eventId}`).flush(null, { status: 401, statusText: 'Unauthorized' });
+      httpMock
+        .expectOne(`${environment.guestManagementBaseUrl}/guest`)
+        .flush(null, { status: 409, statusText: 'Conflict' });
 
-    expect(error?.kind).toBe('unauthorized');
+      expect(error?.kind).toBe('duplicate');
+    });
+
+    it('maps a 400 with field errors to a validation error', () => {
+      let error: AddGuestError | undefined;
+      client.addGuest(addRequest()).subscribe({ error: (e: AddGuestError) => (error = e) });
+
+      httpMock.expectOne(`${environment.guestManagementBaseUrl}/guest`).flush(
+        { errors: { EmailAddress: ['Email is required.'] } },
+        { status: 400, statusText: 'Bad Request' },
+      );
+
+      expect(error?.kind).toBe('validation');
+      expect(error?.fieldErrors?.['emailAddress']).toContain('Email is required.');
+    });
+
+    it('maps a 500 to a server error', () => {
+      let error: AddGuestError | undefined;
+      client.addGuest(addRequest()).subscribe({ error: (e: AddGuestError) => (error = e) });
+
+      httpMock
+        .expectOne(`${environment.guestManagementBaseUrl}/guest`)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      expect(error?.kind).toBe('server');
+    });
   });
 });

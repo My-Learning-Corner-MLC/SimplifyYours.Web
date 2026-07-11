@@ -182,7 +182,7 @@
                 <div class="detail__guests" data-testid="event-detail-guests" role="tabpanel">
                   <div class="detail__guests-toolbar">
                     <div class="detail__chips" role="list" aria-label="Filter guests by status">
-                      @for (filter of guestFilters; track filter.label) {
+                      @for (filter of guestFilters(); track filter.label) {
                         <span class="detail__chip" [class.detail__chip--active]="filter.label === 'All'" role="listitem">
                           {{ filter.label }} · {{ filter.count }}
                         </span>
@@ -193,43 +193,80 @@
                         <span class="detail__search-icon" aria-hidden="true">⌕</span>
                         <input type="search" placeholder="Find a guest…" aria-label="Find a guest" />
                       </span>
-                      <button type="button" class="detail__tool-btn">Import CSV</button>
-                      <button type="button" class="detail__tool-btn detail__tool-btn--primary">+ Add guest</button>
+                      <button
+                        type="button"
+                        class="detail__tool-btn detail__tool-btn--primary"
+                        data-testid="event-detail-add-guest"
+                        (click)="openAddGuest()"
+                      >
+                        + Add guest
+                      </button>
                     </div>
                   </div>
 
-                  <div class="detail__table" role="table" aria-label="Guest list">
-                    <div class="detail__table-head" role="row">
-                      <span class="detail__cell-check" aria-hidden="true"></span>
-                      <span role="columnheader">Guest</span>
-                      <span role="columnheader">Email</span>
-                      <span role="columnheader">Party</span>
-                      <span role="columnheader">Status</span>
-                      <span role="columnheader">Meal</span>
-                      <span role="columnheader" class="detail__cell-right">Table</span>
-                    </div>
-                    @for (guest of guests; track guest.email) {
-                      <div class="detail__table-row" role="row">
-                        <span class="detail__cell-check detail__cell-check--row" aria-hidden="true"></span>
-                        <span class="detail__guest" role="cell">
-                          <span class="detail__avatar" [style.background]="guest.avatarBg">{{ guest.initial }}</span>
-                          <span class="detail__guest-id">
-                            <span class="detail__guest-name">{{ guest.name }}</span>
-                            <span class="detail__guest-group">{{ guest.group }}</span>
-                          </span>
-                        </span>
-                        <span class="detail__guest-email" role="cell">{{ guest.email }}</span>
-                        <span class="detail__guest-party" role="cell">{{ guest.party }}</span>
-                        <span role="cell">
-                          <span class="detail__status detail__status--{{ guest.status }}">
-                            {{ guestStatusLabel[guest.status] }}
-                          </span>
-                        </span>
-                        <span class="detail__guest-meal" role="cell">{{ guest.meal ?? '—' }}</span>
-                        <span class="detail__guest-table" role="cell">{{ guest.table ?? '—' }}</span>
+                  @switch (guestsState()) {
+                    @case ('loading') {
+                      <div class="detail__guests-status" data-testid="guests-loading" aria-busy="true" aria-live="polite">
+                        <span class="sr-only">Loading the guest list…</span>
+                        <div class="detail__skeleton"></div>
+                        <div class="detail__skeleton"></div>
+                        <div class="detail__skeleton"></div>
                       </div>
                     }
-                  </div>
+                    @case ('error') {
+                      <div class="detail__guests-status detail__notice" data-testid="guests-error" role="alert">
+                        <span class="detail__notice-glyph" aria-hidden="true">⚠️</span>
+                        <p class="detail__notice-title">{{ guestLoadError() }}</p>
+                        <button class="detail__retry" type="button" (click)="retryGuests()">Try again</button>
+                      </div>
+                    }
+                    @default {
+                      @if (guestRows().length === 0) {
+                        <div class="detail__guests-empty" data-testid="guests-empty">
+                          <div class="detail__guests-empty-title">No guests yet</div>
+                          <p class="detail__guests-empty-text">
+                            Add your first guest by hand — they'll appear here and stay under Awaiting until they RSVP.
+                          </p>
+                          <button type="button" class="detail__action detail__action--primary" (click)="openAddGuest()">
+                            + Add guest
+                          </button>
+                        </div>
+                      } @else {
+                        <div class="detail__table" role="table" aria-label="Guest list">
+                          <div class="detail__table-head" role="row">
+                            <span class="detail__cell-check" aria-hidden="true"></span>
+                            <span role="columnheader">Guest</span>
+                            <span role="columnheader">Email</span>
+                            <span role="columnheader">Party</span>
+                            <span role="columnheader">Status</span>
+                            <span role="columnheader">Meal</span>
+                            <span role="columnheader" class="detail__cell-right">Table</span>
+                          </div>
+                          @for (guest of guestRows(); track guest.id) {
+                            <div class="detail__table-row" role="row">
+                              <span class="detail__cell-check detail__cell-check--row" aria-hidden="true"></span>
+                              <span class="detail__guest" role="cell">
+                                <span class="detail__avatar" [style.background]="guest.avatarBg">{{ guest.initial }}</span>
+                                <span class="detail__guest-id">
+                                  <span class="detail__guest-name">{{ guest.name }}</span>
+                                  @if (guest.group) {
+                                    <span class="detail__guest-group">{{ guest.group }}</span>
+                                  }
+                                </span>
+                              </span>
+                              <span class="detail__guest-email" role="cell">{{ guest.email }}</span>
+                              <span class="detail__guest-party" role="cell">{{ guest.party }}</span>
+                              <span role="cell">
+                                <span class="detail__status detail__status--awaiting">{{ guestStatusLabel }}</span>
+                              </span>
+                              <span class="detail__guest-meal" role="cell">{{ guest.meal }}</span>
+                              <span class="detail__guest-table" role="cell">—</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  }
                 </div>
               }
 
@@ -251,6 +288,15 @@
             }
           </div>
         </div>
+
+        @if (addGuestOpen()) {
+          <app-add-guest-modal
+            [eventId]="eventId"
+            [isWedding]="isWedding()"
+            (closed)="closeAddGuest()"
+            (added)="onGuestAdded($event)"
+          />
+        }
       }
     }
   }
