@@ -1,5 +1,7 @@
 import { isSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AuthSessionService } from './auth-session.service';
 import { TokenRefreshService, RefreshOutcome } from './token-refresh.service';
@@ -39,7 +41,11 @@ describe('AuthSessionService', () => {
     refresh = new FakeTokenRefreshService();
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [{ provide: TokenRefreshService, useValue: refresh }],
+      providers: [
+        { provide: TokenRefreshService, useValue: refresh },
+        provideRouter([]),
+        MessageService,
+      ],
     });
   });
 
@@ -207,7 +213,7 @@ describe('AuthSessionService', () => {
     expect(service.session()?.fullName).toBe('Jane Refreshed');
   });
 
-  it('clears the session signal silently on a refresh failure outcome', () => {
+  it('clears the session, redirects home, and shows a sign-in toast on a refresh failure outcome', () => {
     const idToken = makeIdToken({
       sub: 'u',
       name: 'Jane Test',
@@ -221,9 +227,22 @@ describe('AuthSessionService', () => {
       expiresAt: Date.now() + 60_000,
     });
     const service = TestBed.inject(AuthSessionService);
+    const router = TestBed.inject(Router);
+    const messages = TestBed.inject(MessageService);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
+    const messagesSpy = vi.spyOn(messages, 'add');
     expect(service.session()).not.toBeNull();
 
     refresh.outcome!.onFailure();
+
     expect(service.session()).toBeNull();
+    expect(navigateSpy).toHaveBeenCalledWith('/home');
+    expect(messagesSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: 'session-expired',
+        severity: 'warn',
+        data: { action: 'sign-in' },
+      }),
+    );
   });
 });
