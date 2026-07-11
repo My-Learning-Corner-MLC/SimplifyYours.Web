@@ -1,0 +1,45 @@
+<aside class="selected-panel" data-testid="selected-table-panel">
+  @if (table(); as t) {
+    <header class="selected-panel__head">
+      <h3 class="selected-panel__name">{{ t.name }}</h3>
+      <span class="selected-panel__shape">{{ t.shape }}</span>
+    </header>
+
+    <dl class="selected-panel__meta">
+      <div>
+        <dt>Position</dt>
+        <dd>
+          @if (t.positionX !== null && t.positionY !== null) {
+            {{ t.positionX | number: '1.0-0' }}, {{ t.positionY | number: '1.0-0' }}
+          } @else {
+            Not placed yet
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Seated</dt>
+        <dd>{{ seatedGuests().length }} / {{ t.seatCount }}</dd>
+      </div>
+    </dl>
+
+    @if (seatedGuests().length > 0) {
+      <ul class="selected-panel__guests" role="list">
+        @for (seat of seatedGuests(); track seat.seatIndex) {
+          <li>{{ seat.guestName }}</li>
+        }
+      </ul>
+    }
+
+    <div class="selected-panel__actions">
+      <button type="button" class="selected-panel__btn" (click)="editTable.emit()">Edit table</button>
+      <button type="button" class="selected-panel__btn" (click)="markFull.emit()">
+        {{ t.isFull ? 'Mark as not full' : 'Mark as full' }}
+      </button>
+      <button type="button" class="selected-panel__btn selected-panel__btn--danger" (click)="deleteTable.emit()">
+        Delete table
+      </button>
+    </div>
+  } @else {
+    <p class="selected-panel__empty">Select a table on the floor plan to see its details.</p>
+  }
+</aside>

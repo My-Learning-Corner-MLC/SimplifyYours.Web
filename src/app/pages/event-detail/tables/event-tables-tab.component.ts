@@ -9,6 +9,7 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -18,7 +19,9 @@ import { SeatingStore } from '../../../core/seating/seating-store';
 import { SeatingTable } from '../../../core/seating/seating-table.model';
 import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
 import { FloatingGuestsPanelComponent } from './floating-guests-panel/floating-guests-panel.component';
+import { FloorPlanCanvasComponent, TableMoveIntent } from './floor-plan-canvas/floor-plan-canvas.component';
 import { SeatDropIntent, SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
+import { SelectedTablePanelComponent } from './selected-table-panel/selected-table-panel.component';
 import { TableFormModalComponent } from './table-form-modal/table-form-modal.component';
 
 export type TablesView = 'grid' | 'floor';
@@ -37,6 +40,8 @@ export type TablesView = 'grid' | 'floor';
     SeatingTableCardComponent,
     FloatingGuestsPanelComponent,
     TableFormModalComponent,
+    FloorPlanCanvasComponent,
+    SelectedTablePanelComponent,
     CdkDropListGroup,
   ],
   providers: [SeatingStore],
@@ -56,6 +61,11 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
   readonly editingTable = signal<SeatingTable | null>(null);
   readonly assigningGuestId = signal<string | null>(null);
   readonly announcement = signal('');
+  readonly selectedTableId = signal<string | null>(null);
+
+  readonly selectedTable = computed(
+    () => this.store.tables().find((table) => table.id === this.selectedTableId()) ?? null,
+  );
 
   ngOnInit(): void {
     this.store.load(this.eventId);
@@ -138,6 +148,38 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
     const guestName = this.guestDisplayName(guestId);
     this.store.unassignGuest(guestId);
     this.announcement.set(`${guestName} moved back to the floating list.`);
+  }
+
+  // ---- Floor-plan view ----
+
+  selectTable(tableId: string): void {
+    this.selectedTableId.set(tableId);
+  }
+
+  onTableMoved(intent: TableMoveIntent): void {
+    this.store.moveTable(intent.tableId, intent.positionX, intent.positionY, intent.rotation);
+  }
+
+  editSelectedTable(): void {
+    const table = this.selectedTable();
+    if (table) {
+      this.openEditModal(table);
+    }
+  }
+
+  toggleFullSelectedTable(): void {
+    const table = this.selectedTable();
+    if (table) {
+      this.toggleFull(table);
+    }
+  }
+
+  deleteSelectedTable(): void {
+    const table = this.selectedTable();
+    if (table) {
+      this.quickDelete(table);
+      this.selectedTableId.set(null);
+    }
   }
 
   private guestDisplayName(guestId: string): string {

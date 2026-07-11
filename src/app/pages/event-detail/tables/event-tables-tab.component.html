@@ -92,8 +92,19 @@
               />
             </div>
           } @else {
-            <div class="tables-tab__floor-stub" data-testid="tables-tab-floor">
-              Floor plan view is coming in a later slice.
+            <div class="tables-tab__floor-layout" data-testid="tables-tab-floor">
+              <app-floor-plan-canvas
+                [tables]="store.tables()"
+                [selectedTableId]="selectedTableId()"
+                (tableSelected)="selectTable($event)"
+                (tableMoved)="onTableMoved($event)"
+              />
+              <app-selected-table-panel
+                [table]="selectedTable()"
+                (editTable)="editSelectedTable()"
+                (markFull)="toggleFullSelectedTable()"
+                (deleteTable)="deleteSelectedTable()"
+              />
             </div>
           }
         </div>

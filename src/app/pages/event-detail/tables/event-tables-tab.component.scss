@@ -190,12 +190,15 @@ $hairline: #ece2d2;
     gap: 16px;
   }
 
-  &__floor-stub {
-    padding: 48px 16px;
-    text-align: center;
-    color: $muted;
-    border: 1px dashed $hairline;
-    border-radius: 12px;
+  &__floor-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    align-items: start;
+    gap: 20px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
   }
 }
 

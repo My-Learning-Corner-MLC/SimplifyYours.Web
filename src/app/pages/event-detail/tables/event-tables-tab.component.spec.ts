@@ -239,4 +239,63 @@ describe('EventTablesTabComponent', () => {
       expect(fixture.componentInstance.announcement()).toContain('Amara Okoye');
     });
   });
+
+  describe('floor-plan view', () => {
+    const tableAt = (x: number | null, y: number | null) => ({
+      id: 't1',
+      name: 'Table 1',
+      shape: 'Round' as const,
+      seatCount: 4,
+      isFull: false,
+      positionX: x,
+      positionY: y,
+      rotation: 0,
+      seats: [],
+    });
+
+    it('selects a table and exposes it via selectedTable', () => {
+      const { fixture } = setup({ getLayout: () => of(layout({ tables: [tableAt(10, 20)] })) });
+
+      fixture.componentInstance.selectTable('t1');
+
+      expect(fixture.componentInstance.selectedTable()?.id).toBe('t1');
+    });
+
+    it('moves a table via onTableMoved', () => {
+      const applyTablePositionsBatch = vi.fn(() => of([{ tableId: 't1', status: 'Applied' as const }]));
+      const { fixture, store } = setup({
+        getLayout: () => of(layout({ tables: [tableAt(10, 20)] })),
+        applyTablePositionsBatch,
+      });
+
+      fixture.componentInstance.onTableMoved({ tableId: 't1', positionX: 50, positionY: 60, rotation: 0 });
+
+      expect(store.tables()[0]).toMatchObject({ positionX: 50, positionY: 60 });
+    });
+
+    it('deleteSelectedTable clears the selection after deleting', () => {
+      const deleteTable = vi.fn(() => of(undefined));
+      const { fixture } = setup({
+        getLayout: () => of(layout({ tables: [tableAt(10, 20)] })),
+        deleteTable,
+      });
+      fixture.componentInstance.selectTable('t1');
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      fixture.componentInstance.deleteSelectedTable();
+
+      expect(deleteTable).toHaveBeenCalledWith('e1', 't1');
+      expect(fixture.componentInstance.selectedTableId()).toBeNull();
+    });
+
+    it('editSelectedTable opens the modal with the selected table', () => {
+      const { fixture } = setup({ getLayout: () => of(layout({ tables: [tableAt(10, 20)] })) });
+      fixture.componentInstance.selectTable('t1');
+
+      fixture.componentInstance.editSelectedTable();
+
+      expect(fixture.componentInstance.formModalOpen()).toBe(true);
+      expect(fixture.componentInstance.editingTable()?.id).toBe('t1');
+    });
+  });
 });

@@ -1,0 +1,36 @@
+<div class="floor-plan" data-testid="floor-plan-canvas">
+  <div class="floor-plan__toolbar">
+    <button
+      type="button"
+      class="floor-plan__snap-btn"
+      [class.floor-plan__snap-btn--active]="snapToGrid()"
+      [attr.aria-pressed]="snapToGrid()"
+      (click)="toggleSnap()"
+    >
+      Snap to grid
+    </button>
+  </div>
+
+  <div class="floor-plan__room" [class.floor-plan__room--grid]="snapToGrid()">
+    @for (vm of tableVms(); track vm.table.id) {
+      <div
+        class="floor-plan__table"
+        [class.floor-plan__table--selected]="selectedTableId() === vm.table.id"
+        data-testid="floor-plan-table"
+        role="button"
+        [attr.aria-label]="vm.table.name"
+        [attr.aria-pressed]="selectedTableId() === vm.table.id"
+        [style.left.px]="vm.x"
+        [style.top.px]="vm.y"
+        cdkDrag
+        [cdkDragFreeDragPosition]="zeroOffset"
+        (cdkDragEnded)="onTableDragEnded(vm, $event)"
+        (click)="selectTable(vm.table.id)"
+        (keydown.enter)="selectTable(vm.table.id)"
+        tabindex="0"
+      >
+        <span class="floor-plan__table-name">{{ vm.table.name }}</span>
+      </div>
+    }
+  </div>
+</div>
