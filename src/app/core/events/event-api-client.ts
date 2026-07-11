@@ -16,8 +16,6 @@ const GENERIC_PAGE_ERROR = 'Something went wrong on our end. Please try again in
 
 const QUERY_EVENTS_SERVER_ERROR =
   "We couldn't load your occasions just now. Please try again in a moment.";
-const QUERY_EVENTS_AUTH_ERROR =
-  'Your session has expired. Please sign in again to see your occasions.';
 
 const EVENT_DETAIL_NOT_FOUND_ERROR =
   "We couldn't find that event. It may have been removed, or the link may be out of date.";
@@ -88,7 +86,7 @@ export class EventApiClient {
 
   private toQueryEventsError(response: HttpErrorResponse): QueryEventsError {
     if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized', message: QUERY_EVENTS_AUTH_ERROR };
+      return { kind: 'unauthorized' };
     }
     return { kind: 'server', message: QUERY_EVENTS_SERVER_ERROR };
   }

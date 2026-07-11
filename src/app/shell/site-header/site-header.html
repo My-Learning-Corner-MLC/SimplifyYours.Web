@@ -24,7 +24,11 @@
         <button
           type="button"
           class="site-header__notif"
+          [class.site-header__notif--active]="notificationsOpen()"
+          aria-haspopup="true"
+          [attr.aria-expanded]="notificationsOpen()"
           aria-label="Notifications"
+          (click)="notificationsPopover.toggle($event)"
         >
           <svg
             class="site-header__notif-icon"
@@ -41,11 +45,110 @@
             <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          @if (hasUnreadNotifications()) {
+          @if (showNotificationsBadge()) {
             <span class="site-header__notif-dot" aria-hidden="true"></span>
           }
         </button>
-        <div class="site-header__avatar-pill">
+        <p-popover
+          #notificationsPopover
+          styleClass="site-header-notification-popover"
+          appendTo="body"
+          (onShow)="onNotificationsShow()"
+          (onHide)="onNotificationsHide()"
+        >
+          <div class="site-header__notification-handle" aria-hidden="true"></div>
+          <div class="site-header__notification-header">
+            <span class="site-header__notification-title">Notifications</span>
+            @if (newNotifications().length > 0) {
+              <button
+                type="button"
+                class="site-header__notification-mark-all"
+                title="Mark all as read"
+                aria-label="Mark all notifications as read"
+                (click)="markAllNotificationsRead()"
+              >
+                <i class="pi pi-check-circle" aria-hidden="true"></i>
+              </button>
+            }
+            <button
+              type="button"
+              class="site-header__notification-close"
+              aria-label="Close notifications"
+              (click)="notificationsPopover.hide()"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          @if (newNotifications().length > 0) {
+            <div class="site-header__notification-group-label">New</div>
+            @for (item of newNotifications(); track item.id) {
+              <div class="site-header__notification-item">
+                <span class="site-header__notification-icon" [attr.data-tone]="tintFor(item).tone">
+                  <i [class]="tintFor(item).icon" aria-hidden="true"></i>
+                </span>
+                <span class="site-header__notification-body">
+                  <span class="site-header__notification-message" [innerHTML]="item.message"></span>
+                  <span class="site-header__notification-time">{{ item.timestamp }}</span>
+                </span>
+                <span class="site-header__notification-unread-dot" aria-hidden="true"></span>
+              </div>
+            }
+          }
+
+          @if (earlierNotifications().length > 0) {
+            @if (newNotifications().length > 0) {
+              <div class="site-header__notification-divider" aria-hidden="true"></div>
+            }
+            <div class="site-header__notification-group-label">Earlier</div>
+            @for (item of earlierNotifications(); track item.id) {
+              <div class="site-header__notification-item">
+                <span class="site-header__notification-icon" [attr.data-tone]="tintFor(item).tone">
+                  <i [class]="tintFor(item).icon" aria-hidden="true"></i>
+                </span>
+                <span class="site-header__notification-body">
+                  <span
+                    class="site-header__notification-message site-header__notification-message--read"
+                    [innerHTML]="item.message"
+                  ></span>
+                  <span class="site-header__notification-time">{{ item.timestamp }}</span>
+                </span>
+              </div>
+            }
+          }
+
+          <div class="site-header__notification-footer">
+            <button
+              type="button"
+              class="site-header__notification-view-all"
+              (click)="notificationsPopover.hide(); showComingSoonToast('All notifications')"
+            >
+              View all notifications
+            </button>
+          </div>
+        </p-popover>
+        <button
+          type="button"
+          class="site-header__avatar-pill"
+          [class.site-header__avatar-pill--active]="profileMenuOpen()"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="profileMenuOpen()"
+          aria-label="Open account menu"
+          (click)="profileMenu.toggle($event)"
+        >
           <span class="site-header__avatar-initial" aria-hidden="true">{{ initial() }}</span>
           <span class="site-header__avatar-name">{{ firstName() }}</span>
           <svg
@@ -62,8 +165,60 @@
           >
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
-        </div>
-      } @else {
+        </button>
+        <p-menu
+          #profileMenu
+          [popup]="true"
+          [model]="profileMenuItems"
+          appendTo="body"
+          styleClass="site-header-profile-menu"
+          (onShow)="onProfileMenuShow()"
+          (onHide)="onProfileMenuHide()"
+        >
+          <ng-template pTemplate="start">
+            <div class="site-header__profile-menu-identity">
+              <span class="site-header__profile-menu-avatar" aria-hidden="true">{{ initial() }}</span>
+              <span class="site-header__profile-menu-identity-text">
+                <span class="site-header__profile-menu-name">{{ fullName() }}</span>
+                <span class="site-header__profile-menu-email">{{ email() }}</span>
+              </span>
+              <button
+                type="button"
+                class="site-header__profile-menu-close"
+                aria-label="Close menu"
+                (click)="profileMenu.hide()"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="end">
+            <div class="site-header__profile-menu-signout">
+              <button
+                type="button"
+                class="site-header__profile-menu-signout-btn"
+                (click)="profileMenu.hide(); onSignOut()"
+              >
+                <i class="pi pi-sign-out" aria-hidden="true"></i>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </ng-template>
+        </p-menu>
+      } @else if (!hideAuthActions()) {
         <button type="button" class="site-header__sign-in" (click)="onSignInClick()">Sign in</button>
         <a class="site-header__sign-up" routerLink="/signup" (click)="closeMenu()">
           <span>Sign up</span>
@@ -135,7 +290,7 @@
         >{{ link.label }}</a>
       }
     </div>
-    @if (!isSignedIn()) {
+    @if (!isSignedIn() && !hideAuthActions()) {
       <button
         type="button"
         class="site-header__menu-sign-in"
