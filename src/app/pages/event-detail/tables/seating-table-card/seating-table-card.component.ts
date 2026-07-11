@@ -1,5 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
 
 import { computeSeatPositions } from '../../../../core/seating/seat-geometry';
 import { SeatingSeat } from '../../../../core/seating/seating-seat.model';
@@ -26,6 +26,11 @@ export interface SeatDropIntent {
  * drag sources so a seated guest can be moved to another seat. Assigning-mode
  * (`assigningGuestId` set) turns empty seats into keyboard/click targets too —
  * the non-drag equivalent required for WCAG 2.1 AA.
+ *
+ * Uses signal `input()` (not the `@Input()` decorator) specifically so the
+ * `computed()`s below re-run when the table changes — `computed()` only
+ * tracks signal reads, so a plain `@Input() table` field would silently
+ * freeze `seats`/`seatedCount` at their first value forever.
  */
 @Component({
   standalone: true,
@@ -36,8 +41,8 @@ export interface SeatDropIntent {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SeatingTableCardComponent {
-  @Input({ required: true }) table!: SeatingTable;
-  @Input() assigningGuestId: string | null = null;
+  readonly table = input.required<SeatingTable>();
+  readonly assigningGuestId = input<string | null>(null);
 
   @Output() readonly editTable = new EventEmitter<void>();
   @Output() readonly markFull = new EventEmitter<void>();
@@ -47,20 +52,18 @@ export class SeatingTableCardComponent {
   readonly menuOpen = signal(false);
 
   readonly seats = computed<SeatVm[]>(() => {
-    if (!this.table) {
-      return [];
-    }
-    const positions = computeSeatPositions(this.table.shape, this.table.seatCount);
-    return this.table.seats.map((seat, index) => ({
+    const table = this.table();
+    const positions = computeSeatPositions(table.shape, table.seatCount);
+    return table.seats.map((seat, index) => ({
       seat,
       xPercent: positions[index]?.xPercent ?? 50,
       yPercent: positions[index]?.yPercent ?? 50,
       initial: seat.guestName ? seat.guestName.trim().charAt(0).toUpperCase() : '',
-      dropListId: `seat-drop_${this.table.id}_${seat.seatIndex}`,
+      dropListId: `seat-drop_${table.id}_${seat.seatIndex}`,
     }));
   });
 
-  readonly seatedCount = computed(() => this.table?.seats.filter((seat) => seat.guestId !== null).length ?? 0);
+  readonly seatedCount = computed(() => this.table().seats.filter((seat) => seat.guestId !== null).length);
 
   // Bound once (not per-seat) — CdkDropList exposes the bound [cdkDropListData]
   // as `drop.data`, so this single predicate works for every seat's drop list.
@@ -100,8 +103,9 @@ export class SeatingTableCardComponent {
   }
 
   onSeatClick(seat: SeatingSeat): void {
-    if (this.assigningGuestId && seat.guestId === null) {
-      this.seatDrop.emit({ seatIndex: seat.seatIndex, guestId: this.assigningGuestId });
+    const assigningGuestId = this.assigningGuestId();
+    if (assigningGuestId && seat.guestId === null) {
+      this.seatDrop.emit({ seatIndex: seat.seatIndex, guestId: assigningGuestId });
     }
   }
 
@@ -109,7 +113,7 @@ export class SeatingTableCardComponent {
     if (seat.guestId) {
       return `Seat ${seat.seatIndex + 1}, occupied by ${seat.guestName ?? 'a guest'}`;
     }
-    return this.assigningGuestId
+    return this.assigningGuestId()
       ? `Seat ${seat.seatIndex + 1}, empty. Press Enter to seat the selected guest here.`
       : `Seat ${seat.seatIndex + 1}, empty`;
   }

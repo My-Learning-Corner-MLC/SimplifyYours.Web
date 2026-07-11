@@ -1,17 +1,17 @@
 <article
   class="table-card"
   data-testid="table-card"
-  [attr.aria-label]="table.name"
+  [attr.aria-label]="table().name"
 >
   <header class="table-card__head">
-    <span class="table-card__name">{{ table.name }}</span>
+    <span class="table-card__name">{{ table().name }}</span>
     <span class="table-card__menu-wrap">
       <button
         type="button"
         class="table-card__menu-btn"
         aria-haspopup="true"
         [attr.aria-expanded]="menuOpen()"
-        [attr.aria-label]="'Actions for ' + table.name"
+        [attr.aria-label]="'Actions for ' + table().name"
         (click)="toggleMenu()"
       >
         &hellip;
@@ -20,7 +20,7 @@
         <div class="table-card__menu" role="menu">
           <button type="button" role="menuitem" (click)="onEdit()">Edit table</button>
           <button type="button" role="menuitem" (click)="onMarkFull()">
-            {{ table.isFull ? 'Mark as not full' : 'Mark as full' }}
+            {{ table().isFull ? 'Mark as not full' : 'Mark as full' }}
           </button>
           <button type="button" role="menuitem" class="table-card__menu-danger" (click)="onDelete()">
             Delete table
@@ -32,11 +32,11 @@
 
   <div
     class="table-card__ring"
-    [class.table-card__ring--round]="table.shape === 'Round'"
-    [class.table-card__ring--long]="table.shape === 'Long'"
-    [class.table-card__ring--square]="table.shape === 'Square'"
+    [class.table-card__ring--round]="table().shape === 'Round'"
+    [class.table-card__ring--long]="table().shape === 'Long'"
+    [class.table-card__ring--square]="table().shape === 'Square'"
   >
-    <span class="table-card__surface" aria-hidden="true">{{ table.shape }}</span>
+    <span class="table-card__surface" aria-hidden="true">{{ table().shape }}</span>
     @for (seatVm of seats(); track seatVm.seat.seatIndex) {
       <span
         class="table-card__seat-slot"
@@ -52,7 +52,7 @@
           type="button"
           class="table-card__seat"
           [class.table-card__seat--filled]="seatVm.seat.guestId !== null"
-          [class.table-card__seat--targetable]="assigningGuestId && seatVm.seat.guestId === null"
+          [class.table-card__seat--targetable]="assigningGuestId() && seatVm.seat.guestId === null"
           cdkDrag
           [cdkDragDisabled]="seatVm.seat.guestId === null"
           [cdkDragData]="seatVm.seat.guestId"
@@ -67,8 +67,8 @@
   </div>
 
   <footer class="table-card__foot">
-    <span>{{ seatedCount() }} / {{ table.seatCount }} seated</span>
-    @if (table.isFull) {
+    <span>{{ seatedCount() }} / {{ table().seatCount }} seated</span>
+    @if (table().isFull) {
       <span class="table-card__full-badge">Full</span>
     }
   </footer>

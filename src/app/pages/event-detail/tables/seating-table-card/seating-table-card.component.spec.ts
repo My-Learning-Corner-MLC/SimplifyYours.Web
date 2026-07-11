@@ -26,7 +26,7 @@ function makeTable(overrides: Partial<SeatingTable> = {}): SeatingTable {
 function setup(table: SeatingTable) {
   TestBed.configureTestingModule({ imports: [SeatingTableCardComponent] });
   const fixture = TestBed.createComponent(SeatingTableCardComponent);
-  fixture.componentInstance.table = table;
+  fixture.componentRef.setInput('table', table);
   fixture.detectChanges();
   return fixture;
 }
@@ -47,6 +47,27 @@ describe('SeatingTableCardComponent', () => {
     const filled = fixture.nativeElement.querySelectorAll('.table-card__seat--filled');
     expect(filled.length).toBe(1);
     expect(filled[0].textContent.trim()).toBe('A');
+  });
+
+  it('re-renders seats and the footer when the table input changes', () => {
+    const fixture = setup(makeTable());
+    expect(fixture.nativeElement.textContent).toContain('1 / 4 seated');
+
+    fixture.componentRef.setInput(
+      'table',
+      makeTable({
+        seats: [
+          { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' },
+          { seatIndex: 1, guestId: 'g2', guestName: 'Ben Ilori' },
+          { seatIndex: 2, guestId: null, guestName: null },
+          { seatIndex: 3, guestId: null, guestName: null },
+        ],
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('2 / 4 seated');
+    expect(fixture.nativeElement.querySelectorAll('.table-card__seat--filled').length).toBe(2);
   });
 
   it('shows a Full badge when the table is marked full', () => {
@@ -118,7 +139,7 @@ describe('SeatingTableCardComponent', () => {
   describe('click-to-assign fallback', () => {
     it('emits seatDrop when an empty seat is clicked while a guest is being assigned', () => {
       const fixture = setup(makeTable());
-      fixture.componentInstance.assigningGuestId = 'g2';
+      fixture.componentRef.setInput('assigningGuestId', 'g2');
       const spy = vi.fn();
       fixture.componentInstance.seatDrop.subscribe(spy);
 
@@ -139,7 +160,7 @@ describe('SeatingTableCardComponent', () => {
 
     it('does nothing when clicking an already-occupied seat', () => {
       const fixture = setup(makeTable());
-      fixture.componentInstance.assigningGuestId = 'g2';
+      fixture.componentRef.setInput('assigningGuestId', 'g2');
       const spy = vi.fn();
       fixture.componentInstance.seatDrop.subscribe(spy);
 

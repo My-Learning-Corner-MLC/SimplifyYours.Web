@@ -1,5 +1,5 @@
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
 
 import { Guest, guestFullName } from '../../../../core/guests/guest.model';
 
@@ -12,6 +12,11 @@ export const FLOATING_GUESTS_DROP_LIST_ID = 'floating-guests-drop-list';
  * back here unseats them. Clicking a row (instead of dragging) selects the
  * guest for "assigning" mode — the keyboard/click fallback required for
  * WCAG 2.1 AA; Escape (handled by the parent) cancels it.
+ *
+ * Uses signal `input()` (not the `@Input()` decorator) so `filteredGuests`
+ * re-runs when `guests` changes — `computed()` only tracks signal reads, so
+ * a plain `@Input() guests` field would silently freeze the filtered list
+ * at whatever it was on the first render.
  */
 @Component({
   standalone: true,
@@ -22,8 +27,8 @@ export const FLOATING_GUESTS_DROP_LIST_ID = 'floating-guests-drop-list';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FloatingGuestsPanelComponent {
-  @Input({ required: true }) guests: readonly Guest[] = [];
-  @Input() assigningGuestId: string | null = null;
+  readonly guests = input.required<readonly Guest[]>();
+  readonly assigningGuestId = input<string | null>(null);
 
   @Output() readonly guestSelected = new EventEmitter<string>();
   @Output() readonly guestUnseated = new EventEmitter<string>();
@@ -33,10 +38,11 @@ export class FloatingGuestsPanelComponent {
 
   readonly filteredGuests = computed(() => {
     const term = this.search().trim().toLowerCase();
+    const guests = this.guests();
     if (!term) {
-      return this.guests;
+      return guests;
     }
-    return this.guests.filter((guest) => guestFullName(guest).toLowerCase().includes(term));
+    return guests.filter((guest) => guestFullName(guest).toLowerCase().includes(term));
   });
 
   readonly guestFullName = guestFullName;

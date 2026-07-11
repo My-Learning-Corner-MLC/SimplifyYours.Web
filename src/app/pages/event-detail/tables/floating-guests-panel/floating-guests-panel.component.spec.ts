@@ -23,7 +23,7 @@ function makeGuest(overrides: Partial<Guest> = {}): Guest {
 function setup(guests: Guest[]) {
   TestBed.configureTestingModule({ imports: [FloatingGuestsPanelComponent] });
   const fixture = TestBed.createComponent(FloatingGuestsPanelComponent);
-  fixture.componentInstance.guests = guests;
+  fixture.componentRef.setInput('guests', guests);
   fixture.detectChanges();
   return fixture;
 }
@@ -34,6 +34,19 @@ describe('FloatingGuestsPanelComponent', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="floating-guests-count"]').textContent).toBe('2');
     expect(fixture.nativeElement.querySelectorAll('[data-testid="floating-guest-row"]').length).toBe(2);
+  });
+
+  it('re-renders the list and count when the guests input changes', () => {
+    const fixture = setup([makeGuest({ id: 'g1' }), makeGuest({ id: 'g2', firstName: 'Ben', lastName: 'Ilori' })]);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="floating-guest-row"]').length).toBe(2);
+
+    fixture.componentRef.setInput('guests', [makeGuest({ id: 'g2', firstName: 'Ben', lastName: 'Ilori' })]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="floating-guests-count"]').textContent).toBe('1');
+    const rows = fixture.nativeElement.querySelectorAll('[data-testid="floating-guest-row"]');
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('Ben Ilori');
   });
 
   it('shows an empty message when there are no floating guests', () => {

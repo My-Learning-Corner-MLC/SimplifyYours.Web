@@ -1,7 +1,7 @@
 <aside class="floating-panel" data-testid="floating-guests-panel">
   <header class="floating-panel__head">
     <h3 class="floating-panel__title">Still floating</h3>
-    <span class="floating-panel__count" data-testid="floating-guests-count">{{ guests.length }}</span>
+    <span class="floating-panel__count" data-testid="floating-guests-count">{{ guests().length }}</span>
   </header>
 
   <label class="floating-panel__search">
@@ -16,7 +16,7 @@
 
   @if (filteredGuests().length === 0) {
     <p class="floating-panel__empty">
-      {{ guests.length === 0 ? 'Everyone has a seat.' : 'No guests match your search.' }}
+      {{ guests().length === 0 ? 'Everyone has a seat.' : 'No guests match your search.' }}
     </p>
   } @else {
     <ul
@@ -28,14 +28,14 @@
     >
       @for (guest of filteredGuests(); track guest.id) {
         <li
-          [class]="assigningGuestId === guest.id ? 'floating-panel__row floating-panel__row--selected' : 'floating-panel__row'"
+          [class]="assigningGuestId() === guest.id ? 'floating-panel__row floating-panel__row--selected' : 'floating-panel__row'"
           data-testid="floating-guest-row"
           tabindex="0"
           role="button"
           cdkDrag
           [cdkDragData]="guest.id"
-          [attr.aria-pressed]="assigningGuestId === guest.id"
-          [attr.aria-label]="guestFullName(guest) + (assigningGuestId === guest.id ? ', selected. Click a seat to place them.' : '')"
+          [attr.aria-pressed]="assigningGuestId() === guest.id"
+          [attr.aria-label]="guestFullName(guest) + (assigningGuestId() === guest.id ? ', selected. Click a seat to place them.' : '')"
           (click)="onRowClick(guest.id)"
           (keydown.enter)="onRowClick(guest.id)"
         >
