@@ -5,7 +5,7 @@ import { GuestApiClient } from '../guests/guest-api-client';
 import { Guest } from '../guests/guest.model';
 import { SeatingApiClient } from './seating-api-client';
 import { SeatingLayout } from './seating-layout.model';
-import { SeatingStore } from './seating-store';
+import { FLUSH_DEBOUNCE_MS, SeatingStore } from './seating-store';
 
 const guest = (id: string): Guest => ({
   id,
@@ -30,13 +30,22 @@ const layout = (overrides: Partial<SeatingLayout> = {}): SeatingLayout => ({
 });
 
 function createStore(
-  seatingApi: Partial<SeatingApiClient> = { getLayout: () => of(layout()) },
+  seatingApi: Partial<SeatingApiClient> = {},
   guestApi: Partial<GuestApiClient> = { listGuests: () => of([guest('g1')]) },
 ) {
+  // Safe no-op defaults for the flush endpoints: SeatingStore.ngOnDestroy force-flushes
+  // any pending batch on TestBed teardown, so every store needs these callable even
+  // when a test never intends to exercise them.
+  const seatingApiWithDefaults: Partial<SeatingApiClient> = {
+    getLayout: () => of(layout()),
+    applyAssignmentsBatch: () => of({ layout: layout(), opResults: [] }),
+    applyTablePositionsBatch: () => of([]),
+    ...seatingApi,
+  };
   TestBed.configureTestingModule({
     providers: [
       SeatingStore,
-      { provide: SeatingApiClient, useValue: seatingApi },
+      { provide: SeatingApiClient, useValue: seatingApiWithDefaults },
       { provide: GuestApiClient, useValue: guestApi },
     ],
   });
@@ -186,5 +195,192 @@ describe('SeatingStore', () => {
     store.createTables({ name: 'Table', shape: 'Round', seatCount: 8, count: 1 }).subscribe();
 
     expect(store.state()).toBe('ready');
+  });
+
+  // ---- Debounced batch queue (seat assignment + table position drags) ----
+  describe('batched assignment', () => {
+    const tableWithSeats = (): SeatingLayout['tables'][number] =>
+      table({
+        seats: [
+          { seatIndex: 0, guestId: null, guestName: null },
+          { seatIndex: 1, guestId: null, guestName: null },
+        ],
+      });
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('assigns a guest to a seat optimistically, before any flush', () => {
+      const store = createStore({ getLayout: () => of(layout({ tables: [tableWithSeats()] })) });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+
+      expect(store.tables()[0].seats[0]).toEqual({ seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' });
+      expect(store.saveState()).toBe('unsaved');
+    });
+
+    it('removes an assigned guest from the floating list immediately', () => {
+      const store = createStore({ getLayout: () => of(layout({ tables: [tableWithSeats()] })) });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+
+      expect(store.floatingGuests().map((g) => g.id)).not.toContain('g1');
+    });
+
+    it('coalesces N rapid assignments into a single flushed batch request', () => {
+      const applyAssignmentsBatch = vi.fn(() =>
+        of({ layout: layout({ tables: [tableWithSeats()] }), opResults: [] }),
+      );
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      store.assignGuest('g1', 't1', 1); // same guest, moved — last-write-wins, still one op
+      vi.advanceTimersByTime(FLUSH_DEBOUNCE_MS);
+
+      expect(applyAssignmentsBatch).toHaveBeenCalledTimes(1);
+      expect(applyAssignmentsBatch).toHaveBeenCalledWith('e1', [{ op: 'Assign', guestId: 'g1', tableId: 't1', seatIndex: 1 }]);
+    });
+
+    it('does not flush before the debounce window elapses', () => {
+      const applyAssignmentsBatch = vi.fn(() => of({ layout: layout(), opResults: [] }));
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      vi.advanceTimersByTime(FLUSH_DEBOUNCE_MS - 100);
+
+      expect(applyAssignmentsBatch).not.toHaveBeenCalled();
+    });
+
+    it('goes Unsaved -> Saving -> Saved across the debounce/flush cycle', () => {
+      const applyAssignmentsBatch = vi.fn(() => of({ layout: layout({ tables: [tableWithSeats()] }), opResults: [] }));
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      expect(store.saveState()).toBe('unsaved');
+
+      vi.advanceTimersByTime(FLUSH_DEBOUNCE_MS);
+      expect(store.saveState()).toBe('saved');
+    });
+
+    it('force-flushes immediately without waiting for the debounce window', () => {
+      const applyAssignmentsBatch = vi.fn(() => of({ layout: layout({ tables: [tableWithSeats()] }), opResults: [] }));
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      store.forceFlush();
+
+      expect(applyAssignmentsBatch).toHaveBeenCalledTimes(1);
+    });
+
+    it('flushes on destroy (leaving the tab) even if the debounce has not elapsed', () => {
+      const applyAssignmentsBatch = vi.fn(() => of({ layout: layout({ tables: [tableWithSeats()] }), opResults: [] }));
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      store.ngOnDestroy();
+
+      expect(applyAssignmentsBatch).toHaveBeenCalledTimes(1);
+    });
+
+    it('rolls back the optimistic change and re-queues on a hard failure', () => {
+      const applyAssignmentsBatch = vi.fn(() => throwError(() => ({ kind: 'server', message: 'Boom' })));
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      vi.advanceTimersByTime(FLUSH_DEBOUNCE_MS);
+
+      expect(store.tables()[0].seats[0].guestId).toBeNull();
+      expect(store.saveState()).toBe('error');
+
+      // re-queued: the retry fires on the next debounce tick
+      applyAssignmentsBatch.mockClear();
+      vi.advanceTimersByTime(FLUSH_DEBOUNCE_MS);
+      expect(applyAssignmentsBatch).toHaveBeenCalledTimes(1);
+    });
+
+    it('reconciles against the server-authoritative layout on a partial conflict', () => {
+      const serverLayout = layout({
+        tables: [table({ seats: [{ seatIndex: 0, guestId: 'g2', guestName: 'Someone Else' }, { seatIndex: 1, guestId: null, guestName: null }] })],
+      });
+      const applyAssignmentsBatch = vi.fn(() =>
+        of({ layout: serverLayout, opResults: [{ guestId: 'g1', status: 'Conflict' as const }] }),
+      );
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      vi.advanceTimersByTime(FLUSH_DEBOUNCE_MS);
+
+      expect(store.tables()).toEqual(serverLayout.tables);
+      expect(store.saveState()).toBe('error');
+      expect(store.actionError()).toBeTruthy();
+    });
+
+    it('moveTable optimistically updates position and batches via the position queue', () => {
+      const applyTablePositionsBatch = vi.fn(() => of([{ tableId: 't1', status: 'Applied' as const }]));
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [table()] })),
+        applyTablePositionsBatch,
+      });
+      store.load('e1');
+
+      store.moveTable('t1', 42, 84, 90);
+      expect(store.tables()[0]).toMatchObject({ positionX: 42, positionY: 84, rotation: 90 });
+
+      vi.advanceTimersByTime(FLUSH_DEBOUNCE_MS);
+      expect(applyTablePositionsBatch).toHaveBeenCalledWith('e1', [{ tableId: 't1', positionX: 42, positionY: 84, rotation: 90 }]);
+    });
+
+    it('force-flushes assignment and position queues independently', () => {
+      const applyAssignmentsBatch = vi.fn(() => of({ layout: layout({ tables: [tableWithSeats()] }), opResults: [] }));
+      const applyTablePositionsBatch = vi.fn(() => of([{ tableId: 't1', status: 'Applied' as const }]));
+      const store = createStore({
+        getLayout: () => of(layout({ tables: [tableWithSeats()] })),
+        applyAssignmentsBatch,
+        applyTablePositionsBatch,
+      });
+      store.load('e1');
+
+      store.assignGuest('g1', 't1', 0);
+      store.moveTable('t1', 1, 2, 0);
+      store.forceFlush();
+
+      expect(applyAssignmentsBatch).toHaveBeenCalledTimes(1);
+      expect(applyTablePositionsBatch).toHaveBeenCalledTimes(1);
+    });
   });
 });
