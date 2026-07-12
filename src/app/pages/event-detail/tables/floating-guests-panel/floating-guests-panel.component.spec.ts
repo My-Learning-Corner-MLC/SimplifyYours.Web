@@ -10,7 +10,6 @@ function makeGuest(overrides: Partial<Guest> = {}): Guest {
     lastName: 'Okoye',
     phoneNumber: '+1 555 0100',
     emailAddress: null,
-    gender: 'Female',
     relationship: null,
     side: null,
     plusOnes: 0,
@@ -32,7 +31,7 @@ describe('FloatingGuestsPanelComponent', () => {
   it('shows the live count and one row per guest', () => {
     const fixture = setup([makeGuest({ id: 'g1' }), makeGuest({ id: 'g2', firstName: 'Ben', lastName: 'Ilori' })]);
 
-    expect(fixture.nativeElement.querySelector('[data-testid="floating-guests-count"]').textContent).toBe('2');
+    expect(fixture.nativeElement.querySelector('[data-testid="floating-guests-count"]').textContent).toBe('2 guests');
     expect(fixture.nativeElement.querySelectorAll('[data-testid="floating-guest-row"]').length).toBe(2);
   });
 
@@ -43,7 +42,7 @@ describe('FloatingGuestsPanelComponent', () => {
     fixture.componentRef.setInput('guests', [makeGuest({ id: 'g2', firstName: 'Ben', lastName: 'Ilori' })]);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="floating-guests-count"]').textContent).toBe('1');
+    expect(fixture.nativeElement.querySelector('[data-testid="floating-guests-count"]').textContent).toBe('1 guest');
     const rows = fixture.nativeElement.querySelectorAll('[data-testid="floating-guest-row"]');
     expect(rows.length).toBe(1);
     expect(rows[0].textContent).toContain('Ben Ilori');
@@ -97,13 +96,4 @@ describe('FloatingGuestsPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.floating-panel__row--selected')).toBeTruthy();
   });
 
-  it('emits guestUnseated when a seated-guest chip is dropped onto the list', () => {
-    const fixture = setup([makeGuest({ id: 'g1' })]);
-    const spy = vi.fn();
-    fixture.componentInstance.guestUnseated.subscribe(spy);
-
-    fixture.componentInstance.onDropped({ item: { data: 'g2' } } as never);
-
-    expect(spy).toHaveBeenCalledWith('g2');
-  });
 });

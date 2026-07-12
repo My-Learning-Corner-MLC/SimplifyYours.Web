@@ -14,6 +14,7 @@ export interface SeatingBatchOp {
 export type SeatingBatchOpStatus =
   | 'Applied'
   | 'Conflict'
+  | 'InsufficientAdjacentSeats'
   | 'TableNotFound'
   | 'GuestNotFound'
   | 'SeatIndexOutOfRange';

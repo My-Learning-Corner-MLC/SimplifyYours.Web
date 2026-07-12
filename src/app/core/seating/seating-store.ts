@@ -95,10 +95,11 @@ export class SeatingStore implements OnDestroy {
     return this.guests().filter((guest) => !seatedGuestIds.has(guest.id));
   });
 
-  load(eventId: string): void {
+  load(eventId: string, force = false): void {
     // Skip redundant fetches caused by tab-switch re-mounting when the store is
     // scoped to the parent (EventDetailPage) and the data is already fresh.
-    if (eventId === this.eventId && this.state() === 'ready') {
+    // `force` bypasses this for explicit user-triggered retries.
+    if (!force && eventId === this.eventId && this.state() === 'ready') {
       return;
     }
     this.eventId = eventId;
@@ -121,7 +122,7 @@ export class SeatingStore implements OnDestroy {
 
   retry(): void {
     if (this.eventId) {
-      this.load(this.eventId);
+      this.load(this.eventId, true);
     }
   }
 
@@ -135,12 +136,28 @@ export class SeatingStore implements OnDestroy {
   // Optimistic and instant locally; the actual write is coalesced (last-write
   // wins per guest/table) and debounced — see FLUSH_DEBOUNCE_MS above.
 
+  // Tracks whether the drag gesture in progress has already been resolved by a
+  // CDK drop list (reassign / unseat-via-floating-panel). Seat cards reset this
+  // when a drag starts and consult it when the drag ends: if nothing claimed the
+  // gesture, the guest was released over open space rather than a valid target —
+  // see EventTablesTabComponent.onSeatDragEndedOutside, which unseats them.
+  private dragGestureConsumed = false;
+
+  beginDragGesture(): void {
+    this.dragGestureConsumed = false;
+  }
+
+  wasDragGestureConsumed(): boolean {
+    return this.dragGestureConsumed;
+  }
+
   assignGuest(guestId: string, tableId: string, seatIndex: number): void {
     const guest = this.guests().find((g) => g.id === guestId);
     const current = this.layout();
     if (!guest || !current) {
       return;
     }
+    this.dragGestureConsumed = true;
     this.captureAssignSnapshotIfNeeded(current);
     this.layout.set(withGuestAssigned(current, guest, tableId, seatIndex));
     this.pendingAssignOps.set(guestId, { op: 'Assign', guestId, tableId, seatIndex });
@@ -152,6 +169,7 @@ export class SeatingStore implements OnDestroy {
     if (!current) {
       return;
     }
+    this.dragGestureConsumed = true;
     this.captureAssignSnapshotIfNeeded(current);
     this.layout.set(withGuestUnassigned(current, guestId));
     this.pendingAssignOps.set(guestId, { op: 'Unassign', guestId, tableId: null, seatIndex: null });

@@ -240,6 +240,113 @@ describe('EventTablesTabComponent', () => {
     });
   });
 
+  describe('drop guest out of a table (release inside the room panel, not onto a seat)', () => {
+    const guestApiWithG1: Partial<GuestApiClient> = {
+      listGuests: () =>
+        of([
+          {
+            id: 'g1',
+            firstName: 'Amara',
+            lastName: 'Okoye',
+            phoneNumber: '',
+            emailAddress: null,
+            relationship: null,
+            side: null,
+            plusOnes: 0,
+            dietaryNotes: null,
+            createdAt: '2026-01-01T00:00:00+00:00',
+          },
+        ]),
+    };
+
+    const seatedTable = () => ({
+      id: 't1',
+      name: 'Table 1',
+      shape: 'Round' as const,
+      seatCount: 2,
+      isFull: false,
+      positionX: null,
+      positionY: null,
+      rotation: 0,
+      seats: [
+        { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' },
+        { seatIndex: 1, guestId: null, guestName: null },
+      ],
+    });
+
+    // onSeatDragEndedOutside hit-tests the real DOM via document.elementFromPoint
+    // (see event-tables-tab.component.ts) rather than bounding-box math, so it's
+    // correct regardless of scroll position or which sub-area of a panel was
+    // under the pointer. jsdom doesn't implement elementFromPoint at all, so it
+    // must be assigned directly (vi.spyOn requires the property to pre-exist).
+    function stubElementFromPoint(element: Element | null) {
+      document.elementFromPoint = vi.fn().mockReturnValue(element);
+    }
+
+    afterEach(() => {
+      // @ts-expect-error - removing the jsdom-incompatible stub between tests
+      delete document.elementFromPoint;
+    });
+
+    it('unseats the guest when the drag was not claimed by any drop list and the release landed inside the room panel', () => {
+      const { fixture, store } = setup({ getLayout: () => of(layout({ tables: [seatedTable()] })) });
+      const roomPanel = fixture.nativeElement.querySelector('.tables-tab__room-panel');
+      stubElementFromPoint(roomPanel);
+      fixture.componentInstance.onSeatDragStarted();
+
+      fixture.componentInstance.onSeatDragEndedOutside({ guestId: 'g1', dropPoint: { x: 250, y: 250 } });
+
+      expect(store.tables()[0].seats[0].guestId).toBeNull();
+      expect(fixture.componentInstance.announcement()).toContain('Amara Okoye');
+    });
+
+    it('unseats the guest when the release landed on the floating-guests panel', () => {
+      const { fixture, store } = setup({ getLayout: () => of(layout({ tables: [seatedTable()] })) });
+      const floatingPanel = fixture.nativeElement.querySelector('[data-testid="floating-guests-panel"]');
+      stubElementFromPoint(floatingPanel);
+      fixture.componentInstance.onSeatDragStarted();
+
+      fixture.componentInstance.onSeatDragEndedOutside({ guestId: 'g1', dropPoint: { x: 900, y: 250 } });
+
+      expect(store.tables()[0].seats[0].guestId).toBeNull();
+    });
+
+    it('does nothing when the release landed outside both panels', () => {
+      const { fixture, store } = setup({ getLayout: () => of(layout({ tables: [seatedTable()] })) });
+      stubElementFromPoint(document.body);
+      fixture.componentInstance.onSeatDragStarted();
+
+      fixture.componentInstance.onSeatDragEndedOutside({ guestId: 'g1', dropPoint: { x: 9999, y: 9999 } });
+
+      expect(store.tables()[0].seats[0].guestId).toBe('g1');
+    });
+
+    it('does nothing when elementFromPoint finds nothing at the release point', () => {
+      const { fixture, store } = setup({ getLayout: () => of(layout({ tables: [seatedTable()] })) });
+      stubElementFromPoint(null);
+      fixture.componentInstance.onSeatDragStarted();
+
+      fixture.componentInstance.onSeatDragEndedOutside({ guestId: 'g1', dropPoint: { x: 0, y: 0 } });
+
+      expect(store.tables()[0].seats[0].guestId).toBe('g1');
+    });
+
+    it('does nothing when a drop list already claimed the gesture (e.g. reassigned to another seat)', () => {
+      const { fixture, store } = setup(
+        { getLayout: () => of(layout({ tables: [seatedTable()] })) },
+        guestApiWithG1,
+      );
+      const roomPanel = fixture.nativeElement.querySelector('.tables-tab__room-panel');
+      stubElementFromPoint(roomPanel);
+      fixture.componentInstance.onSeatDragStarted();
+      store.assignGuest('g1', 't1', 1);
+
+      fixture.componentInstance.onSeatDragEndedOutside({ guestId: 'g1', dropPoint: { x: 250, y: 250 } });
+
+      expect(store.tables()[0].seats[1].guestId).toBe('g1');
+    });
+  });
+
   describe('floor-plan view', () => {
     const tableAt = (x: number | null, y: number | null) => ({
       id: 't1',

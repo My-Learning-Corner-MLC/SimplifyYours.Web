@@ -8,7 +8,6 @@ const guest = (id: string): Guest => ({
   lastName: 'Okoye',
   phoneNumber: '+1 555 0100',
   emailAddress: null,
-  gender: 'Female',
   relationship: null,
   side: null,
   plusOnes: 0,
@@ -53,7 +52,13 @@ describe('withGuestAssigned', () => {
   it('places the guest in the target seat', () => {
     const result = withGuestAssigned(layout(), guest('g2'), 't1', 1);
 
-    expect(result.tables[0].seats[1]).toEqual({ seatIndex: 1, guestId: 'g2', guestName: 'Amara Okoye' });
+    expect(result.tables[0].seats[1]).toEqual({
+      seatIndex: 1,
+      guestId: 'g2',
+      guestName: 'Amara Okoye',
+      isReservedForParty: false,
+      partyOwnerGuestId: 'g2',
+    });
   });
 
   it('removes the guest from any previous seat first (move semantics)', () => {
@@ -75,7 +80,13 @@ describe('withGuestUnassigned', () => {
   it('clears the seat the guest was in', () => {
     const result = withGuestUnassigned(layout(), 'g1');
 
-    expect(result.tables[0].seats[0]).toEqual({ seatIndex: 0, guestId: null, guestName: null });
+    expect(result.tables[0].seats[0]).toEqual({
+      seatIndex: 0,
+      guestId: null,
+      guestName: null,
+      isReservedForParty: false,
+      partyOwnerGuestId: null,
+    });
   });
 
   it('is a no-op when the guest is not seated anywhere', () => {

@@ -27,51 +27,35 @@
         />
       } @else {
         <div class="tables-tab__body" data-testid="tables-tab-ready">
-          <div class="tables-tab__toolbar">
-            <ul class="tables-tab__summary" role="list" aria-label="Table summary">
-              <li class="tables-tab__chip tables-tab__chip--tables">
-                <span class="tables-tab__chip-num">{{ store.summary().tableCount }}</span>
-                <span class="tables-tab__chip-label">tables</span>
-              </li>
-              <li class="tables-tab__chip tables-tab__chip--seats">
-                <span class="tables-tab__chip-num">{{ store.summary().seatCount }}</span>
-                <span class="tables-tab__chip-label">seats</span>
-              </li>
-              <li class="tables-tab__chip tables-tab__chip--seated">
-                <span class="tables-tab__chip-num">{{ store.summary().seatedCount }}</span>
-                <span class="tables-tab__chip-label">seated</span>
-              </li>
-              <li class="tables-tab__chip tables-tab__chip--floating">
-                <span class="tables-tab__chip-num">{{ store.summary().floatingCount }}</span>
-                <span class="tables-tab__chip-label">floating</span>
-              </li>
-            </ul>
-            <div class="tables-tab__toolbar-actions">
-              <div class="tables-tab__view-toggle" role="group" aria-label="Switch view">
-                <button
-                  type="button"
-                  class="tables-tab__view-btn"
-                  [class.tables-tab__view-btn--active]="view() === 'grid'"
-                  [attr.aria-pressed]="view() === 'grid'"
-                  (click)="setView('grid')"
-                >
-                  Grid
-                </button>
-                <button
-                  type="button"
-                  class="tables-tab__view-btn"
-                  [class.tables-tab__view-btn--active]="view() === 'floor'"
-                  [attr.aria-pressed]="view() === 'floor'"
-                  (click)="setView('floor')"
-                >
-                  Floor plan
-                </button>
-              </div>
-              <button type="button" class="tables-tab__add-btn" data-testid="add-table-button" (click)="openCreateModal()">
-                + Add table
-              </button>
+          <div class="tables-tab__head">
+            <div class="tables-tab__head-text">
+              <h2 class="tables-tab__heading">Arrange your <em>tables</em>.</h2>
+              <div class="tables-tab__accent"></div>
+              <p class="tables-tab__subtext">Drag a name onto a seat. Round table or long table — your call.</p>
             </div>
+            <button type="button" class="tables-tab__add-btn" data-testid="add-table-button" (click)="openCreateModal()">
+              + Add table
+            </button>
           </div>
+
+          <ul class="tables-tab__summary" role="list" aria-label="Table summary">
+            <li class="tables-tab__chip tables-tab__chip--tables">
+              <span class="tables-tab__chip-num">{{ store.summary().tableCount }}</span>
+              <span class="tables-tab__chip-label">tables</span>
+            </li>
+            <li class="tables-tab__chip tables-tab__chip--seats">
+              <span class="tables-tab__chip-num">{{ store.summary().seatCount }}</span>
+              <span class="tables-tab__chip-label">seats</span>
+            </li>
+            <li class="tables-tab__chip tables-tab__chip--seated">
+              <span class="tables-tab__chip-num">{{ store.summary().seatedCount }}</span>
+              <span class="tables-tab__chip-label">seated</span>
+            </li>
+            <li class="tables-tab__chip tables-tab__chip--floating">
+              <span class="tables-tab__chip-num">{{ store.summary().floatingCount }}</span>
+              <span class="tables-tab__chip-label">still floating</span>
+            </li>
+          </ul>
 
           <div class="tables-tab__save-status" data-testid="save-status" [attr.data-state]="store.saveState()">
             @switch (store.saveState()) {
@@ -82,37 +66,88 @@
             }
           </div>
 
+          <ng-template #viewToggle>
+            <div class="tables-tab__view-toggle" role="group" aria-label="Switch view">
+              <button
+                type="button"
+                class="tables-tab__view-btn"
+                [class.tables-tab__view-btn--active]="view() === 'grid'"
+                [attr.aria-pressed]="view() === 'grid'"
+                (click)="setView('grid')"
+              >
+                Grid view
+              </button>
+              <button
+                type="button"
+                class="tables-tab__view-btn"
+                [class.tables-tab__view-btn--active]="view() === 'floor'"
+                [attr.aria-pressed]="view() === 'floor'"
+                (click)="setView('floor')"
+              >
+                Floor plan
+              </button>
+            </div>
+          </ng-template>
+
           @if (view() === 'grid') {
             <div class="tables-tab__grid-layout" cdkDropListGroup>
-              <div class="tables-tab__grid" data-testid="tables-tab-grid">
-                @for (table of store.tables(); track table.id) {
-                  <app-seating-table-card
-                    [table]="table"
-                    [assigningGuestId]="assigningGuestId()"
-                    (editTable)="openEditModal(table)"
-                    (markFull)="toggleFull(table)"
-                    (deleteTable)="quickDelete(table)"
-                    (seatDrop)="onSeatDrop(table, $event)"
-                  />
-                }
+              <div class="tables-tab__room-panel">
+                <div class="tables-tab__room-head">
+                  <span class="tables-tab__room-label">The room</span>
+                  <ng-container [ngTemplateOutlet]="viewToggle" />
+                </div>
+                <div class="tables-tab__grid" data-testid="tables-tab-grid">
+                  @for (table of store.tables(); track table.id) {
+                    <app-seating-table-card
+                      class="tables-tab__grid-item"
+                      [class.tables-tab__grid-item--wide]="table.shape === 'Long'"
+                      [table]="table"
+                      [assigningGuestId]="assigningGuestId()"
+                      (editTable)="openEditModal(table)"
+                      (markFull)="toggleFull(table)"
+                      (deleteTable)="quickDelete(table)"
+                      (seatDrop)="onSeatDrop(table, $event)"
+                      (seatDragStarted)="onSeatDragStarted()"
+                      (seatDragEndedOutside)="onSeatDragEndedOutside($event)"
+                    />
+                  }
+                  <button
+                    type="button"
+                    class="tables-tab__add-tile"
+                    data-testid="add-table-tile"
+                    (click)="openCreateModal()"
+                  >
+                    <span class="tables-tab__add-tile-icon" aria-hidden="true">+</span>
+                    <span class="tables-tab__add-tile-title">Add another table</span>
+                    <span class="tables-tab__add-tile-sub">Round, long, or square</span>
+                  </button>
+                </div>
+                <div class="tables-tab__room-tip">
+                  <span class="tables-tab__room-tip-label">Tip</span> · drag a guest anywhere in the room to unseat them
+                </div>
               </div>
               <app-floating-guests-panel
                 [guests]="store.floatingGuests()"
                 [assigningGuestId]="assigningGuestId()"
                 (guestSelected)="onGuestSelected($event)"
-                (guestUnseated)="onGuestUnseated($event)"
               />
             </div>
           } @else {
             <div class="tables-tab__floor-layout" data-testid="tables-tab-floor">
-              <app-floor-plan-canvas
-                [tables]="store.tables()"
-                [areas]="store.areas()"
-                [selectedTableId]="selectedTableId()"
-                (tableSelected)="selectTable($event)"
-                (tableMoved)="onTableMoved($event)"
-                (areaMoved)="onAreaMoved($event)"
-              />
+              <div class="tables-tab__room-panel">
+                <div class="tables-tab__room-head">
+                  <span class="tables-tab__room-label">The room</span>
+                  <ng-container [ngTemplateOutlet]="viewToggle" />
+                </div>
+                <app-floor-plan-canvas
+                  [tables]="store.tables()"
+                  [areas]="store.areas()"
+                  [selectedTableId]="selectedTableId()"
+                  (tableSelected)="selectTable($event)"
+                  (tableMoved)="onTableMoved($event)"
+                  (areaMoved)="onAreaMoved($event)"
+                />
+              </div>
               <app-selected-table-panel
                 [table]="selectedTable()"
                 (editTable)="editSelectedTable()"

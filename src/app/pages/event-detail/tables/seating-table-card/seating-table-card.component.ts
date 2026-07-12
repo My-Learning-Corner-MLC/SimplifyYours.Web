@@ -1,13 +1,20 @@
-import { CdkDrag, CdkDragDrop, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragEnd, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
 import { NgStyle } from '@angular/common';
 
 import { computeSeatPositions } from '../../../../core/seating/seat-geometry';
 import { SeatingSeat } from '../../../../core/seating/seating-seat.model';
 import { SeatingTable } from '../../../../core/seating/seating-table.model';
+import { TableShape } from '../../../../core/seating/table-shape.model';
 
 // Deterministic pastel tint per guest — stable across re-renders.
 const SEAT_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c9', '#e5c9c0', '#d7c7e0'];
+
+const SHAPE_LABELS: Record<TableShape, string> = {
+  Round: 'Round',
+  Long: 'Rectangular',
+  Square: 'Square',
+};
 
 function guestTint(guestId: string): string {
   let h = 0;
@@ -22,11 +29,19 @@ interface SeatVm {
   readonly initial: string;
   readonly tint: string | null;
   readonly dropListId: string;
+  // A guest's own seat, or one reserved for their party's accompanying attendees —
+  // either way, the seat isn't free.
+  readonly isOccupied: boolean;
 }
 
 export interface SeatDropIntent {
   readonly seatIndex: number;
   readonly guestId: string;
+}
+
+export interface SeatDragEndedOutside {
+  readonly guestId: string;
+  readonly dropPoint: { readonly x: number; readonly y: number };
 }
 
 /**
@@ -59,6 +74,8 @@ export class SeatingTableCardComponent {
   @Output() readonly markFull = new EventEmitter<void>();
   @Output() readonly deleteTable = new EventEmitter<void>();
   @Output() readonly seatDrop = new EventEmitter<SeatDropIntent>();
+  @Output() readonly seatDragStarted = new EventEmitter<void>();
+  @Output() readonly seatDragEndedOutside = new EventEmitter<SeatDragEndedOutside>();
 
   // Drop-receiving counter — tracks when any seat on this card is actively
   // being dragged over (multiple cdkDropList enter/exit events fire as the
@@ -66,36 +83,55 @@ export class SeatingTableCardComponent {
   private dropEnterCount = 0;
   readonly receivingDrop = signal(false);
 
+  // Which specific seat is currently being hovered by an active drag — drives
+  // a per-seat highlight ring (the seat itself never moves; only its style changes).
+  readonly hoveredSeatIndex = signal<number | null>(null);
+
   readonly seats = computed<SeatVm[]>(() => {
     const table = this.table();
     const positions = computeSeatPositions(table.shape, table.seatCount);
-    return table.seats.map((seat, index) => ({
-      seat,
-      xPercent: positions[index]?.xPercent ?? 50,
-      yPercent: positions[index]?.yPercent ?? 50,
-      initial: seat.guestName ? seat.guestName.trim().charAt(0).toUpperCase() : '',
-      tint: seat.guestId ? guestTint(seat.guestId) : null,
-      dropListId: `seat-drop_${table.id}_${seat.seatIndex}`,
-    }));
+    return table.seats.map((seat, index) => {
+      const tintKey = seat.guestId ?? seat.partyOwnerGuestId;
+      return {
+        seat,
+        xPercent: positions[index]?.xPercent ?? 50,
+        yPercent: positions[index]?.yPercent ?? 50,
+        initial: seat.guestName ? seat.guestName.trim().charAt(0).toUpperCase() : '',
+        tint: tintKey ? guestTint(tintKey) : null,
+        dropListId: `seat-drop_${table.id}_${seat.seatIndex}`,
+        isOccupied: seat.guestId !== null || !!seat.isReservedForParty,
+      };
+    });
   });
 
-  readonly seatedCount = computed(() => this.table().seats.filter((seat) => seat.guestId !== null).length);
+  readonly seatedCount = computed(() => this.seats().filter((seatVm) => seatVm.isOccupied).length);
+
+  readonly shapeLabel = computed(() => SHAPE_LABELS[this.table().shape]);
 
   // Bound once (not per-seat) — CdkDropList exposes the bound [cdkDropListData]
   // as `drop.data`, so this single predicate works for every seat's drop list.
+  // A seat reserved for someone else's party is occupied too, even though its
+  // guestId is null, so it isn't a valid drop target.
   readonly seatEnterPredicate = (drag: CdkDrag<string>, drop: CdkDropList<SeatingSeat>): boolean => {
-    return drop.data.guestId === null || drop.data.guestId === drag.data;
+    const seat = drop.data;
+    return (seat.guestId === null && !seat.isReservedForParty) || seat.guestId === drag.data;
   };
 
-  onSeatEnter(): void {
+  onSeatEnter(seatIndex: number): void {
     this.dropEnterCount++;
-    this.receivingDrop.set(true);
+    if (this.dropEnterCount === 1) {
+      this.receivingDrop.set(true);
+    }
+    this.hoveredSeatIndex.set(seatIndex);
   }
 
-  onSeatExit(): void {
+  onSeatExit(seatIndex: number): void {
     this.dropEnterCount = Math.max(0, this.dropEnterCount - 1);
     if (this.dropEnterCount === 0) {
       this.receivingDrop.set(false);
+    }
+    if (this.hoveredSeatIndex() === seatIndex) {
+      this.hoveredSeatIndex.set(null);
     }
   }
 
@@ -104,12 +140,36 @@ export class SeatingTableCardComponent {
     if (!guestId) {
       return;
     }
+    // When a drag is released somewhere no drop list will accept it (e.g. over
+    // the floating-guests panel, which deliberately rejects entries so the
+    // unseat gesture can be detected by DOM hit-testing on drag end instead —
+    // see EventTablesTabComponent.onSeatDragEndedOutside), CDK falls back to
+    // "dropping" the item back into its own origin list. Treating that as a
+    // real assign would silently no-op the seat and consume the gesture,
+    // starving the hit-test fallback of its chance to run.
+    if (event.previousContainer === event.container) {
+      return;
+    }
     this.seatDrop.emit({ seatIndex, guestId });
+  }
+
+  onSeatDragStarted(): void {
+    this.seatDragStarted.emit();
+  }
+
+  // Always fires on release, whether or not a cdkDropList claimed the drop.
+  // The parent checks SeatingStore.wasDragGestureConsumed() to tell a genuine
+  // "released over open space" from a drop that a list already handled.
+  onSeatDragEnded(seat: SeatingSeat, event: CdkDragEnd<unknown>): void {
+    if (seat.guestId === null) {
+      return;
+    }
+    this.seatDragEndedOutside.emit({ guestId: seat.guestId, dropPoint: event.dropPoint });
   }
 
   onSeatClick(seat: SeatingSeat): void {
     const assigningGuestId = this.assigningGuestId();
-    if (assigningGuestId && seat.guestId === null) {
+    if (assigningGuestId && seat.guestId === null && !seat.isReservedForParty) {
       this.seatDrop.emit({ seatIndex: seat.seatIndex, guestId: assigningGuestId });
     }
   }
@@ -117,6 +177,9 @@ export class SeatingTableCardComponent {
   seatLabel(seat: SeatingSeat): string {
     if (seat.guestId) {
       return `Seat ${seat.seatIndex + 1}, occupied by ${seat.guestName ?? 'a guest'}`;
+    }
+    if (seat.isReservedForParty) {
+      return `Seat ${seat.seatIndex + 1}, reserved for a guest's accompanying attendee`;
     }
     return this.assigningGuestId()
       ? `Seat ${seat.seatIndex + 1}, empty. Press Enter to seat the selected guest here.`

@@ -116,13 +116,24 @@ $hairline: #ece2d2;
     font-size: 10px;
     color: $muted;
     cursor: grab;
-    transition: border-color 120ms, background 120ms;
+    transition: border-color 120ms, background 120ms, transform 120ms ease;
 
     &--filled {
       border-style: solid;
       color: $plum-ink;
-      font-weight: 600;
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 13px;
+      font-weight: 400;
       // background + border-color come from [ngStyle] per guest tint
+    }
+
+    // Anonymous seat reserved for a party's accompanying attendee — shares the
+    // party owner's tint (grouping cue) but stays visually lighter than a named
+    // guest's own seat so the two read as related, not identical.
+    &--reserved {
+      opacity: 0.62;
+      font-size: 8px;
     }
 
     &--targetable {
@@ -133,6 +144,18 @@ $hairline: #ece2d2;
       animation: table-card-target-pulse 1.4s ease-in-out infinite;
     }
 
+    // A drag is currently hovering directly over this seat. The seat's own
+    // position never changes — only its own appearance scales/glows in place.
+    &--drop-target {
+      border-style: solid;
+      border-color: $coral;
+      border-width: 2px;
+      background: $linen;
+      color: $coral;
+      box-shadow: 0 0 0 4px rgba(224, 123, 90, 0.18);
+      transform: scale(1.15);
+    }
+
     &:focus-visible {
       outline: 2px solid $plum;
       outline-offset: 2px;
@@ -141,10 +164,6 @@ $hairline: #ece2d2;
     &.cdk-drag-preview {
       box-shadow: 0 8px 20px rgba(42, 31, 45, 0.24);
     }
-  }
-
-  .cdk-drop-list-dragging .table-card__seat:not(.cdk-drag-placeholder) {
-    transition: transform 150ms ease;
   }
 
   &__foot {

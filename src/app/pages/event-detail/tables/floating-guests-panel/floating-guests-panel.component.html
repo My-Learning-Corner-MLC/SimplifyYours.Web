@@ -1,18 +1,25 @@
-<aside class="floating-panel" data-testid="floating-guests-panel">
+<aside
+  class="floating-panel"
+  data-testid="floating-guests-panel"
+>
   <header class="floating-panel__head">
-    <h3 class="floating-panel__title">Still floating</h3>
-    <span class="floating-panel__count" data-testid="floating-guests-count">{{ guests().length }}</span>
-  </header>
+    <div class="floating-panel__head-row">
+      <h3 class="floating-panel__title">Still floating</h3>
+      <span class="floating-panel__count" data-testid="floating-guests-count">{{ guests().length }} {{ guests().length === 1 ? 'guest' : 'guests' }}</span>
+    </div>
+    <div class="floating-panel__accent"></div>
 
-  <label class="floating-panel__search">
-    <span class="sr-only">Search floating guests</span>
-    <input
-      type="search"
-      placeholder="Find a guest…"
-      [value]="search()"
-      (input)="onSearchInput($any($event.target).value)"
-    />
-  </label>
+    <label class="floating-panel__search">
+      <span class="sr-only">Search floating guests</span>
+      <span class="floating-panel__search-icon" aria-hidden="true">&#8981;</span>
+      <input
+        type="search"
+        placeholder="Find a guest…"
+        [value]="search()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+    </label>
+  </header>
 
   @if (filteredGuests().length === 0) {
     <p class="floating-panel__empty">
@@ -24,7 +31,8 @@
       role="list"
       cdkDropList
       [id]="dropListId"
-      (cdkDropListDropped)="onDropped($event)"
+      [cdkDropListSortingDisabled]="true"
+      [cdkDropListEnterPredicate]="rejectAllEnterPredicate"
     >
       @for (guest of filteredGuests(); track guest.id; let i = $index) {
         <li
@@ -39,6 +47,13 @@
           (click)="onRowClick(guest.id)"
           (keydown.enter)="onRowClick(guest.id)"
         >
+          <ng-template cdkDragPreview [matchSize]="false">
+            <span
+              class="floating-panel__preview-chip"
+              data-testid="floating-guest-preview-chip"
+              [ngStyle]="{ background: avatarTint(i) }"
+            >{{ guestFullName(guest).charAt(0).toUpperCase() }}</span>
+          </ng-template>
           <span class="floating-panel__handle" aria-hidden="true">&#8942;&#8942;</span>
           <span
             class="floating-panel__avatar"
@@ -51,13 +66,13 @@
               <span class="floating-panel__detail">{{ guestDetail(guest) }}</span>
             }
           </span>
-          <span class="floating-panel__status" aria-label="RSVP status: Awaiting">&#9675; Awaiting</span>
+          <span class="floating-panel__status" aria-label="RSVP status: Awaiting">&#9675;</span>
         </li>
       }
     </ul>
   }
 
   <footer class="floating-panel__footer" aria-hidden="true">
-    <span class="floating-panel__tip-label">Tip</span> · drag a name onto any seat
+    <span class="floating-panel__tip-label">Tip</span> · drag a name onto any seat, or drop a seated guest here to unseat them
   </footer>
 </aside>

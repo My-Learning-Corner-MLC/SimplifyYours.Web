@@ -25,5 +25,12 @@ export class SelectedTablePanelComponent {
   @Output() readonly deleteTable = new EventEmitter<void>();
   @Output() readonly addArea = new EventEmitter<void>();
 
+  // Named guests only — reserved-for-party seats have no guestName to list.
   readonly seatedGuests = computed(() => this.table()?.seats.filter((seat) => seat.guestId !== null) ?? []);
+
+  // "n / m" tally: a guest's own seat and any reserved for their party's
+  // accompanying attendees both count as occupied.
+  readonly occupiedSeatCount = computed(
+    () => this.table()?.seats.filter((seat) => seat.guestId !== null || seat.isReservedForParty).length ?? 0,
+  );
 }

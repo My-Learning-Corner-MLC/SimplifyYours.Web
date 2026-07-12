@@ -1,4 +1,5 @@
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,7 +21,7 @@ import { SeatingTable } from '../../../core/seating/seating-table.model';
 import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
 import { FloatingGuestsPanelComponent } from './floating-guests-panel/floating-guests-panel.component';
 import { AreaMoveIntent, FloorPlanCanvasComponent, TableMoveIntent } from './floor-plan-canvas/floor-plan-canvas.component';
-import { SeatDropIntent, SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
+import { SeatDragEndedOutside, SeatDropIntent, SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
 import { SelectedTablePanelComponent } from './selected-table-panel/selected-table-panel.component';
 import { TableFormModalComponent } from './table-form-modal/table-form-modal.component';
 import { CustomAreaModalComponent } from './custom-area-modal/custom-area-modal.component';
@@ -46,6 +47,7 @@ export type TablesView = 'grid' | 'floor';
     SelectedTablePanelComponent,
     CustomAreaModalComponent,
     CdkDropListGroup,
+    NgTemplateOutlet,
   ],
   templateUrl: './event-tables-tab.component.html',
   styleUrl: './event-tables-tab.component.scss',
@@ -166,6 +168,35 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
     const guestName = this.guestDisplayName(guestId);
     this.store.unassignGuest(guestId);
     this.announcement.set(`${guestName} moved back to the floating list.`);
+  }
+
+  // A seat drag started — reset the per-gesture "was this claimed by a drop
+  // list" flag so onSeatDragEndedOutside can tell a genuine open-space release
+  // apart from a normal reassignment/unseat that a drop list already handled.
+  onSeatDragStarted(): void {
+    this.store.beginDragGesture();
+  }
+
+  // Fires on every seat drag release. If nothing claimed the gesture (no
+  // reassignment, no drop onto the floating panel) and the guest was released
+  // over the room panel or the floating-guests panel, treat it as "drop the
+  // guest out" — unseat them. Uses real DOM hit-testing (elementFromPoint),
+  // not bounding-box math, so it's correct regardless of scroll position,
+  // overlapping elements, or which exact sub-area (list, empty state, footer)
+  // was under the pointer.
+  onSeatDragEndedOutside(payload: SeatDragEndedOutside): void {
+    if (this.store.wasDragGestureConsumed()) {
+      return;
+    }
+    const target = document.elementFromPoint(payload.dropPoint.x, payload.dropPoint.y);
+    if (!target) {
+      return;
+    }
+    const droppedInRoom = target.closest('.tables-tab__room-panel') !== null;
+    const droppedOnFloatingPanel = target.closest('[data-testid="floating-guests-panel"]') !== null;
+    if (droppedInRoom || droppedOnFloatingPanel) {
+      this.onGuestUnseated(payload.guestId);
+    }
   }
 
   // ---- Floor-plan view ----

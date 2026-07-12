@@ -17,35 +17,59 @@
     [class.table-card__ring--long]="table().shape === 'Long'"
     [class.table-card__ring--square]="table().shape === 'Square'"
   >
-    <span class="table-card__surface" aria-hidden="true">{{ table().shape }}</span>
+    <span class="table-card__surface" aria-hidden="true">{{ shapeLabel() }} · {{ table().seatCount }}</span>
     @for (seatVm of seats(); track seatVm.seat.seatIndex) {
       <span
         class="table-card__seat-slot"
         cdkDropList
+        [cdkDropListSortingDisabled]="true"
         [id]="seatVm.dropListId"
         [cdkDropListData]="seatVm.seat"
         [cdkDropListEnterPredicate]="seatEnterPredicate"
         (cdkDropListDropped)="onSeatDropped($event, seatVm.seat.seatIndex)"
-        (cdkDropListEntered)="onSeatEnter()"
-        (cdkDropListExited)="onSeatExit()"
+        (cdkDropListEntered)="onSeatEnter(seatVm.seat.seatIndex)"
+        (cdkDropListExited)="onSeatExit(seatVm.seat.seatIndex)"
         [style.left.%]="seatVm.xPercent"
         [style.top.%]="seatVm.yPercent"
       >
-        <button
-          type="button"
-          class="table-card__seat"
-          [class.table-card__seat--filled]="seatVm.seat.guestId !== null"
-          [class.table-card__seat--targetable]="assigningGuestId() && seatVm.seat.guestId === null"
-          [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
-          cdkDrag
-          [cdkDragDisabled]="seatVm.seat.guestId === null"
-          [cdkDragData]="seatVm.seat.guestId"
-          [attr.aria-label]="seatLabel(seatVm.seat)"
-          [attr.title]="seatVm.seat.guestName ?? 'Empty seat'"
-          (click)="onSeatClick(seatVm.seat)"
-        >
-          {{ seatVm.seat.guestId !== null ? seatVm.initial : '+' }}
-        </button>
+        @if (seatVm.seat.guestId !== null) {
+          <!-- Only a filled seat is a drag source (move to another seat); an empty
+               or reserved seat carries no cdkDrag at all — CDK still treats a
+               disabled cdkDrag as a sortable list member and transforms it out of
+               place when another drag enters this slot's drop list. -->
+          <button
+            type="button"
+            class="table-card__seat table-card__seat--filled"
+            [class.table-card__seat--drop-target]="hoveredSeatIndex() === seatVm.seat.seatIndex"
+            [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
+            cdkDrag
+            [cdkDragData]="seatVm.seat.guestId"
+            [attr.aria-label]="seatLabel(seatVm.seat)"
+            [attr.title]="seatVm.seat.guestName ?? 'Guest'"
+            (click)="onSeatClick(seatVm.seat)"
+            (cdkDragStarted)="onSeatDragStarted()"
+            (cdkDragEnded)="onSeatDragEnded(seatVm.seat, $event)"
+          >{{ seatVm.initial }}</button>
+        } @else {
+          <button
+            type="button"
+            class="table-card__seat"
+            [class.table-card__seat--filled]="seatVm.isOccupied"
+            [class.table-card__seat--reserved]="seatVm.seat.isReservedForParty"
+            [class.table-card__seat--targetable]="assigningGuestId() && !seatVm.isOccupied"
+            [class.table-card__seat--drop-target]="hoveredSeatIndex() === seatVm.seat.seatIndex"
+            [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
+            [attr.aria-label]="seatLabel(seatVm.seat)"
+            [attr.title]="seatVm.seat.isReservedForParty ? 'Reserved seat' : 'Empty seat'"
+            (click)="onSeatClick(seatVm.seat)"
+          >
+            @if (seatVm.seat.isReservedForParty) {
+              &#9679;
+            } @else {
+              +
+            }
+          </button>
+        }
       </span>
     }
   </div>

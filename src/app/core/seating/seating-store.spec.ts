@@ -13,7 +13,6 @@ const guest = (id: string): Guest => ({
   lastName: 'Okoye',
   phoneNumber: '+1 555 0100',
   emailAddress: null,
-  gender: 'Female',
   relationship: null,
   side: null,
   plusOnes: 0,
@@ -221,7 +220,13 @@ describe('SeatingStore', () => {
 
       store.assignGuest('g1', 't1', 0);
 
-      expect(store.tables()[0].seats[0]).toEqual({ seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' });
+      expect(store.tables()[0].seats[0]).toEqual({
+        seatIndex: 0,
+        guestId: 'g1',
+        guestName: 'Amara Okoye',
+        isReservedForParty: false,
+        partyOwnerGuestId: 'g1',
+      });
       expect(store.saveState()).toBe('unsaved');
     });
 
@@ -232,6 +237,31 @@ describe('SeatingStore', () => {
       store.assignGuest('g1', 't1', 0);
 
       expect(store.floatingGuests().map((g) => g.id)).not.toContain('g1');
+    });
+
+    it('marks the drag gesture consumed when assignGuest runs, for the "drop guest out" fallback to distinguish a real reassignment from an open-space release', () => {
+      const store = createStore({ getLayout: () => of(layout({ tables: [tableWithSeats()] })) });
+      store.load('e1');
+
+      store.beginDragGesture();
+      expect(store.wasDragGestureConsumed()).toBe(false);
+
+      store.assignGuest('g1', 't1', 0);
+
+      expect(store.wasDragGestureConsumed()).toBe(true);
+    });
+
+    it('marks the drag gesture consumed when unassignGuest runs', () => {
+      const store = createStore({ getLayout: () => of(layout({ tables: [tableWithSeats()] })) });
+      store.load('e1');
+      store.assignGuest('g1', 't1', 0);
+
+      store.beginDragGesture();
+      expect(store.wasDragGestureConsumed()).toBe(false);
+
+      store.unassignGuest('g1');
+
+      expect(store.wasDragGestureConsumed()).toBe(true);
     });
 
     it('coalesces N rapid assignments into a single flushed batch request', () => {

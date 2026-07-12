@@ -6,13 +6,23 @@ import { SeatingLayout } from './seating-layout.model';
 // `summary` — SeatingStore derives it reactively from the live tables/guests
 // signals instead, so it always stays consistent with whatever these produce.
 
+const emptySeat = (seatIndex: number) => ({
+  seatIndex,
+  guestId: null,
+  guestName: null,
+  isReservedForParty: false,
+  partyOwnerGuestId: null,
+});
+
 export function withGuestUnassigned(layout: SeatingLayout, guestId: string): SeatingLayout {
   return {
     ...layout,
     tables: layout.tables.map((table) => ({
       ...table,
+      // Releases the guest's own seat and any seats reserved for their party's
+      // accompanying attendees (guestId null, partyOwnerGuestId === guestId).
       seats: table.seats.map((seat) =>
-        seat.guestId === guestId ? { seatIndex: seat.seatIndex, guestId: null, guestName: null } : seat,
+        seat.guestId === guestId || seat.partyOwnerGuestId === guestId ? emptySeat(seat.seatIndex) : seat,
       ),
     })),
   };
@@ -34,7 +44,13 @@ export function withGuestAssigned(
             ...table,
             seats: table.seats.map((seat) =>
               seat.seatIndex === seatIndex
-                ? { seatIndex, guestId: guest.id, guestName: guestFullName(guest) }
+                ? {
+                    seatIndex,
+                    guestId: guest.id,
+                    guestName: guestFullName(guest),
+                    isReservedForParty: false,
+                    partyOwnerGuestId: guest.id,
+                  }
                 : seat,
             ),
           },
