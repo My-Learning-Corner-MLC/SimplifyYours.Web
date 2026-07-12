@@ -415,5 +415,36 @@ describe('SeatingTableCardComponent', () => {
 
       expect(fixture.componentInstance.seatEnterPredicate({ data: 'g1' } as never, drop)).toBe(true);
     });
+
+    it('clears the stale hover ring left on a seat when the drag moves directly onto an occupied seat mid-drag (BUG-006)', () => {
+      // CDK only fires cdkDropListExited on the previously active container
+      // when the pointer enters a *different accepting* container. Moving
+      // straight from an accepted empty seat into a rejected occupied one
+      // never triggers that exit, so onSeatEnter's ring/hint would otherwise
+      // stay stuck on the seat left behind for the rest of the drag (not just
+      // after it ends, which BUG-005's pointerup fallback already covers).
+      const fixture = setup(makeTable());
+      fixture.componentInstance.onSeatEnter(1);
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+      expect(fixture.componentInstance.receivingDrop()).toBe(true);
+
+      const occupiedDrop = { data: { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' } } as never;
+      const result = fixture.componentInstance.seatEnterPredicate({ data: 'g2' } as never, occupiedDrop);
+
+      expect(result).toBe(false);
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+
+    it('does not clear hover state when evaluating a seat the dragged guest already occupies', () => {
+      const fixture = setup(makeTable());
+      fixture.componentInstance.onSeatEnter(1);
+
+      const ownSeatDrop = { data: { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' } } as never;
+      fixture.componentInstance.seatEnterPredicate({ data: 'g1' } as never, ownSeatDrop);
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+      expect(fixture.componentInstance.receivingDrop()).toBe(true);
+    });
   });
 });

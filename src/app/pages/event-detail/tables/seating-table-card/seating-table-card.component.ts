@@ -114,7 +114,21 @@ export class SeatingTableCardComponent {
   // guestId is null, so it isn't a valid drop target.
   readonly seatEnterPredicate = (drag: CdkDrag<string>, drop: CdkDropList<SeatingSeat>): boolean => {
     const seat = drop.data;
-    return (seat.guestId === null && !seat.isReservedForParty) || seat.guestId === drag.data;
+    const isValidTarget = (seat.guestId === null && !seat.isReservedForParty) || seat.guestId === drag.data;
+    if (!isValidTarget) {
+      // CDK only fires `cdkDropListExited` on the previously active container
+      // when the pointer enters a *different accepting* container — moving
+      // from an accepted seat straight into a rejected (occupied) one never
+      // triggers that exit, so the ring/hint set by onSeatEnter on the seat
+      // left behind would otherwise persist for the rest of the drag. This
+      // predicate is invoked exactly when the pointer enters this rejected
+      // seat's bounding box, making it the only reliable signal available to
+      // clear the stale state immediately rather than waiting for drag end.
+      this.dropEnterCount = 0;
+      this.receivingDrop.set(false);
+      this.hoveredSeatIndex.set(null);
+    }
+    return isValidTarget;
   };
 
   onSeatEnter(seatIndex: number): void {
