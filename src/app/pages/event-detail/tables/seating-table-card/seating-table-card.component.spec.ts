@@ -172,7 +172,7 @@ describe('SeatingTableCardComponent', () => {
     fixture.componentInstance.seatDrop.subscribe(spy);
 
     fixture.componentInstance.onSeatDropped(
-      { item: { data: 'g2' }, previousContainer: {}, container: {} } as never,
+      { item: { data: 'g2' }, previousContainer: {}, container: {}, isPointerOverContainer: true } as never,
       1,
     );
 
@@ -185,7 +185,7 @@ describe('SeatingTableCardComponent', () => {
     fixture.componentInstance.seatDrop.subscribe(spy);
 
     fixture.componentInstance.onSeatDropped(
-      { item: { data: '' }, previousContainer: {}, container: {} } as never,
+      { item: { data: '' }, previousContainer: {}, container: {}, isPointerOverContainer: true } as never,
       1,
     );
 
@@ -206,6 +206,52 @@ describe('SeatingTableCardComponent', () => {
     fixture.componentInstance.onSeatDropped(
       { item: { data: 'g1' }, previousContainer: sameContainer, container: sameContainer } as never,
       0,
+    );
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('clears the hover highlight and DROP TO SEAT hint once a drop lands, even though CDK never fires a matching exit event', () => {
+    const fixture = setup(makeTable());
+    fixture.componentInstance.onSeatEnter(1);
+    expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+    expect(fixture.componentInstance.receivingDrop()).toBe(true);
+
+    fixture.componentInstance.onSeatDropped(
+      { item: { data: 'g2' }, previousContainer: {}, container: {}, isPointerOverContainer: true } as never,
+      1,
+    );
+
+    expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+    expect(fixture.componentInstance.receivingDrop()).toBe(false);
+  });
+
+  it('clears the hover highlight even when the drop is rejected (falls back to its own origin list)', () => {
+    const fixture = setup(makeTable());
+    fixture.componentInstance.onSeatEnter(0);
+    const sameContainer = {};
+
+    fixture.componentInstance.onSeatDropped(
+      { item: { data: 'g1' }, previousContainer: sameContainer, container: sameContainer, isPointerOverContainer: true } as never,
+      0,
+    );
+
+    expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+    expect(fixture.componentInstance.receivingDrop()).toBe(false);
+  });
+
+  it('ignores a drop fired on a seat the pointer already moved off of (CDK reports the last accepting container, not the release point)', () => {
+    // Reproduces BUG-004: hover an empty seat (accepted), slide to an
+    // adjacent occupied seat without a clean exit event firing, then
+    // release. CDK still fires `dropped` on the empty seat but marks
+    // isPointerOverContainer: false since the pointer isn't actually there.
+    const fixture = setup(makeTable());
+    const spy = vi.fn();
+    fixture.componentInstance.seatDrop.subscribe(spy);
+
+    fixture.componentInstance.onSeatDropped(
+      { item: { data: 'g2' }, previousContainer: {}, container: {}, isPointerOverContainer: false } as never,
+      1,
     );
 
     expect(spy).not.toHaveBeenCalled();

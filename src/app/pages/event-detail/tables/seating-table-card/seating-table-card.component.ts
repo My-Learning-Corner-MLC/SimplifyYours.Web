@@ -136,6 +136,13 @@ export class SeatingTableCardComponent {
   }
 
   onSeatDropped(event: CdkDragDrop<SeatingSeat, SeatingSeat, string>, seatIndex: number): void {
+    // CDK fires (cdkDropListDropped) without a following (cdkDropListExited) —
+    // the pointer never physically leaves the zone it drops into — so hover
+    // state must be cleared here explicitly or it sticks until the next drag.
+    this.dropEnterCount = 0;
+    this.receivingDrop.set(false);
+    this.hoveredSeatIndex.set(null);
+
     const guestId = event.item.data;
     if (!guestId) {
       return;
@@ -148,6 +155,16 @@ export class SeatingTableCardComponent {
     // real assign would silently no-op the seat and consume the gesture,
     // starving the hit-test fallback of its chance to run.
     if (event.previousContainer === event.container) {
+      return;
+    }
+    // CDK fires `dropped` on the last container that accepted the drag even
+    // if the pointer has since moved off it without triggering an exit event
+    // (small, closely-packed seat zones). `isPointerOverContainer` is false
+    // in that case — treat it as a miss rather than assigning the wrong seat.
+    // No explicit "undo" is needed: the guest chip is store-driven, so
+    // returning here without emitting simply leaves it rendered in the
+    // floating panel on the next change-detection pass.
+    if (!event.isPointerOverContainer) {
       return;
     }
     this.seatDrop.emit({ seatIndex, guestId });
