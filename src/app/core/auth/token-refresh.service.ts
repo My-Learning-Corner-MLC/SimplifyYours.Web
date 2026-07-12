@@ -17,6 +17,7 @@ export class TokenRefreshService {
   private readonly tokenStorage = inject(TokenStorageService);
   private timer: ReturnType<typeof setTimeout> | null = null;
   private outcome: RefreshOutcome | null = null;
+  private inFlightRefresh: Promise<TokenBundle | null> | null = null;
 
   bind(outcome: RefreshOutcome): void {
     this.outcome = outcome;
@@ -26,7 +27,7 @@ export class TokenRefreshService {
     this.cancel();
     const delay = Math.max(0, bundle.expiresAt - Date.now() - REFRESH_LEAD_TIME_MS);
     this.timer = setTimeout(() => {
-      void this.fire(bundle.refreshToken);
+      void this.refresh(bundle.refreshToken);
     }, delay);
   }
 
@@ -37,8 +38,34 @@ export class TokenRefreshService {
     }
   }
 
-  private async fire(refreshToken: string): Promise<void> {
-    this.timer = null;
+  /**
+   * Refreshes the access token on demand (e.g. after a 401), sharing a single
+   * in-flight request so concurrent callers don't trigger duplicate refreshes.
+   */
+  ensureFreshToken(): Promise<TokenBundle | null> {
+    if (this.inFlightRefresh) {
+      return this.inFlightRefresh;
+    }
+    const bundle = this.tokenStorage.read();
+    if (!bundle) {
+      return Promise.resolve(null);
+    }
+    return this.refresh(bundle.refreshToken);
+  }
+
+  private refresh(refreshToken: string): Promise<TokenBundle | null> {
+    if (this.inFlightRefresh) {
+      return this.inFlightRefresh;
+    }
+    this.cancel();
+    const promise = this.performRefresh(refreshToken).finally(() => {
+      this.inFlightRefresh = null;
+    });
+    this.inFlightRefresh = promise;
+    return promise;
+  }
+
+  private async performRefresh(refreshToken: string): Promise<TokenBundle | null> {
     try {
       const tokens = await exchangeRefreshToken({
         identityBaseUrl: environment.identityBaseUrl,
@@ -47,7 +74,8 @@ export class TokenRefreshService {
       });
       const claims = parseIdToken(tokens.id_token);
       if (!claims) {
-        return this.fail();
+        this.fail();
+        return null;
       }
       const next: TokenBundle = {
         accessToken: tokens.access_token,
@@ -58,8 +86,10 @@ export class TokenRefreshService {
       this.tokenStorage.write(next);
       this.outcome?.onSuccess(next, claims);
       this.schedule(next);
+      return next;
     } catch {
       this.fail();
+      return null;
     }
   }
 

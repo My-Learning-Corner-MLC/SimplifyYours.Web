@@ -3,7 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 import { vi } from 'vitest';
-import { environment } from '../../../environments/environment';
 import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
 import { SignUpPage } from './sign-up-page';
 
@@ -78,19 +77,19 @@ describe('SignUpPage', () => {
       expect(el(fixture, '[data-testid="form-pane"]')).not.toBeNull();
     });
 
-    it('shows the CREATE ACCOUNT eyebrow and the form title', () => {
+    it('shows the form title in the header row', () => {
       const fixture = create();
-      const eyebrow = el<HTMLElement>(fixture, '.sign-up-page__eyebrow');
       const title = el<HTMLElement>(fixture, '.sign-up-page__title');
-      expect(eyebrow?.textContent).toContain('CREATE ACCOUNT');
       expect(title?.textContent).toContain('Create your');
       expect(title?.textContent).toContain('account.');
     });
 
-    it('renders an external sign-in link to identity.simplifyyours.com', () => {
+    it('starts the OIDC authorization flow when the sign-in link is clicked', () => {
       const fixture = create();
-      const link = el<HTMLAnchorElement>(fixture, '[data-testid="sign-in-link"]');
-      expect(link?.getAttribute('href')).toBe(environment.identityBaseUrl);
+      const link = el<HTMLButtonElement>(fixture, '[data-testid="sign-in-link"]');
+      expect(link).not.toBeNull();
+      link?.click();
+      expect(startAuthorizationSpy).toHaveBeenCalledOnce();
     });
 
     it('renders all five form rows', () => {
@@ -442,15 +441,16 @@ describe('SignUpPage', () => {
       );
     });
 
-    it('renders the email-taken variant with an italic "Try signing in instead." link', () => {
+    it('renders the email-taken variant with a "Try signing in instead." link that starts OIDC auth', () => {
       const fixture = create();
       submitAndFlush400(fixture, { errors: { Email: ['Email already in use.'] } });
 
       const err = el<HTMLElement>(fixture, '[data-testid="error-email"]');
       expect(err?.textContent).toContain('This email is already in use.');
-      const link = el<HTMLAnchorElement>(fixture, '[data-testid="error-email-signin-link"]');
+      const link = el<HTMLButtonElement>(fixture, '[data-testid="error-email-signin-link"]');
       expect(link).not.toBeNull();
-      expect(link?.getAttribute('href')).toBe(environment.identityBaseUrl);
+      link?.click();
+      expect(startAuthorizationSpy).toHaveBeenCalledOnce();
     });
 
     it('clears a per-field backend error live when the user edits that field', () => {

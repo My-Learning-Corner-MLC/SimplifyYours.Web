@@ -172,4 +172,66 @@ describe('TokenRefreshService', () => {
     await Promise.resolve();
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
+
+  it('ensureFreshToken resolves to null when there is no stored bundle', async () => {
+    const fetchImpl = vi.fn();
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const result = await service.ensureFreshToken();
+
+    expect(result).toBeNull();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('ensureFreshToken performs a refresh and returns the new bundle', async () => {
+    storage.write({ accessToken: 'a', refreshToken: 'r', idToken: 'i', expiresAt: Date.now() + 120_000 });
+    const fetchImpl = vi.fn().mockResolvedValue(
+      tokenResponse({
+        access_token: 'a2',
+        refresh_token: 'r2',
+        id_token: makeIdToken({ sub: 'u', name: 'n', email: 'e@x', exp: 2 }),
+        expires_in: 60,
+      }),
+    );
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const result = await service.ensureFreshToken();
+
+    expect(result?.accessToken).toBe('a2');
+    expect(success).toHaveBeenCalledTimes(1);
+    expect(storage.read()?.accessToken).toBe('a2');
+  });
+
+  it('ensureFreshToken shares a single in-flight refresh across concurrent callers', async () => {
+    storage.write({ accessToken: 'a', refreshToken: 'r', idToken: 'i', expiresAt: Date.now() + 120_000 });
+    const fetchImpl = vi.fn().mockResolvedValue(
+      tokenResponse({
+        access_token: 'a2',
+        refresh_token: 'r2',
+        id_token: makeIdToken({ sub: 'u', name: 'n', email: 'e@x', exp: 2 }),
+        expires_in: 60,
+      }),
+    );
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const [first, second] = await Promise.all([
+      service.ensureFreshToken(),
+      service.ensureFreshToken(),
+    ]);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(first?.accessToken).toBe('a2');
+    expect(second?.accessToken).toBe('a2');
+  });
+
+  it('ensureFreshToken resolves to null and calls onFailure when the refresh fails', async () => {
+    storage.write({ accessToken: 'a', refreshToken: 'r', idToken: 'i', expiresAt: Date.now() + 120_000 });
+    const fetchImpl = vi.fn().mockResolvedValue(tokenResponse({}, false, 400));
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const result = await service.ensureFreshToken();
+
+    expect(result).toBeNull();
+    expect(failure).toHaveBeenCalledTimes(1);
+  });
 });

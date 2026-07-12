@@ -10,3 +10,34 @@ main {
   flex-direction: column;
   min-height: 0;
 }
+
+.sy-session-expired-toast {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 0;
+
+  &__summary {
+    font-weight: 600;
+    font-size: 14.5px;
+  }
+
+  &__detail {
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  &__action {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 8px 18px;
+    background: #5a2849;
+    color: #fffcf5;
+    border: none;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+  }
+}
