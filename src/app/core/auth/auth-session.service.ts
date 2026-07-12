@@ -1,4 +1,6 @@
 import { Injectable, Signal, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { parseIdToken } from './id-token-parser';
 import { TokenBundle } from './token-bundle.model';
 import { TokenRefreshService } from './token-refresh.service';
@@ -9,6 +11,8 @@ import { UserSession } from './user-session.model';
 export class AuthSessionService {
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly tokenRefresh = inject(TokenRefreshService);
+  private readonly router = inject(Router);
+  private readonly messages = inject(MessageService);
   private readonly sessionSignal = signal<UserSession | null>(null);
 
   readonly session: Signal<UserSession | null> = this.sessionSignal.asReadonly();
@@ -28,6 +32,7 @@ export class AuthSessionService {
       },
       onFailure: () => {
         this.sessionSignal.set(null);
+        this.expireSession();
       },
     });
 
@@ -64,5 +69,17 @@ export class AuthSessionService {
     this.tokenRefresh.cancel();
     this.sessionSignal.set(null);
     this.tokenStorage.clear();
+  }
+
+  private expireSession(): void {
+    void this.router.navigateByUrl('/home');
+    this.messages.add({
+      key: 'session-expired',
+      severity: 'warn',
+      summary: 'Session expired',
+      detail: 'Please sign in again to continue.',
+      sticky: true,
+      data: { action: 'sign-in' },
+    });
   }
 }
