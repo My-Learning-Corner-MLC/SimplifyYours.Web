@@ -1,5 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDragEnd, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Output, computed, input, signal } from '@angular/core';
 import { NgStyle } from '@angular/common';
 
 import { computeSeatPositions } from '../../../../core/seating/seat-geometry';
@@ -133,6 +133,25 @@ export class SeatingTableCardComponent {
     if (this.hoveredSeatIndex() === seatIndex) {
       this.hoveredSeatIndex.set(null);
     }
+  }
+
+  // Fallback cleanup for the case where CDK routes a drag release back to the
+  // floating panel's own drop list (the item's origin) instead of any seat —
+  // e.g. the pointer hovered an empty seat, then moved onto an occupied
+  // (rejected) seat whose bounding box overlaps the first without a clean
+  // `cdkDropListExited` firing. In that path no seat's `onSeatDropped` runs at
+  // all, so the hover state set by `onSeatEnter` would otherwise persist
+  // indefinitely. Safe regardless of firing order relative to a seat's own
+  // `onSeatDropped`: the reset here and `seatDrop.emit(...)` there are
+  // independent, so whichever runs first, the other still behaves correctly —
+  // a genuine drop still emits, and this handler is just a harmless re-set of
+  // already-null/false values when it runs after `onSeatDropped`.
+  @HostListener('document:pointerup')
+  @HostListener('document:pointercancel')
+  onDocumentPointerUp(): void {
+    this.dropEnterCount = 0;
+    this.receivingDrop.set(false);
+    this.hoveredSeatIndex.set(null);
   }
 
   onSeatDropped(event: CdkDragDrop<SeatingSeat, SeatingSeat, string>, seatIndex: number): void {

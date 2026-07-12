@@ -257,6 +257,35 @@ describe('SeatingTableCardComponent', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  it('clears the hover highlight on a document pointerup even when no seat drop fires at all', () => {
+    // Reproduces BUG-005: hover an empty seat (accepted), then move onto an
+    // adjacent occupied (rejected) seat whose bounding box overlaps the first
+    // without a clean exit event firing. CDK then routes the release back to
+    // the drag's origin list (the floating panel) instead of any seat, so
+    // this component's onSeatDropped never runs — the only remaining signal
+    // is the browser's own pointerup, which this component listens for on
+    // the document as a fallback.
+    const fixture = setup(makeTable());
+    fixture.componentInstance.onSeatEnter(0);
+    expect(fixture.componentInstance.hoveredSeatIndex()).toBe(0);
+    expect(fixture.componentInstance.receivingDrop()).toBe(true);
+
+    document.dispatchEvent(new PointerEvent('pointerup'));
+
+    expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+    expect(fixture.componentInstance.receivingDrop()).toBe(false);
+  });
+
+  it('clears the hover highlight on a document pointercancel', () => {
+    const fixture = setup(makeTable());
+    fixture.componentInstance.onSeatEnter(0);
+
+    document.dispatchEvent(new PointerEvent('pointercancel'));
+
+    expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+    expect(fixture.componentInstance.receivingDrop()).toBe(false);
+  });
+
   describe('drag-out reporting', () => {
     it('emits seatDragStarted when a seat drag begins', () => {
       const fixture = setup(makeTable());
