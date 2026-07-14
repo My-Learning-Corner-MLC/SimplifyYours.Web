@@ -6,14 +6,16 @@ import { environment } from '../../../environments/environment';
 import { CreateEventError } from './create-event-error.model';
 import { CreateEventRequest } from './create-event-request.model';
 import { CreateEventResponse } from './create-event-response.model';
+import { EventDetail } from './event-detail.model';
+import { EventDetailError } from './event-detail-error.model';
 import { QueryEventsError } from './query-events-error.model';
 import { QueryEventsRequest } from './query-events-request.model';
 import { QueryEventsResponse } from './query-events-response.model';
 
 const GENERIC_PAGE_ERROR = 'Something went wrong on our end. Please try again in a moment.';
 
-const QUERY_EVENTS_SERVER_ERROR =
-  "We couldn't load your occasions just now. Please try again in a moment.";
+const EVENT_DETAIL_NOT_FOUND_ERROR =
+  "We couldn't find that event. It may have been removed, or the link may be out of date.";
 
 const ALLOWED_FIELD_KEYS = new Set([
   'eventName',
@@ -48,17 +50,28 @@ export class EventApiClient {
     return this.http
       .post<QueryEventsResponse>(url, request, { withCredentials: false })
       .pipe(
-        catchError((response: HttpErrorResponse) =>
-          throwError(() => this.toQueryEventsError(response)),
+        catchError(() =>
+          throwError((): QueryEventsError => ({ kind: 'server', message: GENERIC_PAGE_ERROR })),
         ),
       );
   }
 
-  private toQueryEventsError(response: HttpErrorResponse): QueryEventsError {
-    if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized' };
+  getEventDetails(eventId: string): Observable<EventDetail> {
+    const url = `${environment.eventBaseUrl}/events/${encodeURIComponent(eventId)}`;
+    return this.http
+      .get<EventDetail>(url, { withCredentials: false })
+      .pipe(
+        catchError((response: HttpErrorResponse) =>
+          throwError(() => this.toEventDetailError(response)),
+        ),
+      );
+  }
+
+  private toEventDetailError(response: HttpErrorResponse): EventDetailError {
+    if (response.status === 404) {
+      return { kind: 'notFound', message: EVENT_DETAIL_NOT_FOUND_ERROR };
     }
-    return { kind: 'server', message: QUERY_EVENTS_SERVER_ERROR };
+    return { kind: 'server', message: GENERIC_PAGE_ERROR };
   }
 
   private toCreateEventError(response: HttpErrorResponse): CreateEventError {

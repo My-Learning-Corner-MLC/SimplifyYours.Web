@@ -10,6 +10,8 @@ import { CreateEventError } from './create-event-error.model';
 import { CreateEventRequest } from './create-event-request.model';
 import { CreateEventResponse } from './create-event-response.model';
 import { EventApiClient } from './event-api-client';
+import { EventDetail } from './event-detail.model';
+import { EventDetailError } from './event-detail-error.model';
 import { QueryEventsError } from './query-events-error.model';
 import { QueryEventsResponse } from './query-events-response.model';
 
@@ -172,22 +174,22 @@ describe('EventApiClient', () => {
       expect(actual).toEqual(pageResponse());
     });
 
-    it('maps a 401 to an unauthorized error', () => {
+    it('maps a 401 to a generic server error (unauthorized handling lives in the interceptor)', () => {
       let err: QueryEventsError | undefined;
       client.queryEvents({}).subscribe({ error: (e) => (err = e as QueryEventsError) });
 
       httpMock.expectOne(queryUrl).flush(null, { status: 401, statusText: 'Unauthorized' });
 
-      expect(err?.kind).toBe('unauthorized');
+      expect(err?.kind).toBe('server');
     });
 
-    it('maps a 403 to an unauthorized error', () => {
+    it('maps a 403 to a generic server error', () => {
       let err: QueryEventsError | undefined;
       client.queryEvents({}).subscribe({ error: (e) => (err = e as QueryEventsError) });
 
       httpMock.expectOne(queryUrl).flush(null, { status: 403, statusText: 'Forbidden' });
 
-      expect(err?.kind).toBe('unauthorized');
+      expect(err?.kind).toBe('server');
     });
 
     it('maps a 5xx to a generic server error', () => {
@@ -209,6 +211,93 @@ describe('EventApiClient', () => {
       client.queryEvents({}).subscribe({ error: (e) => (err = e as QueryEventsError) });
 
       httpMock.expectOne(queryUrl).error(new ProgressEvent('error'));
+
+      expect(err?.kind).toBe('server');
+    });
+  });
+
+  describe('getEventDetails', () => {
+    const eventId = 'e1';
+    const detailUrl = `${environment.eventBaseUrl}/events/${eventId}`;
+
+    const detailResponse = (): EventDetail => ({
+      id: eventId,
+      eventName: 'Mateo turns five',
+      eventDate: '2026-07-05',
+      eventType: 'birthday',
+      eventDescription: 'Backyard party',
+      createdAt: '2026-06-01T10:00:00+00:00',
+      updatedAt: '2026-06-01T10:00:00+00:00',
+      concurrencyToken: 'token',
+      location: { venueName: 'The Backyard', address: '414 Maple Street', notes: null },
+      timeZoneId: 'America/Los_Angeles',
+      eventStartTime: '14:00:00',
+      eventEndTime: '18:00:00',
+    });
+
+    it('GETs /events/{id} and returns the typed detail', () => {
+      let actual: EventDetail | undefined;
+      client.getEventDetails(eventId).subscribe((r) => (actual = r));
+
+      const req = httpMock.expectOne(detailUrl);
+      expect(req.request.method).toBe('GET');
+      req.flush(detailResponse());
+
+      expect(actual).toEqual(detailResponse());
+    });
+
+    it('encodes the event id in the URL', () => {
+      client.getEventDetails('a b/c').subscribe();
+
+      const req = httpMock.expectOne(`${environment.eventBaseUrl}/events/a%20b%2Fc`);
+      req.flush(detailResponse());
+    });
+
+    it('maps a 404 to a notFound error', () => {
+      let err: EventDetailError | undefined;
+      client.getEventDetails(eventId).subscribe({ error: (e) => (err = e as EventDetailError) });
+
+      httpMock.expectOne(detailUrl).flush(null, { status: 404, statusText: 'Not Found' });
+
+      expect(err?.kind).toBe('notFound');
+      expect(err?.message).toMatch(/couldn't find/i);
+    });
+
+    it('maps a 401 to a generic server error (unauthorized handling lives in the interceptor)', () => {
+      let err: EventDetailError | undefined;
+      client.getEventDetails(eventId).subscribe({ error: (e) => (err = e as EventDetailError) });
+
+      httpMock.expectOne(detailUrl).flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(err?.kind).toBe('server');
+    });
+
+    it('maps a 403 to a generic server error', () => {
+      let err: EventDetailError | undefined;
+      client.getEventDetails(eventId).subscribe({ error: (e) => (err = e as EventDetailError) });
+
+      httpMock.expectOne(detailUrl).flush(null, { status: 403, statusText: 'Forbidden' });
+
+      expect(err?.kind).toBe('server');
+    });
+
+    it('maps a 5xx to a generic server error', () => {
+      let err: EventDetailError | undefined;
+      client.getEventDetails(eventId).subscribe({ error: (e) => (err = e as EventDetailError) });
+
+      httpMock
+        .expectOne(detailUrl)
+        .flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+      expect(err?.kind).toBe('server');
+      expect(err?.message).toMatch(/try again/i);
+    });
+
+    it('maps a network failure to a generic server error', () => {
+      let err: EventDetailError | undefined;
+      client.getEventDetails(eventId).subscribe({ error: (e) => (err = e as EventDetailError) });
+
+      httpMock.expectOne(detailUrl).error(new ProgressEvent('error'));
 
       expect(err?.kind).toBe('server');
     });
