@@ -101,14 +101,18 @@ describe('bearerTokenInterceptor', () => {
     expect(result).toEqual({ ok: true });
   });
 
-  it('propagates the original error when the refresh fails', async () => {
+  it('swallows the request when the refresh fails, leaving the global session-expired handler to react', async () => {
     tokenStorage.write(bundle);
     tokenRefresh.ensureFreshToken.mockResolvedValue(null);
 
-    let error: HttpErrorResponse | undefined;
+    let error: unknown;
+    let completed = false;
     http.post(`${environment.eventBaseUrl}/events`, {}).subscribe({
-      error: (err: HttpErrorResponse) => {
+      error: (err: unknown) => {
         error = err;
+      },
+      complete: () => {
+        completed = true;
       },
     });
 
@@ -118,7 +122,8 @@ describe('bearerTokenInterceptor', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(error?.status).toBe(401);
+    expect(error).toBeUndefined();
+    expect(completed).toBe(true);
     expect(tokenRefresh.ensureFreshToken).toHaveBeenCalledTimes(1);
   });
 
