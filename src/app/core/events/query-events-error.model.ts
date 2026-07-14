@@ -1,6 +1,7 @@
 // Typed failure surfaced to the dashboard when the event list cannot be loaded.
-// `kind` lets the UI distinguish an auth problem from a generic server error.
+// Unauthorized (401/403) responses never reach here: the bearer-token
+// interceptor handles silent refresh and session expiry globally.
 export interface QueryEventsError {
-  kind: 'unauthorized' | 'server';
+  kind: 'server';
   message: string;
 }

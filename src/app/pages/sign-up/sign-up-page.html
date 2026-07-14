@@ -81,7 +81,13 @@
       </ul>
     </aside>
 
-    <div #formPane class="sign-up-page__form-pane" data-testid="form-pane">
+    <div
+      #formPane
+      class="sign-up-page__form-pane"
+      [class.sign-up-page__form-pane--success]="succeeded()"
+      [style.min-height.px]="lockedPaneHeight()"
+      data-testid="form-pane"
+    >
       @if (succeeded()) {
         <div class="sign-up-page__success" data-testid="success-pane">
           <div class="sign-up-page__confetti" aria-hidden="true">
@@ -101,16 +107,19 @@
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
+          <p class="sign-up-page__success-eyebrow">YOUR ACCOUNT IS READY</p>
           <h2 class="sign-up-page__success-headline" data-testid="success-headline">
             Welcome to SimplifyYours,
             <span class="sign-up-page__success-name">{{ successFirstName() }}.</span>
           </h2>
+          <div class="sign-up-page__success-divider"></div>
           <p class="sign-up-page__success-copy">
-            Your account is ready. Sign in to start planning something memorable.
+            You&rsquo;ve successfully created your account in SimplifyYours. Sign in to start
+            planning something memorable.
           </p>
           <button
             type="button"
-            class="sign-up-page__submit sign-up-page__submit--link"
+            class="sign-up-page__submit"
             data-testid="success-cta"
             (click)="onSignInClick()"
           >
@@ -120,19 +129,22 @@
         </div>
       } @else {
         <header class="sign-up-page__form-header">
-          <p class="sign-up-page__eyebrow">CREATE ACCOUNT</p>
-          <p class="sign-up-page__sign-in">
-            Already have an account?
-            <a [attr.href]="identityBaseUrl" data-testid="sign-in-link">Sign in</a>
-          </p>
-        </header>
-
-        <div class="sign-up-page__title-block">
           <h2 class="sign-up-page__title">
             Create your <span class="sign-up-page__title--italic">account.</span>
           </h2>
-          <div class="sign-up-page__title-divider"></div>
-        </div>
+          <p class="sign-up-page__sign-in">
+            Already have an account?
+            <button
+              type="button"
+              class="sign-up-page__sign-in-link"
+              data-testid="sign-in-link"
+              (click)="onSignInClick()"
+            >
+              Sign in
+            </button>
+          </p>
+        </header>
+        <div class="sign-up-page__title-divider"></div>
 
         @if (backendErrorCount() >= 2) {
           <div
@@ -252,12 +264,14 @@
               @if (isEmailTakenError()) {
                 <p id="sy-email-error" class="sign-up-page__error" data-testid="error-email">
                   This email is already in use.
-                  <a
-                    [attr.href]="identityBaseUrl"
+                  <button
+                    type="button"
                     class="sign-up-page__error-link"
                     data-testid="error-email-signin-link"
-                    >Try signing in instead.</a
+                    (click)="onSignInClick()"
                   >
+                    Try signing in instead.
+                  </button>
                 </p>
               } @else {
                 <p id="sy-email-error" class="sign-up-page__error" data-testid="error-email">

@@ -8,9 +8,19 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map } from 'rxjs';
+import { MenuItem, MessageService, PrimeTemplate } from 'primeng/api';
+import { Menu } from 'primeng/menu';
+import { Popover } from 'primeng/popover';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { OidcRedirectService } from '../../core/auth/oidc-redirect.service';
+import { MOCK_NOTIFICATIONS } from '../../core/notifications/mock-notifications';
+import { NotificationItem } from '../../core/notifications/notification-item.model';
+import { notificationTint } from '../../core/notifications/notification-display';
+
+const AUTH_ACTIONS_HIDDEN_ROUTES = ['/signup'];
 
 interface NavLink {
   label: string;
@@ -20,7 +30,7 @@ interface NavLink {
 @Component({
   standalone: true,
   selector: 'app-site-header',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, Menu, Popover, PrimeTemplate],
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,20 +38,35 @@ interface NavLink {
 export class SiteHeader {
   private readonly auth = inject(AuthSessionService);
   private readonly oidcRedirect = inject(OidcRedirectService);
+  private readonly router = inject(Router);
+  private readonly messages = inject(MessageService);
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly hamburgerRef = viewChild<ElementRef<HTMLButtonElement>>('hamburger');
 
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  readonly hideAuthActions = computed(() =>
+    AUTH_ACTIONS_HIDDEN_ROUTES.some((route) => this.currentUrl().split('?')[0] === route),
+  );
+
   readonly navLinks: NavLink[] = [
-    { label: 'How it works', path: '/how-it-works' },
-    { label: 'Themes', path: '/themes' },
+    { label: 'Home', path: '/home' },
+    { label: 'Blogs', path: '/blogs' },
     { label: 'Pricing', path: '/pricing' },
-    { label: 'Stories', path: '/stories' },
+    { label: 'How it works', path: '/how-it-works' },
+    { label: 'About Us', path: '/about-us' },
   ];
 
   readonly signedInNavLinks: NavLink[] = [
     { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Guests', path: '/guests' },
-    { label: 'Themes', path: '/themes' },
+    { label: 'Events', path: '/events' },
+    { label: 'Tasks', path: '/tasks' },
     { label: 'Vendors', path: '/vendors' },
   ];
 
@@ -66,7 +91,69 @@ export class SiteHeader {
     return first ? first.charAt(0).toUpperCase() : '';
   });
 
-  readonly hasUnreadNotifications = computed(() => this.auth.session()?.hasUnreadNotifications ?? false);
+  readonly fullName = computed(() => this.auth.session()?.fullName ?? '');
+  readonly email = computed(() => this.auth.session()?.email ?? '');
+
+  private readonly notificationItems = signal<readonly NotificationItem[]>(MOCK_NOTIFICATIONS);
+  readonly newNotifications = computed(() => this.notificationItems().filter((item) => item.unread));
+  readonly earlierNotifications = computed(() => this.notificationItems().filter((item) => !item.unread));
+
+  readonly notificationsOpen = signal(false);
+  // The bell's badge dot clears the moment the popover is opened, not when
+  // individual items are read — matches the "BADGE → clears on open, not on
+  // read" note in the design.
+  private readonly notificationsBadgeDismissed = signal(false);
+  readonly showNotificationsBadge = computed(
+    () => this.newNotifications().length > 0 && !this.notificationsBadgeDismissed(),
+  );
+
+  readonly profileMenuOpen = signal(false);
+
+  readonly profileMenuItems: MenuItem[] = [
+    {
+      label: 'My Account',
+      items: [
+        { label: 'Profile', icon: 'pi pi-user', command: () => this.showComingSoonToast('Profile') },
+        { label: 'Billing', icon: 'pi pi-wallet', command: () => this.showComingSoonToast('Billing') },
+        { label: 'Settings', icon: 'pi pi-cog', command: () => this.showComingSoonToast('Settings') },
+      ],
+    },
+    {
+      label: 'Security',
+      items: [
+        {
+          label: 'Change Password',
+          icon: 'pi pi-lock',
+          command: () => this.showComingSoonToast('Change Password'),
+        },
+        {
+          label: 'Two-Factor Auth',
+          icon: 'pi pi-shield',
+          command: () => this.showComingSoonToast('Two-Factor Auth'),
+        },
+      ],
+    },
+    {
+      label: 'Tenant',
+      items: [
+        {
+          label: 'Add Members',
+          icon: 'pi pi-user-plus',
+          command: () => this.showComingSoonToast('Add Members'),
+        },
+      ],
+    },
+    {
+      label: 'SimplifyYours',
+      items: [
+        {
+          label: 'Contact Support',
+          icon: 'pi pi-question-circle',
+          command: () => this.showComingSoonToast('Contact Support'),
+        },
+      ],
+    },
+  ];
 
   constructor() {
     effect((onCleanup) => {
@@ -103,6 +190,40 @@ export class SiteHeader {
   onSignInClick(): void {
     this.closeMenu();
     void this.oidcRedirect.startAuthorization();
+  }
+
+  onProfileMenuShow(): void {
+    this.profileMenuOpen.set(true);
+  }
+
+  onProfileMenuHide(): void {
+    this.profileMenuOpen.set(false);
+  }
+
+  onNotificationsShow(): void {
+    this.notificationsOpen.set(true);
+    this.notificationsBadgeDismissed.set(true);
+  }
+
+  onNotificationsHide(): void {
+    this.notificationsOpen.set(false);
+  }
+
+  markAllNotificationsRead(): void {
+    this.notificationItems.update((items) => items.map((item) => ({ ...item, unread: false })));
+  }
+
+  tintFor(item: NotificationItem) {
+    return notificationTint(item.category, item.unread);
+  }
+
+  showComingSoonToast(label: string): void {
+    this.messages.add({ severity: 'info', summary: label, detail: 'Coming soon.' });
+  }
+
+  onSignOut(): void {
+    this.auth.clearSession();
+    void this.router.navigateByUrl('/home');
   }
 
   private focusFirstMenuLink(): void {

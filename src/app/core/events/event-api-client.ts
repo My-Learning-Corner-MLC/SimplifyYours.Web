@@ -14,17 +14,8 @@ import { QueryEventsResponse } from './query-events-response.model';
 
 const GENERIC_PAGE_ERROR = 'Something went wrong on our end. Please try again in a moment.';
 
-const QUERY_EVENTS_SERVER_ERROR =
-  "We couldn't load your occasions just now. Please try again in a moment.";
-const QUERY_EVENTS_AUTH_ERROR =
-  'Your session has expired. Please sign in again to see your occasions.';
-
 const EVENT_DETAIL_NOT_FOUND_ERROR =
   "We couldn't find that event. It may have been removed, or the link may be out of date.";
-const EVENT_DETAIL_SERVER_ERROR =
-  "We couldn't load this event just now. Please try again in a moment.";
-const EVENT_DETAIL_AUTH_ERROR =
-  'Your session has expired. Please sign in again to see this event.';
 
 const ALLOWED_FIELD_KEYS = new Set([
   'eventName',
@@ -59,8 +50,8 @@ export class EventApiClient {
     return this.http
       .post<QueryEventsResponse>(url, request, { withCredentials: false })
       .pipe(
-        catchError((response: HttpErrorResponse) =>
-          throwError(() => this.toQueryEventsError(response)),
+        catchError(() =>
+          throwError((): QueryEventsError => ({ kind: 'server', message: GENERIC_PAGE_ERROR })),
         ),
       );
   }
@@ -80,17 +71,7 @@ export class EventApiClient {
     if (response.status === 404) {
       return { kind: 'notFound', message: EVENT_DETAIL_NOT_FOUND_ERROR };
     }
-    if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized', message: EVENT_DETAIL_AUTH_ERROR };
-    }
-    return { kind: 'server', message: EVENT_DETAIL_SERVER_ERROR };
-  }
-
-  private toQueryEventsError(response: HttpErrorResponse): QueryEventsError {
-    if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized', message: QUERY_EVENTS_AUTH_ERROR };
-    }
-    return { kind: 'server', message: QUERY_EVENTS_SERVER_ERROR };
+    return { kind: 'server', message: GENERIC_PAGE_ERROR };
   }
 
   private toCreateEventError(response: HttpErrorResponse): CreateEventError {

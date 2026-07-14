@@ -8,3 +8,165 @@ body {
   color: #2a1f2d;
   font-family: 'DM Sans', system-ui, sans-serif;
 }
+
+// Parchment + plum palette (mirrors the per-page SCSS vars). Kept here so the
+// body-appended PrimeNG overlays below theme consistently with the app.
+$plum: #5a2849;
+$champagne: #c8a876;
+$cream: #fffcf5;
+$linen: #f5efe6;
+$linen-border: #ece2d2;
+$ink: #2a1f2d;
+$muted: #7a6b6e;
+
+// PrimeNG DatePicker + Select render their popups on document.body (CDK
+// overlay), so their theming must live globally, not inside a component's
+// encapsulated styles. Aura's dark defaults are re-skinned to the palette.
+.p-datepicker-panel {
+  background: $cream !important;
+  border: 1px solid $linen-border !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(42, 31, 45, 0.16) !important;
+  padding: 0.9rem !important;
+
+  .p-datepicker-header {
+    background: transparent !important;
+    color: $ink !important;
+  }
+
+  .p-datepicker-title,
+  .p-datepicker-select-month,
+  .p-datepicker-select-year {
+    color: $ink !important;
+    font-weight: 500;
+  }
+
+  .p-datepicker-prev-button,
+  .p-datepicker-next-button {
+    color: $muted !important;
+    background: transparent !important;
+
+    &:hover {
+      color: $plum !important;
+      background: $linen !important;
+    }
+  }
+
+  .p-datepicker-weekday {
+    color: $muted !important;
+    font-size: 0.7rem;
+  }
+
+  .p-datepicker-day {
+    color: $ink !important;
+    border-radius: 8px !important;
+
+    &:hover {
+      background: $linen !important;
+    }
+  }
+
+  .p-datepicker-day-selected {
+    background: $plum !important;
+    color: $cream !important;
+  }
+
+  .p-datepicker-today > .p-datepicker-day {
+    background: transparent !important;
+    border: 1px solid $champagne !important;
+  }
+
+  .p-datepicker-other-month {
+    color: $muted !important;
+    opacity: 0.6;
+  }
+
+  // Dates before [minDate] (e.g. past days on the event-date picker) — grayed
+  // out and non-interactive rather than just visually identical but clickable.
+  .p-datepicker-day.p-disabled {
+    color: $muted !important;
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+
+    &:hover {
+      background: transparent !important;
+    }
+  }
+
+  // timeOnly spinner panel (Starts / Ends pickers)
+  .p-datepicker-time-picker {
+    background: transparent !important;
+    border-top: 0 !important;
+
+    span {
+      color: $ink !important;
+    }
+
+    button {
+      color: $muted !important;
+      background: transparent !important;
+
+      &:hover {
+        color: $plum !important;
+        background: $linen !important;
+      }
+    }
+  }
+}
+
+.p-select-overlay {
+  background: $cream !important;
+  border: 1px solid $linen-border !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(42, 31, 45, 0.16) !important;
+
+  .p-select-header {
+    background: transparent !important;
+    padding: 0.6rem;
+  }
+
+  .p-select-filter {
+    background: $cream !important;
+    color: $ink !important;
+    border: 1px solid $linen-border !important;
+    border-radius: 8px !important;
+  }
+
+  .p-select-option {
+    color: $ink !important;
+    border-radius: 8px !important;
+
+    &:hover {
+      background: $linen !important;
+    }
+  }
+
+  .p-select-empty-message {
+    color: $muted !important;
+  }
+
+  .p-select-option-selected {
+    background: $plum !important;
+
+    .tz-city,
+    .tz-offset {
+      color: $cream !important;
+    }
+  }
+}
+
+// Timezone option row: city on the left, GMT offset on the right.
+.tz-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.tz-offset {
+  color: $muted;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.72rem;
+}

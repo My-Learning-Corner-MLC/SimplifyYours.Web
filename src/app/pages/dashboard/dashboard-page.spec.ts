@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { Signal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -54,13 +54,21 @@ class ApiStub {
   queryEvents = vi.fn(() => of(makeResponse([])));
 }
 
+class AuthStub {
+  readonly session: Signal<UserSession | null>;
+  readonly clearSession = vi.fn();
+  constructor(session: UserSession | null) {
+    this.session = signal(session);
+  }
+}
+
 function setup(api: ApiStub, session: UserSession | null = null) {
   TestBed.configureTestingModule({
     imports: [DashboardPage],
     providers: [
       provideRouter([]),
       { provide: EventApiClient, useValue: api },
-      { provide: AuthSessionService, useValue: { session: signal(session) } },
+      { provide: AuthSessionService, useValue: new AuthStub(session) },
     ],
   });
   const fixture = TestBed.createComponent(DashboardPage);
