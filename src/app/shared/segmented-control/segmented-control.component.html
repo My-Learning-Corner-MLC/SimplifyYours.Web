@@ -1,0 +1,25 @@
+<div
+  class="sc-track"
+  role="radiogroup"
+  [attr.aria-label]="ariaLabel"
+  [style.--sc-count]="options.length"
+  [class.sc-track--disabled]="disabled"
+>
+  <span class="sc-pill" [style.--sc-index]="activeIndex" aria-hidden="true"></span>
+  @for (option of options; track option; let i = $index) {
+    <button
+      #optionButton
+      type="button"
+      role="radio"
+      class="sc-option"
+      [class.sc-option--active]="option === value"
+      [attr.aria-checked]="option === value"
+      [attr.tabindex]="option === value ? 0 : -1"
+      [disabled]="disabled"
+      (click)="select(option)"
+      (keydown)="onKeydown($event, i)"
+    >
+      {{ getLabel(option) }}
+    </button>
+  }
+</div>

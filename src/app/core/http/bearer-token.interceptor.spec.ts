@@ -58,6 +58,16 @@ describe('bearerTokenInterceptor', () => {
     req.flush({});
   });
 
+  it('attaches the bearer token to guest-service requests', () => {
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.guestBaseUrl}/guests?eventId=e1`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.guestBaseUrl}/guests?eventId=e1`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
+    req.flush({});
+  });
+
   it('leaves identity-service requests untouched', () => {
     tokenStorage.write(bundle);
 

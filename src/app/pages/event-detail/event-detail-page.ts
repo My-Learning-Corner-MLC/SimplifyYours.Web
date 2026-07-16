@@ -1,11 +1,18 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
   OnInit,
+  QueryList,
+  ViewChildren,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { describeCountdown, formatEventWhen } from '../../core/events/event-countdown';
@@ -13,21 +20,46 @@ import { EventApiClient } from '../../core/events/event-api-client';
 import { EventDetail } from '../../core/events/event-detail.model';
 import { EventDetailError } from '../../core/events/event-detail-error.model';
 import { EventTypeTint, eventTypeLabel, eventTypeTint } from '../../core/events/event-type-display';
+import { GuestApiClient } from '../../core/guests/guest-api-client';
+import { Guest } from '../../core/guests/guest.model';
+import { ListGuestsError } from '../../core/guests/guest-error.model';
+import { describeGuestMetadata } from '../../core/guests/guest-metadata-row';
+import { AddGuestModalComponent } from './add-guest/add-guest-modal.component';
 import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
 import {
   BUDGET_SUGGESTIONS_MOCK,
   BUDGET_SUMMARY_MOCK,
   DAY_OF_MOMENTS_MOCK,
   DETAIL_ROWS_MOCK,
-  GUEST_FILTERS_MOCK,
-  GUEST_STATUS_LABEL,
-  GUESTS_MOCK,
   NOTE_ON_THE_DAY_MOCK,
   RSVP_SUMMARY_MOCK,
 } from './event-detail-mocks';
 
 type DetailState = 'loading' | 'error' | 'not-found' | 'ready';
+type GuestsState = 'idle' | 'loading' | 'ready' | 'error';
 export type DetailTab = 'overview' | 'guests' | 'tables' | 'budget';
+export type SlideDirection = 'forward' | 'backward';
+
+// New guests have no RSVP yet, so every guest shows as "Awaiting" until the RSVP
+// feature ships. Avatar tints cycle through the design's warm palette.
+const GUEST_STATUS_LABEL = '○ Awaiting';
+const AVATAR_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c4', '#e5d3c0', '#d9cbe0'];
+
+interface GuestRowVm {
+  readonly id: string;
+  readonly initial: string;
+  readonly name: string;
+  readonly group: string;
+  readonly email: string;
+  readonly party: string;
+  readonly meal: string;
+  readonly avatarBg: string;
+}
+
+interface GuestFilterVm {
+  readonly label: string;
+  readonly count: number;
+}
 
 interface DetailTabDef {
   readonly key: DetailTab;
@@ -55,26 +87,39 @@ const WEEKS_THRESHOLD_DAYS = 21;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, EventEmptyTabComponent],
+  imports: [RouterLink, EventEmptyTabComponent, AddGuestModalComponent],
   selector: 'app-event-detail-page',
   templateUrl: './event-detail-page.html',
   styleUrl: './event-detail-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EventDetailPage implements OnInit {
+export class EventDetailPage implements OnInit, AfterViewInit {
   private readonly api = inject(EventApiClient);
+  private readonly guestApi = inject(GuestApiClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
+  @ViewChildren('tabButton') private readonly tabButtons!: QueryList<ElementRef<HTMLButtonElement>>;
 
   // Captured once so the countdown stays stable across change detection.
   private readonly now = new Date();
 
-  private eventId = '';
+  protected eventId = '';
 
   readonly state = signal<DetailState>('loading');
   readonly loadError = signal<EventDetailError | null>(null);
   readonly activeTab = signal<DetailTab>('overview');
+  readonly slideDirection = signal<SlideDirection>('forward');
+
+  // Guests tab: real data loaded lazily the first time the tab is opened.
+  readonly guestsState = signal<GuestsState>('idle');
+  readonly guestLoadError = signal<string | null>(null);
+  readonly addGuestOpen = signal(false);
+  private readonly guestList = signal<readonly Guest[]>([]);
 
   private readonly event = signal<EventDetail | null>(null);
+
+  readonly eventType = computed(() => this.event()?.eventType ?? '');
 
   readonly tabs: readonly DetailTabDef[] = [
     { key: 'overview', label: 'Overview' },
@@ -83,15 +128,39 @@ export class EventDetailPage implements OnInit {
     { key: 'budget', label: 'Budget' },
   ];
 
+  readonly activeTabIndex = computed(() => this.tabIndexOf(this.activeTab()));
+
+  // Pixel position of the sliding underline, measured against the actual tab
+  // button widths (labels vary in length, so this can't be a simple % split).
+  readonly tabIndicatorStyle = signal<{ transform: string; width: string }>({
+    transform: 'translateX(0px)',
+    width: '0px',
+  });
+
   // Mock data for panels not yet backed by a service (see event-detail-mocks.ts).
   readonly noteOnTheDay = NOTE_ON_THE_DAY_MOCK;
   readonly rsvp = RSVP_SUMMARY_MOCK;
   readonly dayOfMoments = DAY_OF_MOMENTS_MOCK;
   readonly detailRows = DETAIL_ROWS_MOCK;
-  readonly guests = GUESTS_MOCK;
-  readonly guestFilters = GUEST_FILTERS_MOCK;
-  readonly guestStatusLabel = GUEST_STATUS_LABEL;
   readonly budgetSuggestions = BUDGET_SUGGESTIONS_MOCK;
+
+  // Guests tab view models, derived from the real guest list.
+  readonly guestStatusLabel = GUEST_STATUS_LABEL;
+
+  readonly guestRows = computed<GuestRowVm[]>(() =>
+    this.guestList().map((guest, index) => this.toGuestRow(guest, index)),
+  );
+
+  readonly guestFilters = computed<GuestFilterVm[]>(() => {
+    const total = this.guestList().length;
+    // No RSVP data yet, so every guest is Awaiting; confirmed/declined are zero.
+    return [
+      { label: 'All', count: total },
+      { label: 'Confirmed', count: 0 },
+      { label: 'Awaiting', count: total },
+      { label: 'Declined', count: 0 },
+    ];
+  });
 
   // Conic-gradient stops for the RSVP donut: champagne (confirmed) → coral
   // (declined) → translucent (awaiting), matching the design.
@@ -127,6 +196,16 @@ export class EventDetailPage implements OnInit {
     };
   });
 
+  ngAfterViewInit(): void {
+    this.updateTabIndicator();
+    this.tabButtons.changes.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateTabIndicator());
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateTabIndicator();
+  }
+
   ngOnInit(): void {
     // Subscribe to the param map (not the one-shot snapshot) so navigating
     // straight from one event to another — same route, different :id — reloads
@@ -144,6 +223,11 @@ export class EventDetailPage implements OnInit {
     }
     this.state.set('loading');
     this.loadError.set(null);
+    // Reset guest state so switching between events reloads the correct list.
+    this.guestsState.set('idle');
+    this.guestList.set([]);
+    this.guestLoadError.set(null);
+    this.addGuestOpen.set(false);
     this.api.getEventDetails(this.eventId).subscribe({
       next: (event) => {
         this.event.set(event);
@@ -161,7 +245,85 @@ export class EventDetailPage implements OnInit {
   }
 
   setTab(tab: DetailTab): void {
+    if (tab === this.activeTab()) {
+      return;
+    }
+    this.slideDirection.set(this.tabIndexOf(tab) > this.activeTabIndex() ? 'forward' : 'backward');
     this.activeTab.set(tab);
+    if (tab === 'guests' && this.guestsState() === 'idle') {
+      this.loadGuests();
+    }
+    // Wait for the active-tab class (and its font-weight) to land before measuring.
+    queueMicrotask(() => this.updateTabIndicator());
+  }
+
+  private tabIndexOf(tab: DetailTab): number {
+    return this.tabs.findIndex((t) => t.key === tab);
+  }
+
+  private updateTabIndicator(): void {
+    const button = this.tabButtons?.get(this.activeTabIndex())?.nativeElement;
+    if (!button) {
+      return;
+    }
+    this.tabIndicatorStyle.set({
+      transform: `translateX(${button.offsetLeft}px)`,
+      width: `${button.offsetWidth}px`,
+    });
+  }
+
+  loadGuests(): void {
+    if (!this.eventId) {
+      return;
+    }
+    this.guestsState.set('loading');
+    this.guestLoadError.set(null);
+    this.guestApi.listGuests(this.eventId).subscribe({
+      next: (guests) => {
+        this.guestList.set(guests);
+        this.guestsState.set('ready');
+      },
+      error: (error: ListGuestsError) => {
+        this.guestLoadError.set(error.message);
+        this.guestsState.set('error');
+      },
+    });
+  }
+
+  retryGuests(): void {
+    this.loadGuests();
+  }
+
+  openAddGuest(): void {
+    this.addGuestOpen.set(true);
+  }
+
+  closeAddGuest(): void {
+    this.addGuestOpen.set(false);
+  }
+
+  // No success popup: append the created guest to the list and close the modal.
+  onGuestAdded(guest: Guest): void {
+    this.guestList.update((guests) => [...guests, guest]);
+    if (this.guestsState() !== 'ready') {
+      this.guestsState.set('ready');
+    }
+    this.addGuestOpen.set(false);
+  }
+
+  private toGuestRow(guest: Guest, index: number): GuestRowVm {
+    const name = `${guest.firstName} ${guest.lastName}`.trim();
+    const metadata = describeGuestMetadata(this.eventType(), guest.eventMetadata);
+    return {
+      id: guest.id,
+      initial: (guest.firstName.charAt(0) || '?').toUpperCase(),
+      name,
+      group: metadata.group,
+      email: guest.emailAddress ?? '—',
+      party: metadata.plusOnes > 0 ? `Party of ${metadata.plusOnes + 1}` : 'Solo',
+      meal: metadata.dietaryNotes?.trim() || '—',
+      avatarBg: AVATAR_TINTS[index % AVATAR_TINTS.length],
+    };
   }
 
   /** "Saturday · 12 September 2026 · in 9 weeks" — matches the design's hero. */

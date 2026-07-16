@@ -5,6 +5,9 @@ import { of, throwError } from 'rxjs';
 import { EventApiClient } from '../../core/events/event-api-client';
 import { EventDetail } from '../../core/events/event-detail.model';
 import { EventDetailError } from '../../core/events/event-detail-error.model';
+import { GuestApiClient } from '../../core/guests/guest-api-client';
+import { Guest } from '../../core/guests/guest.model';
+import { ListGuestsError } from '../../core/guests/guest-error.model';
 import { EventDetailPage } from './event-detail-page';
 
 const makeDetail = (overrides: Partial<EventDetail> = {}): EventDetail => ({
@@ -23,15 +26,32 @@ const makeDetail = (overrides: Partial<EventDetail> = {}): EventDetail => ({
   ...overrides,
 });
 
+const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
+  id: 'g1',
+  firstName: 'Ada',
+  lastName: 'Tester',
+  emailAddress: 'ada@example.com',
+  phoneNumber: '+15551234567',
+  eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: 'Vegan' },
+  createdAt: '2026-06-02T10:00:00+00:00',
+  ...overrides,
+});
+
 class ApiStub {
   getEventDetails = vi.fn(() => of(makeDetail()));
 }
 
-function setup(api: ApiStub, id: string | null = 'e1') {
+class GuestApiStub {
+  listGuests = vi.fn(() => of<Guest[]>([makeGuest()]));
+  addGuest = vi.fn(() => of(makeGuest()));
+}
+
+function setup(api: ApiStub, guestApi: GuestApiStub = new GuestApiStub(), id: string | null = 'e1') {
   TestBed.configureTestingModule({
     imports: [EventDetailPage],
     providers: [
       { provide: EventApiClient, useValue: api },
+      { provide: GuestApiClient, useValue: guestApi },
       {
         provide: ActivatedRoute,
         useValue: { paramMap: of(convertToParamMap(id === null ? {} : { id })) },
@@ -80,17 +100,108 @@ describe('EventDetailPage', () => {
     expect(root.textContent).toContain('Add first table');
   });
 
-  it('renders the guest list with mock guests on the Guests tab', () => {
+  it('renders a sliding tab indicator', () => {
     const fixture = setup(new ApiStub());
+    const root = html(fixture);
+
+    expect(testId(root, 'event-detail-tab-indicator')).not.toBeNull();
+  });
+
+  it('slides forward when moving to a later tab and backward when moving to an earlier one', () => {
+    const fixture = setup(new ApiStub());
+    const root = html(fixture);
+    const body = () => root.querySelector<HTMLElement>('.detail__body')!;
+
+    testId(root, 'event-detail-tab-tables')!.click();
+    fixture.detectChanges();
+    expect(body().getAttribute('data-slide')).toBe('forward');
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+    expect(body().getAttribute('data-slide')).toBe('backward');
+  });
+
+  it('loads and renders real guests when the Guests tab is opened', () => {
+    const guestApi = new GuestApiStub();
+    const fixture = setup(new ApiStub(), guestApi);
+    const root = html(fixture);
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+
+    expect(guestApi.listGuests).toHaveBeenCalledWith('e1');
+    const guests = testId(root, 'event-detail-guests')!;
+    expect(guests.textContent).toContain('Ada Tester');
+    expect(guests.textContent).toContain("Family · bride's side");
+    expect(guests.textContent).toContain('Party of 2');
+    expect(guests.textContent).toContain('Awaiting');
+  });
+
+  it('maps birthday guest metadata (no relationship/side) for a birthday event', () => {
+    const api = new ApiStub();
+    api.getEventDetails = vi.fn(() => of(makeDetail({ eventType: 'birthday' })));
+    const guestApi = new GuestApiStub();
+    guestApi.listGuests = vi.fn(() =>
+      of<Guest[]>([makeGuest({ eventMetadata: { plusOnes: 2, dietaryNotes: 'Nut allergy' } })]),
+    );
+    const fixture = setup(api, guestApi);
     const root = html(fixture);
 
     testId(root, 'event-detail-tab-guests')!.click();
     fixture.detectChanges();
 
     const guests = testId(root, 'event-detail-guests')!;
-    expect(guests.querySelectorAll('[role="row"]').length).toBeGreaterThan(1);
-    expect(guests.textContent).toContain('Sir Reginald Ashworth');
-    expect(guests.textContent).toContain('Confirmed');
+    expect(guests.textContent).toContain('Ada Tester');
+    expect(guests.textContent).not.toContain("side");
+    expect(guests.textContent).toContain('Party of 3');
+    expect(guests.textContent).toContain('Nut allergy');
+  });
+
+  it('shows the empty state when the event has no guests', () => {
+    const guestApi = new GuestApiStub();
+    guestApi.listGuests = vi.fn(() => of<Guest[]>([]));
+    const fixture = setup(new ApiStub(), guestApi);
+    const root = html(fixture);
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+
+    expect(testId(root, 'guests-empty')).not.toBeNull();
+  });
+
+  it('shows the guest error state with retry', () => {
+    const guestApi = new GuestApiStub();
+    const err: ListGuestsError = { kind: 'server', message: 'Could not load the guest list.' };
+    guestApi.listGuests = vi
+      .fn()
+      .mockReturnValueOnce(throwError(() => err))
+      .mockReturnValueOnce(of<Guest[]>([makeGuest()]));
+    const fixture = setup(new ApiStub(), guestApi);
+    const root = html(fixture);
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+
+    expect(testId(root, 'guests-error')).not.toBeNull();
+    testId(root, 'guests-error')!.querySelector('button')!.click();
+    fixture.detectChanges();
+
+    expect(guestApi.listGuests).toHaveBeenCalledTimes(2);
+    expect(html(fixture).textContent).toContain('Ada Tester');
+  });
+
+  it('opens the Add Guest modal from the Guests tab', () => {
+    const fixture = setup(new ApiStub());
+    const root = html(fixture);
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+
+    expect(testId(root, 'add-guest-modal')).toBeNull();
+    testId(root, 'event-detail-add-guest')!.click();
+    fixture.detectChanges();
+
+    expect(testId(root, 'add-guest-modal')).not.toBeNull();
   });
 
   it('renders the empty state on the Budget tab', () => {
@@ -147,7 +258,7 @@ describe('EventDetailPage', () => {
 
   it('shows the not-found state when the route has no id', () => {
     const api = new ApiStub();
-    const fixture = setup(api, null);
+    const fixture = setup(api, new GuestApiStub(), null);
     const root = html(fixture);
 
     expect(api.getEventDetails).not.toHaveBeenCalled();
