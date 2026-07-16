@@ -23,6 +23,7 @@ import { EventTypeTint, eventTypeLabel, eventTypeTint } from '../../core/events/
 import { GuestApiClient } from '../../core/guests/guest-api-client';
 import { Guest } from '../../core/guests/guest.model';
 import { ListGuestsError } from '../../core/guests/guest-error.model';
+import { asWeddingGuestMetadata } from '../../core/guests/wedding/wedding-guest-metadata.model';
 import { AddGuestModalComponent } from './add-guest/add-guest-modal.component';
 import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
 import {
@@ -312,18 +313,20 @@ export class EventDetailPage implements OnInit, AfterViewInit {
 
   private toGuestRow(guest: Guest, index: number): GuestRowVm {
     const name = `${guest.firstName} ${guest.lastName}`.trim();
+    const metadata = asWeddingGuestMetadata(guest.eventMetadata);
     const groupParts = [
-      guest.relationship ?? null,
-      guest.side ? `${guest.side.toLowerCase()}'s side` : null,
+      metadata?.relationship ?? null,
+      metadata?.side ? `${metadata.side.toLowerCase()}'s side` : null,
     ].filter((part): part is string => !!part);
+    const plusOnes = metadata?.plusOnes ?? 0;
     return {
       id: guest.id,
       initial: (guest.firstName.charAt(0) || '?').toUpperCase(),
       name,
       group: groupParts.join(' · '),
       email: guest.emailAddress ?? '—',
-      party: guest.plusOnes > 0 ? `Party of ${guest.plusOnes + 1}` : 'Solo',
-      meal: guest.dietaryNotes?.trim() || '—',
+      party: plusOnes > 0 ? `Party of ${plusOnes + 1}` : 'Solo',
+      meal: metadata?.dietaryNotes?.trim() || '—',
       avatarBg: AVATAR_TINTS[index % AVATAR_TINTS.length],
     };
   }

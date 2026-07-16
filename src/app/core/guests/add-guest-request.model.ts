@@ -1,8 +1,8 @@
-import { GuestRelationship, GuestSide } from './guest.model';
+import { WeddingGuestMetadata } from './wedding/wedding-guest-metadata.model';
 
-// Mirrors GuestManagementService.Contracts.Guests.AddGuestRequest. The event's
-// wedding metadata (relationship/side) is only sent for wedding events; plusOnes
-// defaults to 0 and dietaryNotes is optional.
+// Mirrors GuestManagementService.Contracts.Guests.AddGuestRequest. eventMetadata's
+// concrete shape depends on the event's type — see
+// core/guests/wedding/wedding-guest-metadata.model.ts for the wedding shape.
 export interface AddGuestRequest {
   readonly eventId: string;
   readonly guestInfo: {
@@ -10,9 +10,6 @@ export interface AddGuestRequest {
     readonly lastName: string;
     readonly phoneNumber: string;
     readonly emailAddress: string;
-    readonly relationship?: GuestRelationship | null;
-    readonly side?: GuestSide | null;
-    readonly plusOnes?: number;
-    readonly dietaryNotes?: string | null;
+    readonly eventMetadata?: WeddingGuestMetadata | null;
   };
 }

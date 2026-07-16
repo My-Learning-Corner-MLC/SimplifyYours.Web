@@ -13,10 +13,7 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   lastName: 'Tester',
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
-  relationship: 'Family',
-  side: 'Bride',
-  plusOnes: 1,
-  dietaryNotes: null,
+  eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: null },
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });
@@ -93,7 +90,7 @@ describe('AddGuestModalComponent', () => {
 
     expect(guestApi.addGuest).toHaveBeenCalledTimes(1);
     const request = guestApi.addGuest.mock.calls[0][0];
-    expect(request.guestInfo.side).toBe('Bride');
+    expect(request.guestInfo.eventMetadata?.side).toBe('Bride');
     expect(added?.id).toBe('g1');
   });
 
@@ -104,7 +101,7 @@ describe('AddGuestModalComponent', () => {
     component.submit();
 
     const request = guestApi.addGuest.mock.calls[0][0];
-    expect(request.guestInfo.side).toBeNull();
+    expect(request.guestInfo.eventMetadata?.side).toBeNull();
   });
 
   it('shows the duplicate banner on a 409', () => {

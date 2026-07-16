@@ -32,10 +32,7 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   lastName: 'Tester',
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
-  relationship: 'Family',
-  side: 'Bride',
-  plusOnes: 1,
-  dietaryNotes: 'Vegan',
+  eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: 'Vegan' },
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });
