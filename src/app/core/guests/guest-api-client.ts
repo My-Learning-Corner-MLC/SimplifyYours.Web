@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
 
@@ -23,9 +23,9 @@ const ADD_GUEST_AUTH_ERROR =
 const ADD_GUEST_SERVER_ERROR =
   "Something went wrong on our end. Please try again in a moment.";
 
-interface ListGuestsResponseBody {
+interface QueryGuestsResponseBody {
   readonly eventId: string;
-  readonly guests: readonly Guest[];
+  readonly items: readonly Guest[];
 }
 
 interface AddGuestResponseBody {
@@ -49,12 +49,11 @@ export class GuestApiClient {
   private readonly http = inject(HttpClient);
 
   listGuests(eventId: string): Observable<Guest[]> {
-    const url = `${environment.guestBaseUrl}/guests`;
-    const params = new HttpParams().set('eventId', eventId);
+    const url = `${environment.guestBaseUrl}/guests/query`;
     return this.http
-      .get<ListGuestsResponseBody>(url, { params, withCredentials: false })
+      .post<QueryGuestsResponseBody>(url, { eventId }, { withCredentials: false })
       .pipe(
-        map((body) => [...body.guests]),
+        map((body) => [...body.items]),
         catchError((response: HttpErrorResponse) =>
           throwError(() => this.toListGuestsError(response)),
         ),

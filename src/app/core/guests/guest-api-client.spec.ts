@@ -39,17 +39,16 @@ describe('GuestApiClient', () => {
   afterEach(() => httpMock.verify());
 
   describe('listGuests', () => {
-    it('GETs the guests for an event and maps the payload', () => {
+    it('POSTs a guest query for an event and maps the payload', () => {
       let result: unknown;
       client.listGuests('e1').subscribe((guests) => (result = guests));
 
-      const req = httpMock.expectOne(
-        `${environment.guestBaseUrl}/guests?eventId=e1`,
-      );
-      expect(req.request.method).toBe('GET');
+      const req = httpMock.expectOne(`${environment.guestBaseUrl}/guests/query`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ eventId: 'e1' });
       req.flush({
         eventId: 'e1',
-        guests: [
+        items: [
           {
             id: 'g1',
             firstName: 'Ada',
@@ -64,6 +63,12 @@ describe('GuestApiClient', () => {
             createdAt: '2026-06-02T10:00:00+00:00',
           },
         ],
+        pageNumber: 1,
+        pageSize: 20,
+        totalCount: 1,
+        totalPages: 1,
+        hasPreviousPage: false,
+        hasNextPage: false,
       });
 
       expect(result).toEqual([
@@ -76,7 +81,7 @@ describe('GuestApiClient', () => {
       client.listGuests('missing').subscribe({ error: (e: ListGuestsError) => (error = e) });
 
       httpMock
-        .expectOne(`${environment.guestBaseUrl}/guests?eventId=missing`)
+        .expectOne(`${environment.guestBaseUrl}/guests/query`)
         .flush(null, { status: 404, statusText: 'Not Found' });
 
       expect(error?.kind).toBe('notFound');
@@ -87,7 +92,7 @@ describe('GuestApiClient', () => {
       client.listGuests('e1').subscribe({ error: (e: ListGuestsError) => (error = e) });
 
       httpMock
-        .expectOne(`${environment.guestBaseUrl}/guests?eventId=e1`)
+        .expectOne(`${environment.guestBaseUrl}/guests/query`)
         .flush(null, { status: 500, statusText: 'Server Error' });
 
       expect(error?.kind).toBe('server');
