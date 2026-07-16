@@ -1,8 +1,7 @@
-import { WeddingGuestMetadata } from './wedding/wedding-guest-metadata.model';
-
-// Mirrors GuestManagementService.Contracts.Guests.AddGuestRequest. eventMetadata's
-// concrete shape depends on the event's type — see
-// core/guests/wedding/wedding-guest-metadata.model.ts for the wedding shape.
+// Mirrors GuestManagementService.Contracts.Guests.AddGuestRequest. eventMetadata's concrete
+// shape depends on the event's type — the server resolves it dynamically per event type (see
+// GuestMetadataMapperFactory), so the client sends only the fields relevant to that type; see
+// core/guests/guest-metadata-field-config.ts for which fields apply to which event type.
 export interface AddGuestRequest {
   readonly eventId: string;
   readonly guestInfo: {
@@ -10,6 +9,6 @@ export interface AddGuestRequest {
     readonly lastName: string;
     readonly phoneNumber: string;
     readonly emailAddress: string;
-    readonly eventMetadata?: WeddingGuestMetadata | null;
+    readonly eventMetadata?: Record<string, unknown> | null;
   };
 }

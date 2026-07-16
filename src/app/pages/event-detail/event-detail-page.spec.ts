@@ -137,6 +137,26 @@ describe('EventDetailPage', () => {
     expect(guests.textContent).toContain('Awaiting');
   });
 
+  it('maps birthday guest metadata (no relationship/side) for a birthday event', () => {
+    const api = new ApiStub();
+    api.getEventDetails = vi.fn(() => of(makeDetail({ eventType: 'birthday' })));
+    const guestApi = new GuestApiStub();
+    guestApi.listGuests = vi.fn(() =>
+      of<Guest[]>([makeGuest({ eventMetadata: { plusOnes: 2, dietaryNotes: 'Nut allergy' } })]),
+    );
+    const fixture = setup(api, guestApi);
+    const root = html(fixture);
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+
+    const guests = testId(root, 'event-detail-guests')!;
+    expect(guests.textContent).toContain('Ada Tester');
+    expect(guests.textContent).not.toContain("side");
+    expect(guests.textContent).toContain('Party of 3');
+    expect(guests.textContent).toContain('Nut allergy');
+  });
+
   it('shows the empty state when the event has no guests', () => {
     const guestApi = new GuestApiStub();
     guestApi.listGuests = vi.fn(() => of<Guest[]>([]));

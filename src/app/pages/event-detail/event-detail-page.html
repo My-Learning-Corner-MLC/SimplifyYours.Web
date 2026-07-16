@@ -300,7 +300,7 @@
         @if (addGuestOpen()) {
           <app-add-guest-modal
             [eventId]="eventId"
-            [isWedding]="isWedding()"
+            [eventType]="eventType()"
             (closed)="closeAddGuest()"
             (added)="onGuestAdded($event)"
           />

@@ -23,7 +23,7 @@ import { EventTypeTint, eventTypeLabel, eventTypeTint } from '../../core/events/
 import { GuestApiClient } from '../../core/guests/guest-api-client';
 import { Guest } from '../../core/guests/guest.model';
 import { ListGuestsError } from '../../core/guests/guest-error.model';
-import { asWeddingGuestMetadata } from '../../core/guests/wedding/wedding-guest-metadata.model';
+import { describeGuestMetadata } from '../../core/guests/guest-metadata-row';
 import { AddGuestModalComponent } from './add-guest/add-guest-modal.component';
 import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
 import {
@@ -119,7 +119,7 @@ export class EventDetailPage implements OnInit, AfterViewInit {
 
   private readonly event = signal<EventDetail | null>(null);
 
-  readonly isWedding = computed(() => this.event()?.eventType === 'wedding');
+  readonly eventType = computed(() => this.event()?.eventType ?? '');
 
   readonly tabs: readonly DetailTabDef[] = [
     { key: 'overview', label: 'Overview' },
@@ -313,20 +313,15 @@ export class EventDetailPage implements OnInit, AfterViewInit {
 
   private toGuestRow(guest: Guest, index: number): GuestRowVm {
     const name = `${guest.firstName} ${guest.lastName}`.trim();
-    const metadata = asWeddingGuestMetadata(guest.eventMetadata);
-    const groupParts = [
-      metadata?.relationship ?? null,
-      metadata?.side ? `${metadata.side.toLowerCase()}'s side` : null,
-    ].filter((part): part is string => !!part);
-    const plusOnes = metadata?.plusOnes ?? 0;
+    const metadata = describeGuestMetadata(this.eventType(), guest.eventMetadata);
     return {
       id: guest.id,
       initial: (guest.firstName.charAt(0) || '?').toUpperCase(),
       name,
-      group: groupParts.join(' · '),
+      group: metadata.group,
       email: guest.emailAddress ?? '—',
-      party: plusOnes > 0 ? `Party of ${plusOnes + 1}` : 'Solo',
-      meal: metadata?.dietaryNotes?.trim() || '—',
+      party: metadata.plusOnes > 0 ? `Party of ${metadata.plusOnes + 1}` : 'Solo',
+      meal: metadata.dietaryNotes?.trim() || '—',
       avatarBg: AVATAR_TINTS[index % AVATAR_TINTS.length],
     };
   }
