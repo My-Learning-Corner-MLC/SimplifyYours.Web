@@ -21,10 +21,12 @@ describe('GuestApiClient', () => {
       lastName: 'Tester',
       phoneNumber: '+15551234567',
       emailAddress: 'ada@example.com',
-      relationship: 'Family',
-      side: 'Bride',
-      plusOnes: 1,
-      dietaryNotes: 'Vegan',
+      eventMetadata: {
+        relationship: 'Family',
+        side: 'Bride',
+        plusOnes: 1,
+        dietaryNotes: 'Vegan',
+      },
     },
   });
 
@@ -56,10 +58,12 @@ describe('GuestApiClient', () => {
             phoneNumber: '+15551234567',
             emailAddress: 'ada@example.com',
             gender: 'preferNotToSay',
-            relationship: 'Family',
-            side: 'Bride',
-            plusOnes: 1,
-            dietaryNotes: 'Vegan',
+            eventMetadata: {
+              relationship: 'Family',
+              side: 'Bride',
+              plusOnes: 1,
+              dietaryNotes: 'Vegan',
+            },
             createdAt: '2026-06-02T10:00:00+00:00',
           },
         ],
@@ -72,7 +76,11 @@ describe('GuestApiClient', () => {
       });
 
       expect(result).toEqual([
-        expect.objectContaining({ id: 'g1', firstName: 'Ada', side: 'Bride' }),
+        expect.objectContaining({
+          id: 'g1',
+          firstName: 'Ada',
+          eventMetadata: expect.objectContaining({ side: 'Bride' }),
+        }),
       ]);
     });
 
@@ -115,16 +123,22 @@ describe('GuestApiClient', () => {
           phoneNumber: '+15551234567',
           emailAddress: 'ada@example.com',
           gender: 'preferNotToSay',
-          relationship: 'Family',
-          side: 'Bride',
-          plusOnes: 1,
-          dietaryNotes: 'Vegan',
+          eventMetadata: {
+            relationship: 'Family',
+            side: 'Bride',
+            plusOnes: 1,
+            dietaryNotes: 'Vegan',
+          },
         },
         createdAt: '2026-06-02T10:00:00+00:00',
       });
 
       expect(result).toEqual(
-        expect.objectContaining({ id: 'g1', firstName: 'Ada', plusOnes: 1 }),
+        expect.objectContaining({
+          id: 'g1',
+          firstName: 'Ada',
+          eventMetadata: expect.objectContaining({ plusOnes: 1 }),
+        }),
       );
     });
 

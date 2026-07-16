@@ -16,3 +16,11 @@ export const CREATABLE_EVENT_TYPES: readonly EventType[] = [
   'dinner',
   'other',
 ];
+
+// guest-management-service only has a guest-metadata mapper for these types today (see
+// GuestMetadataMapperFactory) — adding a guest to any other event type is rejected server-side.
+// Grey these out at creation time until they get a mapper too.
+export const GUEST_METADATA_SUPPORTED_EVENT_TYPES: ReadonlySet<EventType> = new Set([
+  'wedding',
+  'birthday',
+]);

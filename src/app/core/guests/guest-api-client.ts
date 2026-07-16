@@ -36,10 +36,7 @@ interface AddGuestResponseBody {
     readonly lastName: string;
     readonly phoneNumber: string;
     readonly emailAddress: string | null;
-    readonly relationship: Guest['relationship'];
-    readonly side: Guest['side'];
-    readonly plusOnes: number;
-    readonly dietaryNotes: string | null;
+    readonly eventMetadata: unknown;
   };
   readonly createdAt: string;
 }
@@ -79,10 +76,7 @@ export class GuestApiClient {
       lastName: body.guestInfo.lastName,
       emailAddress: body.guestInfo.emailAddress,
       phoneNumber: body.guestInfo.phoneNumber,
-      relationship: body.guestInfo.relationship,
-      side: body.guestInfo.side,
-      plusOnes: body.guestInfo.plusOnes,
-      dietaryNotes: body.guestInfo.dietaryNotes,
+      eventMetadata: body.guestInfo.eventMetadata,
       createdAt: body.createdAt,
     };
   }

@@ -21,13 +21,18 @@ import {
 
 import { AddGuestRequest } from '../../../core/guests/add-guest-request.model';
 import { AddGuestError } from '../../../core/guests/guest-error.model';
-import { GuestRelationship, GuestSide, Guest } from '../../../core/guests/guest.model';
+import {
+  GuestMetadataFieldKey,
+  guestMetadataFieldsFor,
+} from '../../../core/guests/guest-metadata-field-config';
+import { Guest } from '../../../core/guests/guest.model';
 import { GuestApiClient } from '../../../core/guests/guest-api-client';
+import { Relationship, GuestSide } from '../../../core/guests/wedding/wedding-guest-metadata.model';
 import { SegmentedControlComponent } from '../../../shared/segmented-control/segmented-control.component';
 
 type ModalStatus = 'editing' | 'submitting';
 
-const RELATIONSHIPS: readonly GuestRelationship[] = ['Family', 'Friend', 'Colleague'];
+const RELATIONSHIPS: readonly Relationship[] = ['Family', 'Friend', 'Colleague'];
 const SIDES: readonly GuestSide[] = ['Bride', 'Groom'];
 const MAX_PLUS_ONES = 20;
 
@@ -65,7 +70,7 @@ export class AddGuestModalComponent implements OnInit {
   private readonly api = inject(GuestApiClient);
 
   @Input({ required: true }) eventId = '';
-  @Input() isWedding = false;
+  @Input() eventType = '';
 
   @Output() readonly closed = new EventEmitter<void>();
   @Output() readonly added = new EventEmitter<Guest>();
@@ -88,7 +93,7 @@ export class AddGuestModalComponent implements OnInit {
     lastName: ['', [trimmedRequired, Validators.maxLength(100)]],
     email: ['', [trimmedRequired, Validators.pattern(EMAIL_PATTERN), Validators.maxLength(254)]],
     phone: ['', [phoneValidator, Validators.maxLength(40)]],
-    relationship: ['Family' as GuestRelationship],
+    relationship: ['Family' as Relationship],
     side: ['Bride' as GuestSide],
     plusOnes: [0],
     dietaryNotes: ['', [Validators.maxLength(500)]],
@@ -126,10 +131,15 @@ export class AddGuestModalComponent implements OnInit {
     return !!control && control.invalid && (control.touched || this.submitted());
   }
 
+  /** Which optional guest-metadata fields apply to this event's type — see guestMetadataFieldsFor. */
+  hasField(key: GuestMetadataFieldKey): boolean {
+    return guestMetadataFieldsFor(this.eventType).includes(key);
+  }
+
   /** "Bride" -> "Bride's side" for the segmented control's option labels. */
   readonly sideLabel = (side: GuestSide): string => `${side}'s side`;
 
-  setRelationship(value: GuestRelationship): void {
+  setRelationship(value: Relationship): void {
     this.form.get('relationship')?.setValue(value);
   }
 
@@ -179,6 +189,20 @@ export class AddGuestModalComponent implements OnInit {
     }
 
     const value = this.form.getRawValue();
+    const eventMetadata: Record<string, unknown> = {};
+    if (this.hasField('relationship')) {
+      eventMetadata['relationship'] = value.relationship ?? null;
+    }
+    if (this.hasField('side')) {
+      eventMetadata['side'] = value.side ?? null;
+    }
+    if (this.hasField('plusOnes')) {
+      eventMetadata['plusOnes'] = value.plusOnes ?? 0;
+    }
+    if (this.hasField('dietaryNotes')) {
+      eventMetadata['dietaryNotes'] = (value.dietaryNotes ?? '').trim() || null;
+    }
+
     const request: AddGuestRequest = {
       eventId: this.eventId,
       guestInfo: {
@@ -186,10 +210,7 @@ export class AddGuestModalComponent implements OnInit {
         lastName: (value.lastName ?? '').trim(),
         phoneNumber: (value.phone ?? '').trim(),
         emailAddress: (value.email ?? '').trim(),
-        relationship: value.relationship ?? null,
-        side: this.isWedding ? (value.side ?? null) : null,
-        plusOnes: value.plusOnes ?? 0,
-        dietaryNotes: (value.dietaryNotes ?? '').trim() || null,
+        eventMetadata: Object.keys(eventMetadata).length > 0 ? eventMetadata : null,
       },
     };
 

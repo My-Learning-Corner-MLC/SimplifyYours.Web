@@ -448,6 +448,26 @@ $sage: #5a6b3a;
     color: $cream;
     font-weight: 500;
   }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+
+    &:hover {
+      border-color: $linen-border;
+    }
+  }
+}
+
+.ce-chip-badge {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: $ink-soft;
+  background: $linen-border;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
 }
 
 .ce-datetime {

@@ -133,74 +133,86 @@
           </div>
         </div>
 
-        <!-- Relationship / Whose side? (wedding only — Relationship spans full width otherwise) -->
-        <div class="ag-row" [class.ag-row--single]="!isWedding">
-          <div class="ag-field">
-            <span class="ag-label">Relationship</span>
-            <app-segmented-control
-              class="ag-segmented"
-              [options]="relationships"
-              [value]="form.get('relationship')?.value"
-              [disabled]="status() === 'submitting'"
-              ariaLabel="Relationship"
-              (valueChange)="setRelationship($event)"
-            />
-          </div>
+        <!-- Relationship / Whose side? — which of these render (if any) depends on the event's
+             type; see guestMetadataFieldsFor. Relationship spans full width when side is hidden. -->
+        @if (hasField('relationship') || hasField('side')) {
+          <div class="ag-row" [class.ag-row--single]="!hasField('side')">
+            @if (hasField('relationship')) {
+              <div class="ag-field">
+                <span class="ag-label">Relationship</span>
+                <app-segmented-control
+                  class="ag-segmented"
+                  [options]="relationships"
+                  [value]="form.get('relationship')?.value"
+                  [disabled]="status() === 'submitting'"
+                  ariaLabel="Relationship"
+                  (valueChange)="setRelationship($event)"
+                />
+              </div>
+            }
 
-          @if (isWedding) {
-            <div class="ag-field" data-testid="add-guest-side">
-              <span class="ag-label">Whose side?</span>
-              <app-segmented-control
-                class="ag-segmented"
-                [options]="sides"
-                [value]="form.get('side')?.value"
-                [disabled]="status() === 'submitting'"
-                [getLabel]="sideLabel"
-                ariaLabel="Whose side"
-                (valueChange)="setSide($event)"
-              />
-            </div>
-          }
-        </div>
-
-        <!-- Plus-ones / Dietary notes -->
-        <div class="ag-row">
-          <div class="ag-field">
-            <span class="ag-label">Plus-ones</span>
-            <div class="ag-stepper" role="group" aria-label="Plus-ones">
-              <button
-                type="button"
-                class="ag-stepper-btn"
-                aria-label="Decrease plus-ones"
-                [disabled]="plusOnes === 0"
-                (click)="changePlusOnes(-1)"
-              >
-                −
-              </button>
-              <div class="ag-stepper-value" aria-live="polite">{{ plusOnes }}</div>
-              <button
-                type="button"
-                class="ag-stepper-btn"
-                aria-label="Increase plus-ones"
-                (click)="changePlusOnes(1)"
-              >
-                +
-              </button>
-            </div>
-            <div class="ag-help">Extra seats for their party — kids, partners, dates.</div>
+            @if (hasField('side')) {
+              <div class="ag-field" data-testid="add-guest-side">
+                <span class="ag-label">Whose side?</span>
+                <app-segmented-control
+                  class="ag-segmented"
+                  [options]="sides"
+                  [value]="form.get('side')?.value"
+                  [disabled]="status() === 'submitting'"
+                  [getLabel]="sideLabel"
+                  ariaLabel="Whose side"
+                  (valueChange)="setSide($event)"
+                />
+              </div>
+            }
           </div>
+        }
 
-          <div class="ag-field">
-            <label class="ag-label" for="ag-dietary">Dietary notes <span class="ag-optional">(optional)</span></label>
-            <textarea
-              id="ag-dietary"
-              class="ag-input ag-textarea"
-              formControlName="dietaryNotes"
-              rows="3"
-              placeholder="Allergies, preferences, anything the kitchen should know."
-            ></textarea>
+        <!-- Plus-ones / Dietary notes — which of these render (if any) depends on the event's
+             type; see guestMetadataFieldsFor. -->
+        @if (hasField('plusOnes') || hasField('dietaryNotes')) {
+          <div class="ag-row" [class.ag-row--single]="!hasField('plusOnes') || !hasField('dietaryNotes')">
+            @if (hasField('plusOnes')) {
+              <div class="ag-field">
+                <span class="ag-label">Plus-ones</span>
+                <div class="ag-stepper" role="group" aria-label="Plus-ones">
+                  <button
+                    type="button"
+                    class="ag-stepper-btn"
+                    aria-label="Decrease plus-ones"
+                    [disabled]="plusOnes === 0"
+                    (click)="changePlusOnes(-1)"
+                  >
+                    −
+                  </button>
+                  <div class="ag-stepper-value" aria-live="polite">{{ plusOnes }}</div>
+                  <button
+                    type="button"
+                    class="ag-stepper-btn"
+                    aria-label="Increase plus-ones"
+                    (click)="changePlusOnes(1)"
+                  >
+                    +
+                  </button>
+                </div>
+                <div class="ag-help">Extra seats for their party — kids, partners, dates.</div>
+              </div>
+            }
+
+            @if (hasField('dietaryNotes')) {
+              <div class="ag-field">
+                <label class="ag-label" for="ag-dietary">Dietary notes <span class="ag-optional">(optional)</span></label>
+                <textarea
+                  id="ag-dietary"
+                  class="ag-input ag-textarea"
+                  formControlName="dietaryNotes"
+                  rows="3"
+                  placeholder="Allergies, preferences, anything the kitchen should know."
+                ></textarea>
+              </div>
+            }
           </div>
-        </div>
+        }
       </div>
 
       <!-- Footer -->
