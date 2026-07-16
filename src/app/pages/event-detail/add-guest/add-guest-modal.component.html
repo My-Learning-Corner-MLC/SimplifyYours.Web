@@ -58,151 +58,147 @@
           </div>
         }
 
-        <!-- First name -->
-        <div class="ag-field">
-          <label class="ag-label" for="ag-first-name">First name</label>
-          <div class="ag-help">As it should appear on the place card.</div>
-          <input
-            id="ag-first-name"
-            type="text"
-            class="ag-input"
-            [class.ag-input--error]="showError('firstName')"
-            formControlName="firstName"
-            placeholder="First name…"
-            autocomplete="off"
-          />
-          @if (showError('firstName')) {
-            <div class="ag-error"><span class="ag-error-mark">!</span>First name is required</div>
-          }
-        </div>
+        <!-- First / Last name -->
+        <div class="ag-row">
+          <div class="ag-field">
+            <label class="ag-label" for="ag-first-name">First name<span class="ag-required" aria-hidden="true">*</span></label>
+            <input
+              id="ag-first-name"
+              type="text"
+              class="ag-input"
+              [class.ag-input--error]="showError('firstName')"
+              formControlName="firstName"
+              placeholder="First name…"
+              autocomplete="off"
+            />
+            @if (showError('firstName')) {
+              <div class="ag-error"><span class="ag-error-mark">!</span>First name is required</div>
+            }
+          </div>
 
-        <!-- Last name -->
-        <div class="ag-field">
-          <label class="ag-label" for="ag-last-name">Last name</label>
-          <input
-            id="ag-last-name"
-            type="text"
-            class="ag-input"
-            [class.ag-input--error]="showError('lastName')"
-            formControlName="lastName"
-            placeholder="Last name…"
-            autocomplete="off"
-          />
-          @if (showError('lastName')) {
-            <div class="ag-error"><span class="ag-error-mark">!</span>Last name is required</div>
-          }
-        </div>
-
-        <!-- Email -->
-        <div class="ag-field">
-          <label class="ag-label" for="ag-email">Email address</label>
-          <div class="ag-help">We'll send the invite here.</div>
-          <input
-            id="ag-email"
-            type="email"
-            class="ag-input ag-input--mono"
-            [class.ag-input--error]="showError('email')"
-            formControlName="email"
-            placeholder="name@example.com"
-            autocomplete="off"
-          />
-          @if (showError('email')) {
-            <div class="ag-error">
-              <span class="ag-error-mark">!</span>Enter a valid email, like name@example.com
-            </div>
-          }
-        </div>
-
-        <!-- Phone -->
-        <div class="ag-field">
-          <label class="ag-label" for="ag-phone">Phone number</label>
-          <div class="ag-help">For day-of coordination.</div>
-          <input
-            id="ag-phone"
-            type="tel"
-            class="ag-input ag-input--mono"
-            [class.ag-input--error]="showError('phone')"
-            formControlName="phone"
-            placeholder="+1 555 123 4567"
-            autocomplete="off"
-          />
-          @if (showError('phone')) {
-            <div class="ag-error"><span class="ag-error-mark">!</span>Enter a valid phone number</div>
-          }
-        </div>
-
-        <!-- Relationship -->
-        <div class="ag-field">
-          <span class="ag-label">Relationship</span>
-          <div class="ag-segment" role="group" aria-label="Relationship">
-            @for (option of relationships; track option) {
-              <button
-                type="button"
-                class="ag-segment-item"
-                [class.ag-segment-item--active]="form.get('relationship')?.value === option"
-                (click)="selectRelationship(option)"
-              >
-                {{ option }}
-              </button>
+          <div class="ag-field">
+            <label class="ag-label" for="ag-last-name">Last name<span class="ag-required" aria-hidden="true">*</span></label>
+            <input
+              id="ag-last-name"
+              type="text"
+              class="ag-input"
+              [class.ag-input--error]="showError('lastName')"
+              formControlName="lastName"
+              placeholder="Last name…"
+              autocomplete="off"
+            />
+            @if (showError('lastName')) {
+              <div class="ag-error"><span class="ag-error-mark">!</span>Last name is required</div>
             }
           </div>
         </div>
 
-        <!-- Whose side? (wedding only) -->
-        @if (isWedding) {
-          <div class="ag-field" data-testid="add-guest-side">
-            <span class="ag-label">Whose side?</span>
-            <div class="ag-segment" role="group" aria-label="Whose side">
-              @for (option of sides; track option) {
-                <button
-                  type="button"
-                  class="ag-segment-item"
-                  [class.ag-segment-item--active]="form.get('side')?.value === option"
-                  (click)="selectSide(option)"
-                >
-                  {{ option }}'s side
-                </button>
-              }
-            </div>
+        <!-- Email / Phone -->
+        <div class="ag-row">
+          <div class="ag-field">
+            <label class="ag-label" for="ag-email">Email address<span class="ag-required" aria-hidden="true">*</span></label>
+            <div class="ag-help">We'll send the invite here.</div>
+            <input
+              id="ag-email"
+              type="email"
+              class="ag-input ag-input--mono"
+              [class.ag-input--error]="showError('email')"
+              formControlName="email"
+              placeholder="name@example.com"
+              autocomplete="off"
+            />
+            @if (showError('email')) {
+              <div class="ag-error">
+                <span class="ag-error-mark">!</span>Enter a valid email, like name@example.com
+              </div>
+            }
           </div>
-        }
 
-        <!-- Plus-ones -->
-        <div class="ag-field">
-          <span class="ag-label">Plus-ones</span>
-          <div class="ag-stepper" role="group" aria-label="Plus-ones">
-            <button
-              type="button"
-              class="ag-stepper-btn"
-              aria-label="Decrease plus-ones"
-              [disabled]="plusOnes === 0"
-              (click)="changePlusOnes(-1)"
-            >
-              −
-            </button>
-            <div class="ag-stepper-value" aria-live="polite">{{ plusOnes }}</div>
-            <button
-              type="button"
-              class="ag-stepper-btn"
-              aria-label="Increase plus-ones"
-              (click)="changePlusOnes(1)"
-            >
-              +
-            </button>
+          <div class="ag-field">
+            <label class="ag-label" for="ag-phone">Phone number<span class="ag-required" aria-hidden="true">*</span></label>
+            <div class="ag-help">For day-of coordination.</div>
+            <input
+              id="ag-phone"
+              type="tel"
+              class="ag-input ag-input--mono"
+              [class.ag-input--error]="showError('phone')"
+              formControlName="phone"
+              placeholder="+1 555 123 4567"
+              autocomplete="off"
+            />
+            @if (showError('phone')) {
+              <div class="ag-error"><span class="ag-error-mark">!</span>Enter a valid phone number</div>
+            }
           </div>
-          <div class="ag-help ag-help--tight">Extra seats for their party — kids, partners, dates.</div>
         </div>
 
-        <!-- Dietary notes -->
-        <div class="ag-field">
-          <label class="ag-label" for="ag-dietary">Dietary notes <span class="ag-optional">(optional)</span></label>
-          <textarea
-            id="ag-dietary"
-            class="ag-input ag-textarea"
-            formControlName="dietaryNotes"
-            rows="2"
-            placeholder="Allergies, preferences, anything the kitchen should know."
-          ></textarea>
+        <!-- Relationship / Whose side? (wedding only — Relationship spans full width otherwise) -->
+        <div class="ag-row" [class.ag-row--single]="!isWedding">
+          <div class="ag-field">
+            <span class="ag-label">Relationship</span>
+            <app-segmented-control
+              class="ag-segmented"
+              [options]="relationships"
+              [value]="form.get('relationship')?.value"
+              [disabled]="status() === 'submitting'"
+              ariaLabel="Relationship"
+              (valueChange)="setRelationship($event)"
+            />
+          </div>
+
+          @if (isWedding) {
+            <div class="ag-field" data-testid="add-guest-side">
+              <span class="ag-label">Whose side?</span>
+              <app-segmented-control
+                class="ag-segmented"
+                [options]="sides"
+                [value]="form.get('side')?.value"
+                [disabled]="status() === 'submitting'"
+                [getLabel]="sideLabel"
+                ariaLabel="Whose side"
+                (valueChange)="setSide($event)"
+              />
+            </div>
+          }
+        </div>
+
+        <!-- Plus-ones / Dietary notes -->
+        <div class="ag-row">
+          <div class="ag-field">
+            <span class="ag-label">Plus-ones</span>
+            <div class="ag-stepper" role="group" aria-label="Plus-ones">
+              <button
+                type="button"
+                class="ag-stepper-btn"
+                aria-label="Decrease plus-ones"
+                [disabled]="plusOnes === 0"
+                (click)="changePlusOnes(-1)"
+              >
+                −
+              </button>
+              <div class="ag-stepper-value" aria-live="polite">{{ plusOnes }}</div>
+              <button
+                type="button"
+                class="ag-stepper-btn"
+                aria-label="Increase plus-ones"
+                (click)="changePlusOnes(1)"
+              >
+                +
+              </button>
+            </div>
+            <div class="ag-help">Extra seats for their party — kids, partners, dates.</div>
+          </div>
+
+          <div class="ag-field">
+            <label class="ag-label" for="ag-dietary">Dietary notes <span class="ag-optional">(optional)</span></label>
+            <textarea
+              id="ag-dietary"
+              class="ag-input ag-textarea"
+              formControlName="dietaryNotes"
+              rows="3"
+              placeholder="Allergies, preferences, anything the kitchen should know."
+            ></textarea>
+          </div>
         </div>
       </div>
 

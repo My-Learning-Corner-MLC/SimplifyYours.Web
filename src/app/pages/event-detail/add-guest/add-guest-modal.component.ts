@@ -23,6 +23,7 @@ import { AddGuestRequest } from '../../../core/guests/add-guest-request.model';
 import { AddGuestError } from '../../../core/guests/guest-error.model';
 import { GuestRelationship, GuestSide, Guest } from '../../../core/guests/guest.model';
 import { GuestApiClient } from '../../../core/guests/guest-api-client';
+import { SegmentedControlComponent } from '../../../shared/segmented-control/segmented-control.component';
 
 type ModalStatus = 'editing' | 'submitting';
 
@@ -49,7 +50,7 @@ function phoneValidator(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, SegmentedControlComponent],
   selector: 'app-add-guest-modal',
   templateUrl: './add-guest-modal.component.html',
   styleUrl: './add-guest-modal.component.scss',
@@ -120,17 +121,14 @@ export class AddGuestModalComponent implements OnInit {
     return !!control && control.invalid && (control.touched || this.submitted());
   }
 
-  selectRelationship(value: GuestRelationship): void {
-    if (this.status() === 'submitting') {
-      return;
-    }
+  /** "Bride" -> "Bride's side" for the segmented control's option labels. */
+  readonly sideLabel = (side: GuestSide): string => `${side}'s side`;
+
+  setRelationship(value: GuestRelationship): void {
     this.form.get('relationship')?.setValue(value);
   }
 
-  selectSide(value: GuestSide): void {
-    if (this.status() === 'submitting') {
-      return;
-    }
+  setSide(value: GuestSide): void {
     this.form.get('side')?.setValue(value);
   }
 

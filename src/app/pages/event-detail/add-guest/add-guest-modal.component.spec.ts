@@ -148,6 +148,21 @@ describe('AddGuestModalComponent', () => {
     expect(closed).toBe(true);
   });
 
+  it('updates the relationship and side form controls via the segmented control', () => {
+    const { component } = setup(true);
+
+    component.setRelationship('Colleague');
+    component.setSide('Groom');
+
+    expect(component.form.get('relationship')!.value).toBe('Colleague');
+    expect(component.form.get('side')!.value).toBe('Groom');
+  });
+
+  it('formats side options with a possessive label', () => {
+    const { component } = setup(true);
+    expect(component.sideLabel('Bride')).toBe("Bride's side");
+  });
+
   it('clamps plus-ones at zero and increments', () => {
     const { component } = setup();
     expect(component.plusOnes).toBe(0);
