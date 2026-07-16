@@ -11,15 +11,11 @@ const LIST_GUESTS_NOT_FOUND_ERROR =
   "We couldn't find that event. It may have been removed, or the link may be out of date.";
 const LIST_GUESTS_SERVER_ERROR =
   "We couldn't load the guest list just now. Please try again in a moment.";
-const LIST_GUESTS_AUTH_ERROR =
-  'Your session has expired. Please sign in again to see this guest list.';
 
 const ADD_GUEST_DUPLICATE_ERROR =
   'is already on this list.';
 const ADD_GUEST_NOT_FOUND_ERROR =
   "We couldn't find that event. It may have been removed, or the link may be out of date.";
-const ADD_GUEST_AUTH_ERROR =
-  'Your session has expired. Please sign in again to add a guest.';
 const ADD_GUEST_SERVER_ERROR =
   "Something went wrong on our end. Please try again in a moment.";
 
@@ -85,9 +81,6 @@ export class GuestApiClient {
     if (response.status === 404) {
       return { kind: 'notFound', message: LIST_GUESTS_NOT_FOUND_ERROR };
     }
-    if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized', message: LIST_GUESTS_AUTH_ERROR };
-    }
     return { kind: 'server', message: LIST_GUESTS_SERVER_ERROR };
   }
 
@@ -97,9 +90,6 @@ export class GuestApiClient {
     }
     if (response.status === 404) {
       return { kind: 'notFound', message: ADD_GUEST_NOT_FOUND_ERROR };
-    }
-    if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized', message: ADD_GUEST_AUTH_ERROR };
     }
     if (response.status === 400 && response.error && typeof response.error === 'object') {
       const fieldErrors = this.extractFieldErrors(response.error);
