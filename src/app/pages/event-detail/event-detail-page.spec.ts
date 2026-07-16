@@ -103,6 +103,27 @@ describe('EventDetailPage', () => {
     expect(root.textContent).toContain('Add first table');
   });
 
+  it('renders a sliding tab indicator', () => {
+    const fixture = setup(new ApiStub());
+    const root = html(fixture);
+
+    expect(testId(root, 'event-detail-tab-indicator')).not.toBeNull();
+  });
+
+  it('slides forward when moving to a later tab and backward when moving to an earlier one', () => {
+    const fixture = setup(new ApiStub());
+    const root = html(fixture);
+    const body = () => root.querySelector<HTMLElement>('.detail__body')!;
+
+    testId(root, 'event-detail-tab-tables')!.click();
+    fixture.detectChanges();
+    expect(body().getAttribute('data-slide')).toBe('forward');
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+    expect(body().getAttribute('data-slide')).toBe('backward');
+  });
+
   it('loads and renders real guests when the Guests tab is opened', () => {
     const guestApi = new GuestApiStub();
     const fixture = setup(new ApiStub(), guestApi);

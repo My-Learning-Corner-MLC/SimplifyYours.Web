@@ -31,6 +31,10 @@ const RELATIONSHIPS: readonly GuestRelationship[] = ['Family', 'Friend', 'Collea
 const SIDES: readonly GuestSide[] = ['Bride', 'Groom'];
 const MAX_PLUS_ONES = 20;
 
+// Matches the .ag-modal-out / .ag-overlay-out CSS animation duration so the
+// component isn't torn down mid-fade.
+const CLOSE_ANIMATION_MS = 300;
+
 // Stricter than Angular's built-in email check: requires a dotted domain so
 // "name@gmail" is rejected, matching the design's invalid-email state.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -73,6 +77,7 @@ export class AddGuestModalComponent implements OnInit {
   readonly submitted = signal(false);
   readonly serverError = signal<string | null>(null);
   readonly duplicate = signal(false);
+  readonly closing = signal(false);
 
   // Bumped on every form edit so `invalidCount` (which reads non-signal control
   // validity) recomputes live as the guest fixes fields.
@@ -153,10 +158,11 @@ export class AddGuestModalComponent implements OnInit {
   }
 
   cancel(): void {
-    if (this.status() === 'submitting') {
+    if (this.status() === 'submitting' || this.closing()) {
       return;
     }
-    this.closed.emit();
+    this.closing.set(true);
+    setTimeout(() => this.closed.emit(), CLOSE_ANIMATION_MS);
   }
 
   submit(): void {

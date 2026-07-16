@@ -17,6 +17,38 @@ $err-bg: #f4e2dd;
 $err-border: #e3b9ac;
 $err-ink: #8a3a25;
 
+@keyframes ag-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ag-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ag-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes ag-modal-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
 .ag-overlay {
   position: fixed;
   inset: 0;
@@ -32,6 +64,15 @@ $err-ink: #8a3a25;
   // desaturation keeps the parchment page visible but clearly backgrounded.
   background: rgba(42, 31, 45, 0.55);
   backdrop-filter: blur(8px) saturate(0.85);
+  animation: ag-overlay-in 1s ease both;
+
+  &--closing {
+    animation: ag-overlay-out 0.3s ease both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 .ag-modal {
@@ -47,9 +88,18 @@ $err-ink: #8a3a25;
   overflow: hidden;
   font-family: 'DM Sans', system-ui, sans-serif;
   color: $plum-ink;
+  animation: ag-modal-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  &--closing {
+    animation: ag-modal-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
 
   @media (max-width: 640px) {
     max-width: 480px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 }
 
@@ -190,7 +240,7 @@ $err-ink: #8a3a25;
 }
 
 .ag-required {
-  color: $plum;
+  color: $muted;
   font-weight: 600;
   margin-left: 2px;
 }
@@ -417,7 +467,7 @@ $err-ink: #8a3a25;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 
   &--ghost {
     background: transparent;

@@ -138,14 +138,41 @@ describe('AddGuestModalComponent', () => {
     expect(component.form.get('firstName')!.value).toBe('Ada');
   });
 
-  it('emits closed when cancelled', () => {
-    const { component } = setup();
-    let closed = false;
-    component.closed.subscribe(() => (closed = true));
+  it('marks closing immediately and emits closed after the fade-out animation', async () => {
+    vi.useFakeTimers();
+    try {
+      const { component } = setup();
+      let closed = false;
+      component.closed.subscribe(() => (closed = true));
 
-    component.cancel();
+      component.cancel();
 
-    expect(closed).toBe(true);
+      expect(component.closing()).toBe(true);
+      expect(closed).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(closed).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('ignores a second cancel while already closing', () => {
+    vi.useFakeTimers();
+    try {
+      const { component } = setup();
+      let closedCount = 0;
+      component.closed.subscribe(() => closedCount++);
+
+      component.cancel();
+      component.cancel();
+      vi.advanceTimersByTime(300);
+
+      expect(closedCount).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('updates the relationship and side form controls via the segmented control', () => {
