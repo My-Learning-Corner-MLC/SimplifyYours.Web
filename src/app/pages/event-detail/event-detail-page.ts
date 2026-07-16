@@ -1,11 +1,18 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
   OnInit,
+  QueryList,
+  ViewChildren,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { describeCountdown, formatEventWhen } from '../../core/events/event-countdown';
@@ -30,6 +37,7 @@ import {
 type DetailState = 'loading' | 'error' | 'not-found' | 'ready';
 type GuestsState = 'idle' | 'loading' | 'ready' | 'error';
 export type DetailTab = 'overview' | 'guests' | 'tables' | 'budget';
+export type SlideDirection = 'forward' | 'backward';
 
 // New guests have no RSVP yet, so every guest shows as "Awaiting" until the RSVP
 // feature ships. Avatar tints cycle through the design's warm palette.
@@ -84,10 +92,13 @@ const WEEKS_THRESHOLD_DAYS = 21;
   styleUrl: './event-detail-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EventDetailPage implements OnInit {
+export class EventDetailPage implements OnInit, AfterViewInit {
   private readonly api = inject(EventApiClient);
   private readonly guestApi = inject(GuestApiClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
+  @ViewChildren('tabButton') private readonly tabButtons!: QueryList<ElementRef<HTMLButtonElement>>;
 
   // Captured once so the countdown stays stable across change detection.
   private readonly now = new Date();
@@ -97,6 +108,7 @@ export class EventDetailPage implements OnInit {
   readonly state = signal<DetailState>('loading');
   readonly loadError = signal<EventDetailError | null>(null);
   readonly activeTab = signal<DetailTab>('overview');
+  readonly slideDirection = signal<SlideDirection>('forward');
 
   // Guests tab: real data loaded lazily the first time the tab is opened.
   readonly guestsState = signal<GuestsState>('idle');
@@ -114,6 +126,15 @@ export class EventDetailPage implements OnInit {
     { key: 'tables', label: 'Table management' },
     { key: 'budget', label: 'Budget' },
   ];
+
+  readonly activeTabIndex = computed(() => this.tabIndexOf(this.activeTab()));
+
+  // Pixel position of the sliding underline, measured against the actual tab
+  // button widths (labels vary in length, so this can't be a simple % split).
+  readonly tabIndicatorStyle = signal<{ transform: string; width: string }>({
+    transform: 'translateX(0px)',
+    width: '0px',
+  });
 
   // Mock data for panels not yet backed by a service (see event-detail-mocks.ts).
   readonly noteOnTheDay = NOTE_ON_THE_DAY_MOCK;
@@ -174,6 +195,16 @@ export class EventDetailPage implements OnInit {
     };
   });
 
+  ngAfterViewInit(): void {
+    this.updateTabIndicator();
+    this.tabButtons.changes.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateTabIndicator());
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateTabIndicator();
+  }
+
   ngOnInit(): void {
     // Subscribe to the param map (not the one-shot snapshot) so navigating
     // straight from one event to another — same route, different :id — reloads
@@ -213,10 +244,31 @@ export class EventDetailPage implements OnInit {
   }
 
   setTab(tab: DetailTab): void {
+    if (tab === this.activeTab()) {
+      return;
+    }
+    this.slideDirection.set(this.tabIndexOf(tab) > this.activeTabIndex() ? 'forward' : 'backward');
     this.activeTab.set(tab);
     if (tab === 'guests' && this.guestsState() === 'idle') {
       this.loadGuests();
     }
+    // Wait for the active-tab class (and its font-weight) to land before measuring.
+    queueMicrotask(() => this.updateTabIndicator());
+  }
+
+  private tabIndexOf(tab: DetailTab): number {
+    return this.tabs.findIndex((t) => t.key === tab);
+  }
+
+  private updateTabIndicator(): void {
+    const button = this.tabButtons?.get(this.activeTabIndex())?.nativeElement;
+    if (!button) {
+      return;
+    }
+    this.tabIndicatorStyle.set({
+      transform: `translateX(${button.offsetLeft}px)`,
+      width: `${button.offsetWidth}px`,
+    });
   }
 
   loadGuests(): void {

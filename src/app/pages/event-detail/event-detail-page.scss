@@ -222,8 +222,9 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     color: $body-text;
   }
 
-  // ---- Tabs (underline) -----------------------------------------------
+  // ---- Tabs (sliding underline) ----------------------------------------
   &__tabs {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     padding: 0 56px;
@@ -240,7 +241,7 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     font: inherit;
     font-size: 13.5px;
     cursor: pointer;
-    transition: color 160ms ease-out, border-color 160ms ease-out;
+    transition: color 160ms ease-out;
 
     &:hover {
       color: $plum;
@@ -254,13 +255,43 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     &--active {
       color: $plum;
       font-weight: 500;
-      border-bottom-color: $plum;
     }
+  }
+
+  // Single shared underline that glides beneath the active tab instead of
+  // each tab drawing its own border — see EventDetailPage.updateTabIndicator().
+  // left MUST stay 0: offsetLeft is already measured from .detail__tabs'
+  // border edge (its 56px padding included), so adding it here double-counts
+  // the padding and throws the indicator off by 56px.
+  &__tab-indicator {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 2px;
+    background: $plum;
+    transition: transform 220ms ease-out, width 220ms ease-out;
   }
 
   // ---- Body -----------------------------------------------------------
   &__body {
     padding: 40px 56px 56px;
+    overflow: hidden;
+
+    // Re-triggers on every tab switch because the @switch block replaces the
+    // panel element; direction mirrors whether the new tab is later/earlier.
+    > * {
+      animation: detail-slide-forward 220ms ease-out;
+    }
+
+    &[data-slide='backward'] > * {
+      animation-name: detail-slide-backward;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      > * {
+        animation: none;
+      }
+    }
   }
 
   &__overview {
@@ -937,5 +968,33 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
   }
   to {
     background-position: -200% 0;
+  }
+}
+
+@keyframes detail-slide-forward {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes detail-slide-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail__tab-indicator {
+    transition: none;
   }
 }
