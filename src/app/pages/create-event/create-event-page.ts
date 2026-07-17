@@ -27,7 +27,11 @@ import { EventApiClient } from '../../core/events/event-api-client';
 // Canonical maps live in core/events/event-type-display.ts and are shared with
 // the dashboard; imported for local use and re-exported for existing consumers.
 import { EVENT_TYPE_EMOJI, EVENT_TYPE_LABELS } from '../../core/events/event-type-display';
-import { CREATABLE_EVENT_TYPES, EventType } from '../../core/events/event-type.model';
+import {
+  CREATABLE_EVENT_TYPES,
+  EventType,
+  GUEST_METADATA_SUPPORTED_EVENT_TYPES,
+} from '../../core/events/event-type.model';
 
 export { EVENT_TYPE_EMOJI, EVENT_TYPE_LABELS };
 
@@ -574,12 +578,21 @@ export class CreateEventPage {
   private resolveLeave: ((leave: boolean) => void) | null = null;
 
   selectType(type: EventType): void {
+    if (this.isTypeDisabled(type)) {
+      return;
+    }
     this.form.get('eventType')?.setValue(type);
     this.form.get('eventType')?.markAsDirty();
   }
 
   isTypeSelected(type: EventType): boolean {
     return this.form.get('eventType')?.value === type;
+  }
+
+  // Guest-adding isn't supported yet for event types with no guest-metadata mapper — see
+  // GUEST_METADATA_SUPPORTED_EVENT_TYPES.
+  isTypeDisabled(type: EventType): boolean {
+    return !GUEST_METADATA_SUPPORTED_EVENT_TYPES.has(type);
   }
 
   isStepDone(index: 1 | 2): boolean {

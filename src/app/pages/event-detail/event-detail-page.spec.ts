@@ -19,6 +19,7 @@ const emptyLayout: SeatingLayout = {
   summary: { tableCount: 0, seatCount: 0, seatedCount: 0, floatingCount: 0 },
 };
 
+
 const makeDetail = (overrides: Partial<EventDetail> = {}): EventDetail => ({
   id: 'e1',
   eventName: 'The Whitmore – Hayes Wedding',
@@ -41,10 +42,7 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   lastName: 'Tester',
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
-  relationship: 'Family',
-  side: 'Bride',
-  plusOnes: 1,
-  dietaryNotes: 'Vegan',
+  eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: 'Vegan' },
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });
@@ -113,6 +111,27 @@ describe('EventDetailPage', () => {
     expect(root.textContent).toContain('Add first table');
   });
 
+  it('renders a sliding tab indicator', () => {
+    const fixture = setup(new ApiStub());
+    const root = html(fixture);
+
+    expect(testId(root, 'event-detail-tab-indicator')).not.toBeNull();
+  });
+
+  it('slides forward when moving to a later tab and backward when moving to an earlier one', () => {
+    const fixture = setup(new ApiStub());
+    const root = html(fixture);
+    const body = () => root.querySelector<HTMLElement>('.detail__body')!;
+
+    testId(root, 'event-detail-tab-tables')!.click();
+    fixture.detectChanges();
+    expect(body().getAttribute('data-slide')).toBe('forward');
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+    expect(body().getAttribute('data-slide')).toBe('backward');
+  });
+
   it('loads and renders real guests when the Guests tab is opened', () => {
     const guestApi = new GuestApiStub();
     const fixture = setup(new ApiStub(), guestApi);
@@ -127,6 +146,26 @@ describe('EventDetailPage', () => {
     expect(guests.textContent).toContain("Family · bride's side");
     expect(guests.textContent).toContain('Party of 2');
     expect(guests.textContent).toContain('Awaiting');
+  });
+
+  it('maps birthday guest metadata (no relationship/side) for a birthday event', () => {
+    const api = new ApiStub();
+    api.getEventDetails = vi.fn(() => of(makeDetail({ eventType: 'birthday' })));
+    const guestApi = new GuestApiStub();
+    guestApi.listGuests = vi.fn(() =>
+      of<Guest[]>([makeGuest({ eventMetadata: { plusOnes: 2, dietaryNotes: 'Nut allergy' } })]),
+    );
+    const fixture = setup(api, guestApi);
+    const root = html(fixture);
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+
+    const guests = testId(root, 'event-detail-guests')!;
+    expect(guests.textContent).toContain('Ada Tester');
+    expect(guests.textContent).not.toContain("side");
+    expect(guests.textContent).toContain('Party of 3');
+    expect(guests.textContent).toContain('Nut allergy');
   });
 
   it('shows the empty state when the event has no guests', () => {

@@ -71,10 +71,6 @@ export const DETAIL_ROWS_MOCK: readonly DetailRowMock[] = [
   { label: 'Planner', value: 'Eleanor Whitmore' },
 ];
 
-// NOTE: The Guests tab now loads real data via GuestApiClient (see
-// event-detail-page.ts). The former GUESTS_MOCK / GUEST_FILTERS_MOCK /
-// GUEST_STATUS_LABEL fixtures were removed when that shipped.
-
 // "Common starting points" chips on the empty-budget state.
 export const BUDGET_SUGGESTIONS_MOCK: readonly string[] = [
   'Modest · $2,500',

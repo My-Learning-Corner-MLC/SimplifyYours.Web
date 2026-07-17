@@ -13,10 +13,7 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   lastName: 'Tester',
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
-  relationship: 'Family',
-  side: 'Bride',
-  plusOnes: 1,
-  dietaryNotes: null,
+  eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: null },
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });
@@ -25,14 +22,14 @@ class GuestApiStub {
   addGuest = vi.fn<(request: AddGuestRequest) => Observable<Guest>>(() => of(makeGuest()));
 }
 
-function setup(isWedding = true, guestApi: GuestApiStub = new GuestApiStub()) {
+function setup(eventType = 'wedding', guestApi: GuestApiStub = new GuestApiStub()) {
   TestBed.configureTestingModule({
     imports: [AddGuestModalComponent],
     providers: [{ provide: GuestApiClient, useValue: guestApi }],
   });
   const fixture = TestBed.createComponent(AddGuestModalComponent);
   fixture.componentRef.setInput('eventId', 'e1');
-  fixture.componentRef.setInput('isWedding', isWedding);
+  fixture.componentRef.setInput('eventType', eventType);
   fixture.detectChanges();
   return { fixture, component: fixture.componentInstance, guestApi };
 }
@@ -52,14 +49,14 @@ const validValues = {
 
 describe('AddGuestModalComponent', () => {
   it('shows the "Whose side?" field for wedding events', () => {
-    const { fixture } = setup(true);
+    const { fixture } = setup('wedding');
     expect(
       fixture.nativeElement.querySelector('[data-testid="add-guest-side"]'),
     ).not.toBeNull();
   });
 
-  it('hides the "Whose side?" field for non-wedding events', () => {
-    const { fixture } = setup(false);
+  it('hides the "Whose side?" field for birthday events', () => {
+    const { fixture } = setup('birthday');
     expect(
       fixture.nativeElement.querySelector('[data-testid="add-guest-side"]'),
     ).toBeNull();
@@ -84,7 +81,7 @@ describe('AddGuestModalComponent', () => {
   });
 
   it('submits a valid guest and emits the added guest', () => {
-    const { component, guestApi } = setup(true);
+    const { component, guestApi } = setup('wedding');
     let added: Guest | undefined;
     component.added.subscribe((g) => (added = g));
     fill(component, validValues);
@@ -93,18 +90,34 @@ describe('AddGuestModalComponent', () => {
 
     expect(guestApi.addGuest).toHaveBeenCalledTimes(1);
     const request = guestApi.addGuest.mock.calls[0][0];
-    expect(request.guestInfo.side).toBe('Bride');
+    expect(request.guestInfo.eventMetadata?.['side']).toBe('Bride');
+    expect(request.guestInfo.eventMetadata?.['relationship']).toBe('Family');
     expect(added?.id).toBe('g1');
   });
 
-  it('omits the side for non-wedding events', () => {
-    const { component, guestApi } = setup(false);
+  it('sends only plusOnes/dietaryNotes for birthday events', () => {
+    const { component, guestApi } = setup('birthday');
     fill(component, validValues);
 
     component.submit();
 
     const request = guestApi.addGuest.mock.calls[0][0];
-    expect(request.guestInfo.side).toBeNull();
+    const eventMetadata = request.guestInfo.eventMetadata;
+    expect(eventMetadata).not.toBeNull();
+    expect(eventMetadata).not.toHaveProperty('relationship');
+    expect(eventMetadata).not.toHaveProperty('side');
+    expect(eventMetadata?.['plusOnes']).toBe(0);
+    expect(eventMetadata?.['dietaryNotes']).toBeNull();
+  });
+
+  it('sends no eventMetadata for event types with no guest-metadata fields', () => {
+    const { component, guestApi } = setup('launch');
+    fill(component, validValues);
+
+    component.submit();
+
+    const request = guestApi.addGuest.mock.calls[0][0];
+    expect(request.guestInfo.eventMetadata).toBeNull();
   });
 
   it('shows the duplicate banner on a 409', () => {
@@ -112,7 +125,7 @@ describe('AddGuestModalComponent', () => {
     guestApi.addGuest = vi.fn(() =>
       throwError((): AddGuestError => ({ kind: 'duplicate', message: 'already on this list.' })),
     );
-    const { component, fixture } = setup(true, guestApi);
+    const { component, fixture } = setup('wedding', guestApi);
     fill(component, validValues);
 
     component.submit();
@@ -127,7 +140,7 @@ describe('AddGuestModalComponent', () => {
     guestApi.addGuest = vi.fn(() =>
       throwError((): AddGuestError => ({ kind: 'server', message: 'Something went wrong.' })),
     );
-    const { component, fixture } = setup(true, guestApi);
+    const { component, fixture } = setup('wedding', guestApi);
     fill(component, validValues);
 
     component.submit();
@@ -138,14 +151,56 @@ describe('AddGuestModalComponent', () => {
     expect(component.form.get('firstName')!.value).toBe('Ada');
   });
 
-  it('emits closed when cancelled', () => {
-    const { component } = setup();
-    let closed = false;
-    component.closed.subscribe(() => (closed = true));
+  it('marks closing immediately and emits closed after the fade-out animation', async () => {
+    vi.useFakeTimers();
+    try {
+      const { component } = setup();
+      let closed = false;
+      component.closed.subscribe(() => (closed = true));
 
-    component.cancel();
+      component.cancel();
 
-    expect(closed).toBe(true);
+      expect(component.closing()).toBe(true);
+      expect(closed).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(closed).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('ignores a second cancel while already closing', () => {
+    vi.useFakeTimers();
+    try {
+      const { component } = setup();
+      let closedCount = 0;
+      component.closed.subscribe(() => closedCount++);
+
+      component.cancel();
+      component.cancel();
+      vi.advanceTimersByTime(300);
+
+      expect(closedCount).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('updates the relationship and side form controls via the segmented control', () => {
+    const { component } = setup('wedding');
+
+    component.setRelationship('Colleague');
+    component.setSide('Groom');
+
+    expect(component.form.get('relationship')!.value).toBe('Colleague');
+    expect(component.form.get('side')!.value).toBe('Groom');
+  });
+
+  it('formats side options with a possessive label', () => {
+    const { component } = setup('wedding');
+    expect(component.sideLabel('Bride')).toBe("Bride's side");
   });
 
   it('clamps plus-ones at zero and increments', () => {

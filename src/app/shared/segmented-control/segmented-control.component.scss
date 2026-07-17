@@ -1,0 +1,71 @@
+// Occasion theme tokens (shared with the design — see event-detail-page.scss).
+$plum: #5a2849;
+$plum-ink: #2a1f2d;
+$parchment: #f5efe6;
+$linen: #fffcf5;
+$muted: #7a6b6e;
+
+$track-gap: 6px;
+$track-pad: 4px;
+
+.sc-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--sc-count), 1fr);
+  gap: $track-gap;
+  padding: $track-pad;
+  background: $parchment;
+  border-radius: 10px;
+
+  &--disabled {
+    opacity: 0.6;
+  }
+}
+
+// The sliding highlight. Sized to one column and translated by (own width +
+// gap) per step, so it lands exactly under the active option regardless of
+// how many options there are.
+.sc-pill {
+  position: absolute;
+  top: $track-pad;
+  bottom: $track-pad;
+  left: $track-pad;
+  z-index: 0;
+  width: calc((100% - #{$track-pad * 2} - (var(--sc-count) - 1) * #{$track-gap}) / var(--sc-count));
+  background: $linen;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(90, 40, 73, 0.06);
+  transform: translateX(calc(var(--sc-index) * (100% + #{$track-gap})));
+  // Plain deceleration curve — slides straight to the target with no spring
+  // overshoot/settle-back.
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sc-option {
+  position: relative;
+  z-index: 1;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  color: $muted;
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.15s ease;
+
+  &:focus-visible {
+    outline: 2px solid $plum;
+    outline-offset: 2px;
+  }
+
+  &--active {
+    color: $plum-ink;
+    font-weight: 500;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}

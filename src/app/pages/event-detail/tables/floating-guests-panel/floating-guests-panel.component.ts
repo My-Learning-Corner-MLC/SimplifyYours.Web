@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inp
 
 import { NgStyle } from '@angular/common';
 import { Guest, guestFullName } from '../../../../core/guests/guest.model';
+import { describeGuestMetadata } from '../../../../core/guests/guest-metadata-row';
 
 /**
  * Searchable list of guests not yet seated at any table. Rows are CDK drag
@@ -45,6 +46,7 @@ export class FloatingGuestsPanelComponent {
 
   readonly guests = input.required<readonly Guest[]>();
   readonly assigningGuestId = input<string | null>(null);
+  readonly eventType = input<string>('');
 
   @Output() readonly guestSelected = new EventEmitter<string>();
 
@@ -66,12 +68,13 @@ export class FloatingGuestsPanelComponent {
   }
 
   guestDetail(guest: Guest): string {
+    const metadata = describeGuestMetadata(this.eventType(), guest.eventMetadata);
     const parts: string[] = [];
-    if (guest.plusOnes > 0) {
-      parts.push(`+${guest.plusOnes}`);
+    if (metadata.plusOnes > 0) {
+      parts.push(`+${metadata.plusOnes}`);
     }
-    if (guest.dietaryNotes?.trim()) {
-      parts.push(guest.dietaryNotes.trim());
+    if (metadata.dietaryNotes?.trim()) {
+      parts.push(metadata.dietaryNotes.trim());
     }
     return parts.join(' · ');
   }

@@ -114,6 +114,32 @@ describe('CreateEventPage', () => {
       expect(component.step()).toBe(2);
       expect(fixture.nativeElement.querySelector('#ce-venue-name')).not.toBeNull();
     });
+
+    it('marks event types with no guest-metadata mapper as disabled', () => {
+      expect(component.isTypeDisabled('wedding')).toBe(false);
+      expect(component.isTypeDisabled('birthday')).toBe(false);
+      expect(component.isTypeDisabled('anniversary')).toBe(true);
+      expect(component.isTypeDisabled('launch')).toBe(true);
+      expect(component.isTypeDisabled('dinner')).toBe(true);
+      expect(component.isTypeDisabled('other')).toBe(true);
+    });
+
+    it('ignores selectType for a disabled event type', () => {
+      component.selectType('launch');
+
+      expect(component.form.get('eventType')?.value).toBe('');
+    });
+
+    it('renders disabled chips with a disabled attribute and "Coming soon" badge', () => {
+      fixture.detectChanges();
+      const chips: HTMLButtonElement[] = Array.from(
+        fixture.nativeElement.querySelectorAll('.ce-chip'),
+      );
+      const launchChip = chips.find((chip) => chip.textContent?.includes('Launch'));
+
+      expect(launchChip?.disabled).toBe(true);
+      expect(launchChip?.textContent).toContain('Coming soon');
+    });
   });
 
   describe('step 2 — where & when', () => {

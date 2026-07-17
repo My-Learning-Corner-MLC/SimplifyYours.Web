@@ -105,11 +105,17 @@
                     type="button"
                     class="ce-chip"
                     [class.is-selected]="isTypeSelected(type)"
+                    [class.is-disabled]="isTypeDisabled(type)"
+                    [disabled]="isTypeDisabled(type)"
                     [attr.aria-pressed]="isTypeSelected(type)"
+                    [attr.title]="isTypeDisabled(type) ? 'Coming soon — guest management isn\'t available for this occasion type yet.' : null"
                     (click)="selectType(type)"
                   >
                     <span class="ce-chip-emoji" aria-hidden="true">{{ eventTypeEmoji[type] }}</span>
                     {{ eventTypeLabels[type] }}
+                    @if (isTypeDisabled(type)) {
+                      <span class="ce-chip-badge">Coming soon</span>
+                    }
                   </button>
                 }
               </div>

@@ -129,6 +129,7 @@
               <app-floating-guests-panel
                 [guests]="store.floatingGuests()"
                 [assigningGuestId]="assigningGuestId()"
+                [eventType]="eventType"
                 (guestSelected)="onGuestSelected($event)"
               />
             </div>

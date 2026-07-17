@@ -10,10 +10,7 @@ function makeGuest(overrides: Partial<Guest> = {}): Guest {
     lastName: 'Okoye',
     phoneNumber: '+1 555 0100',
     emailAddress: null,
-    relationship: null,
-    side: null,
-    plusOnes: 0,
-    dietaryNotes: null,
+    eventMetadata: null,
     createdAt: '2026-07-01T10:00:00+00:00',
     ...overrides,
   };

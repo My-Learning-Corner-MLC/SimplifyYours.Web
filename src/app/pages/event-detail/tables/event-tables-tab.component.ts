@@ -55,6 +55,7 @@ export type TablesView = 'grid' | 'floor';
 })
 export class EventTablesTabComponent implements OnInit, OnChanges {
   @Input({ required: true }) eventId!: string;
+  @Input() eventType = '';
   @Input() confirmedGuestCount = 0;
 
   @Output() readonly seeGuestList = new EventEmitter<void>();

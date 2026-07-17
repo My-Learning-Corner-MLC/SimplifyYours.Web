@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
 
@@ -11,19 +11,17 @@ const LIST_GUESTS_NOT_FOUND_ERROR =
   "We couldn't find that event. It may have been removed, or the link may be out of date.";
 const LIST_GUESTS_SERVER_ERROR =
   "We couldn't load the guest list just now. Please try again in a moment.";
-const LIST_GUESTS_AUTH_ERROR =
-  'Your session has expired. Please sign in again to see this guest list.';
 
-const ADD_GUEST_DUPLICATE_ERROR = 'is already on this list.';
+const ADD_GUEST_DUPLICATE_ERROR =
+  'is already on this list.';
 const ADD_GUEST_NOT_FOUND_ERROR =
   "We couldn't find that event. It may have been removed, or the link may be out of date.";
-const ADD_GUEST_AUTH_ERROR =
-  'Your session has expired. Please sign in again to add a guest.';
-const ADD_GUEST_SERVER_ERROR = 'Something went wrong on our end. Please try again in a moment.';
+const ADD_GUEST_SERVER_ERROR =
+  "Something went wrong on our end. Please try again in a moment.";
 
-interface ListGuestsResponseBody {
+interface QueryGuestsResponseBody {
   readonly eventId: string;
-  readonly guests: readonly Guest[];
+  readonly items: readonly Guest[];
 }
 
 interface AddGuestResponseBody {
@@ -34,10 +32,7 @@ interface AddGuestResponseBody {
     readonly lastName: string;
     readonly phoneNumber: string;
     readonly emailAddress: string | null;
-    readonly relationship: Guest['relationship'];
-    readonly side: Guest['side'];
-    readonly plusOnes: number;
-    readonly dietaryNotes: string | null;
+    readonly eventMetadata: unknown;
   };
   readonly createdAt: string;
 }
@@ -47,12 +42,11 @@ export class GuestApiClient {
   private readonly http = inject(HttpClient);
 
   listGuests(eventId: string): Observable<Guest[]> {
-    const url = `${environment.guestManagementBaseUrl}/guests`;
-    const params = new HttpParams().set('eventId', eventId);
+    const url = `${environment.guestManagementBaseUrl}/guests/query`;
     return this.http
-      .get<ListGuestsResponseBody>(url, { params, withCredentials: false })
+      .post<QueryGuestsResponseBody>(url, { eventId }, { withCredentials: false })
       .pipe(
-        map((body) => [...body.guests]),
+        map((body) => [...body.items]),
         catchError((response: HttpErrorResponse) =>
           throwError(() => this.toListGuestsError(response)),
         ),
@@ -78,10 +72,7 @@ export class GuestApiClient {
       lastName: body.guestInfo.lastName,
       emailAddress: body.guestInfo.emailAddress,
       phoneNumber: body.guestInfo.phoneNumber,
-      relationship: body.guestInfo.relationship,
-      side: body.guestInfo.side,
-      plusOnes: body.guestInfo.plusOnes,
-      dietaryNotes: body.guestInfo.dietaryNotes,
+      eventMetadata: body.guestInfo.eventMetadata,
       createdAt: body.createdAt,
     };
   }
@@ -89,9 +80,6 @@ export class GuestApiClient {
   private toListGuestsError(response: HttpErrorResponse): ListGuestsError {
     if (response.status === 404) {
       return { kind: 'notFound', message: LIST_GUESTS_NOT_FOUND_ERROR };
-    }
-    if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized', message: LIST_GUESTS_AUTH_ERROR };
     }
     return { kind: 'server', message: LIST_GUESTS_SERVER_ERROR };
   }
@@ -102,9 +90,6 @@ export class GuestApiClient {
     }
     if (response.status === 404) {
       return { kind: 'notFound', message: ADD_GUEST_NOT_FOUND_ERROR };
-    }
-    if (response.status === 401 || response.status === 403) {
-      return { kind: 'unauthorized', message: ADD_GUEST_AUTH_ERROR };
     }
     if (response.status === 400 && response.error && typeof response.error === 'object') {
       const fieldErrors = this.extractFieldErrors(response.error);
