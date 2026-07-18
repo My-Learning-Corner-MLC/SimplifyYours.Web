@@ -13,25 +13,16 @@ import {
 } from '@angular/core';
 import { NgStyle } from '@angular/common';
 
-import { computeSeatPositions } from '../../../../core/seating/seat-geometry';
+import { computeSeatPositions, guestTint } from '../../../../core/seating/seat-geometry';
 import { SeatingSeat } from '../../../../core/seating/seating-seat.model';
 import { SeatingTable } from '../../../../core/seating/seating-table.model';
 import { TableShape } from '../../../../core/seating/table-shape.model';
-
-// Deterministic pastel tint per guest — stable across re-renders.
-const SEAT_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c9', '#e5c9c0', '#d7c7e0'];
 
 const SHAPE_LABELS: Record<TableShape, string> = {
   Round: 'Round',
   Long: 'Rectangular',
   Square: 'Square',
 };
-
-function guestTint(guestId: string): string {
-  let h = 0;
-  for (const c of guestId) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
-  return SEAT_TINTS[h % SEAT_TINTS.length];
-}
 
 interface SeatVm {
   readonly seat: SeatingSeat;

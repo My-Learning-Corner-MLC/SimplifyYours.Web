@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
+import { SeatingArea } from '../../../../core/seating/seating-area.model';
 import { SeatingTable } from '../../../../core/seating/seating-table.model';
 import { FloorPlanCanvasComponent } from './floor-plan-canvas.component';
 
@@ -18,10 +19,28 @@ function makeTable(overrides: Partial<SeatingTable> = {}): SeatingTable {
   };
 }
 
-function setup(tables: SeatingTable[]) {
+function makeArea(overrides: Partial<SeatingArea> = {}): SeatingArea {
+  return {
+    id: 'a1',
+    name: 'Stage',
+    kind: 'Stage',
+    shape: 'Rect',
+    width: 3,
+    height: 1,
+    positionX: null,
+    positionY: null,
+    rotation: 0,
+    color: null,
+    capacity: null,
+    ...overrides,
+  };
+}
+
+function setup(tables: SeatingTable[], areas: SeatingArea[] = []) {
   TestBed.configureTestingModule({ imports: [FloorPlanCanvasComponent] });
   const fixture = TestBed.createComponent(FloorPlanCanvasComponent);
   fixture.componentRef.setInput('tables', tables);
+  fixture.componentRef.setInput('areas', areas);
   fixture.detectChanges();
   return fixture;
 }
@@ -92,5 +111,65 @@ describe('FloorPlanCanvasComponent', () => {
     fixture.componentInstance.toggleSnap();
 
     expect(fixture.componentInstance.snapToGrid()).toBe(true);
+  });
+
+  describe('mini seat rings', () => {
+    it('gives a table one seat dot per seat', () => {
+      const fixture = setup([
+        makeTable({ seatCount: 3, seats: [
+          { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' },
+          { seatIndex: 1, guestId: null, guestName: null },
+          { seatIndex: 2, guestId: null, guestName: null },
+        ] }),
+      ]);
+
+      expect(fixture.componentInstance.tableVms()[0].seatDots.length).toBe(3);
+    });
+
+    it('counts a guest seat and a party-reserved seat as occupied', () => {
+      const fixture = setup([
+        makeTable({ seatCount: 3, seats: [
+          { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' },
+          { seatIndex: 1, guestId: null, guestName: null, isReservedForParty: true, partyOwnerGuestId: 'g1' },
+          { seatIndex: 2, guestId: null, guestName: null },
+        ] }),
+      ]);
+
+      expect(fixture.componentInstance.tableVms()[0].occupiedCount).toBe(2);
+    });
+
+    it('uses a wide short container for a long table and a square-ish one for round/square', () => {
+      const fixture = setup([
+        makeTable({ id: 'round', shape: 'Round' }),
+        makeTable({ id: 'long', shape: 'Long' }),
+      ]);
+
+      const [round, long] = fixture.componentInstance.tableVms();
+      expect(round.containerWidth).toBe(round.containerHeight);
+      expect(long.containerWidth).toBeGreaterThan(long.containerHeight);
+    });
+  });
+
+  describe('area kind styling', () => {
+    it('maps each area kind to a distinct CSS class', () => {
+      const fixture = setup([], [
+        makeArea({ id: 'a1', kind: 'Stage' }),
+        makeArea({ id: 'a2', kind: 'DanceFloor' }),
+        makeArea({ id: 'a3', kind: 'Bar' }),
+      ]);
+
+      const classes = fixture.componentInstance.areaVms().map((vm) => vm.kindClass);
+      expect(new Set(classes).size).toBe(3);
+      expect(classes).toContain('floor-plan__area--stage');
+      expect(classes).toContain('floor-plan__area--dance-floor');
+      expect(classes).toContain('floor-plan__area--bar');
+    });
+
+    it('renders the kind class on the area element', () => {
+      const fixture = setup([], [makeArea({ kind: 'Bar' })]);
+
+      const el = fixture.nativeElement.querySelector('[data-testid="floor-plan-area"]');
+      expect(el.classList.contains('floor-plan__area--bar')).toBe(true);
+    });
   });
 });

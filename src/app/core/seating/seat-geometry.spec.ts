@@ -1,4 +1,4 @@
-import { computeSeatPositions } from './seat-geometry';
+import { computeSeatPositions, guestTint } from './seat-geometry';
 
 describe('computeSeatPositions', () => {
   it('returns an empty array for a zero seat count', () => {
@@ -43,5 +43,16 @@ describe('computeSeatPositions', () => {
     expect(() => computeSeatPositions('Long', 1)).not.toThrow();
     expect(() => computeSeatPositions('Round', 1)).not.toThrow();
     expect(() => computeSeatPositions('Square', 1)).not.toThrow();
+  });
+});
+
+describe('guestTint', () => {
+  it('returns the same colour for the same guest id every time', () => {
+    expect(guestTint('g1')).toBe(guestTint('g1'));
+  });
+
+  it('returns different colours for different guest ids (not a constant)', () => {
+    const tints = new Set(['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7'].map(guestTint));
+    expect(tints.size).toBeGreaterThan(1);
   });
 });

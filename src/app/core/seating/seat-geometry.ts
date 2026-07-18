@@ -10,6 +10,17 @@ export interface SeatPosition {
 
 const CENTER = 50;
 
+// Deterministic pastel tint per guest — stable across re-renders. Shared by
+// the grid card (seating-table-card) and the floor-plan canvas's mini seat
+// dots so the same guest reads as the same colour in both views.
+const SEAT_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c9', '#e5c9c0', '#d7c7e0'];
+
+export function guestTint(guestId: string): string {
+  let h = 0;
+  for (const c of guestId) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return SEAT_TINTS[h % SEAT_TINTS.length];
+}
+
 /** Pure, presentational: where each of `seatCount` seats sits around a table card. */
 export function computeSeatPositions(shape: TableShape, seatCount: number): SeatPosition[] {
   if (seatCount <= 0) {
