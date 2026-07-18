@@ -93,4 +93,72 @@ describe('FloatingGuestsPanelComponent', () => {
     expect(fixture.nativeElement.querySelector('.floating-panel__row--selected')).toBeTruthy();
   });
 
+  describe('drop hint while dragging a seated guest (enhancement)', () => {
+    beforeEach(() => {
+      // jsdom does not implement elementFromPoint at all — stub it so vi.spyOn
+      // has a real property to replace.
+      if (!document.elementFromPoint) {
+        document.elementFromPoint = () => null;
+      }
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('does not show the receiving highlight when showDropHint is false, even while the pointer is over the panel', () => {
+      const fixture = setup([makeGuest()]);
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(fixture.nativeElement);
+
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 5, clientY: 5 }));
+
+      expect(fixture.nativeElement.querySelector('.floating-panel').classList.contains('floating-panel--receiving')).toBe(false);
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+
+    it('shows the receiving highlight and DROP TO UNSEAT hint when showDropHint is true and the pointer is over the panel', () => {
+      const fixture = setup([makeGuest()]);
+      fixture.componentRef.setInput('showDropHint', true);
+      fixture.detectChanges();
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(fixture.nativeElement.querySelector('.floating-panel__title'));
+
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 5, clientY: 5 }));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.receivingDrop()).toBe(true);
+      expect(fixture.nativeElement.querySelector('.floating-panel').classList.contains('floating-panel--receiving')).toBe(true);
+      expect(fixture.nativeElement.textContent).toContain('DROP TO UNSEAT');
+    });
+
+    it('clears the receiving highlight once the pointer leaves the panel', () => {
+      const fixture = setup([makeGuest()]);
+      fixture.componentRef.setInput('showDropHint', true);
+      fixture.detectChanges();
+      const elementFromPoint = vi.spyOn(document, 'elementFromPoint');
+
+      elementFromPoint.mockReturnValue(fixture.nativeElement.querySelector('.floating-panel__title'));
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 5, clientY: 5 }));
+      expect(fixture.componentInstance.receivingDrop()).toBe(true);
+
+      elementFromPoint.mockReturnValue(document.body);
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 999, clientY: 999 }));
+
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+
+    it('clears the receiving highlight once showDropHint flips back to false, even if the pointer never left the panel', () => {
+      const fixture = setup([makeGuest()]);
+      fixture.componentRef.setInput('showDropHint', true);
+      fixture.detectChanges();
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(fixture.nativeElement.querySelector('.floating-panel__title'));
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 5, clientY: 5 }));
+      expect(fixture.componentInstance.receivingDrop()).toBe(true);
+
+      fixture.componentRef.setInput('showDropHint', false);
+      fixture.detectChanges();
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 5, clientY: 5 }));
+
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+  });
 });

@@ -1,4 +1,6 @@
+import { CdkDropList } from '@angular/cdk/drag-drop';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { SeatingTable } from '../../../../core/seating/seating-table.model';
 import { SeatingTableCardComponent } from './seating-table-card.component';
@@ -399,6 +401,49 @@ describe('SeatingTableCardComponent', () => {
       fixture.componentInstance.onSeatClick({ seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' });
 
       expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('template: no ring when a dragged guest hovers back onto their own current seat (BUG-007)', () => {
+    // seatEnterPredicate still accepts a guest's own seat as a valid (no-op)
+    // drop target, so CDK's `cdkDropListEntered`/`cdkDropListExited` fire
+    // normally for it — the template itself gates whether onSeatEnter/onSeatExit
+    // actually run, by comparing the hovered seat's own guestId against the
+    // dragged item's data ($event.item.data).
+    function dropListFor(fixture: ReturnType<typeof setup>, index: number): CdkDropList {
+      return fixture.debugElement.queryAll(By.directive(CdkDropList))[index].injector.get(CdkDropList);
+    }
+
+    it('does not light the ring when the entered seat belongs to the guest currently being dragged', () => {
+      const fixture = setup(makeTable());
+      const ownSeatDropList = dropListFor(fixture, 0); // seat 0 is g1's own seat
+
+      ownSeatDropList.entered.emit({ item: { data: 'g1' }, container: ownSeatDropList, currentIndex: 0 } as never);
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+    });
+
+    it('still lights the ring when a different (available) seat is entered', () => {
+      const fixture = setup(makeTable());
+      const emptySeatDropList = dropListFor(fixture, 1); // seat 1 is empty
+
+      emptySeatDropList.entered.emit({ item: { data: 'g1' }, container: emptySeatDropList, currentIndex: 0 } as never);
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+    });
+
+    it('does not clear an already-lit ring on a genuine seat via the own-seat exit guard', () => {
+      const fixture = setup(makeTable());
+      const emptySeatDropList = dropListFor(fixture, 1);
+      const ownSeatDropList = dropListFor(fixture, 0);
+      emptySeatDropList.entered.emit({ item: { data: 'g1' }, container: emptySeatDropList, currentIndex: 0 } as never);
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+
+      // Exiting the OWN seat (never entered/lit in the first place) must not
+      // disturb the ring genuinely lit on seat 1.
+      ownSeatDropList.exited.emit({ item: { data: 'g1' }, container: ownSeatDropList } as never);
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
     });
   });
 

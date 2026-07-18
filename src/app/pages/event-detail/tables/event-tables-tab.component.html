@@ -123,13 +123,14 @@
                   </button>
                 </div>
                 <div class="tables-tab__room-tip">
-                  <span class="tables-tab__room-tip-label">Tip</span> · drag a guest anywhere in the room to unseat them
+                  <span class="tables-tab__room-tip-label">Tip</span> · drag a guest to the guest list to unseat them
                 </div>
               </div>
               <app-floating-guests-panel
                 [guests]="store.floatingGuests()"
                 [assigningGuestId]="assigningGuestId()"
                 [eventType]="eventType"
+                [showDropHint]="isDraggingSeatedGuest()"
                 (guestSelected)="onGuestSelected($event)"
               />
             </div>

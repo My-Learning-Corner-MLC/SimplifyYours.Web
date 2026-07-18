@@ -1,5 +1,16 @@
 import { CdkDrag, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Output,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 
 import { NgStyle } from '@angular/common';
 import { Guest, guestFullName } from '../../../../core/guests/guest.model';
@@ -19,6 +30,12 @@ import { describeGuestMetadata } from '../../../../core/guests/guest-metadata-ro
  * re-runs when `guests` changes — `computed()` only tracks signal reads, so
  * a plain `@Input() guests` field would silently freeze the filtered list
  * at whatever it was on the first render.
+ *
+ * `showDropHint`/`receivingDrop`: while `rejectAllEnterPredicate` keeps this
+ * list from ever being a *real* CDK drop target, the parent still flags when
+ * a seated guest's chip is being dragged so this panel can visually invite
+ * the drop (the actual unseat happens via `onSeatDragEndedOutside`'s DOM
+ * hit-testing, not list membership).
  */
 const AVATAR_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c9', '#e5c9c0', '#d7c7e0'];
 
@@ -31,6 +48,8 @@ const AVATAR_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c9', '#e5c9c0', '#d7c7e0'];
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FloatingGuestsPanelComponent {
+  private readonly hostElement = inject(ElementRef<HTMLElement>);
+
   // Home cdkDropList for guest rows — required so a row's cdkDrag has a
   // container to leave from when it's dropped onto a seat's cdkDropList in a
   // different component (connected via the ancestor cdkDropListGroup).
@@ -47,10 +66,36 @@ export class FloatingGuestsPanelComponent {
   readonly guests = input.required<readonly Guest[]>();
   readonly assigningGuestId = input<string | null>(null);
   readonly eventType = input<string>('');
+  // Set by the parent while a seated guest's own chip (not a row from this
+  // panel) is being dragged — the only gesture this panel should visually
+  // invite a drop for, since `rejectAllEnterPredicate` above means CDK itself
+  // never shows this list as an accepting target.
+  readonly showDropHint = input(false);
 
   @Output() readonly guestSelected = new EventEmitter<string>();
 
   readonly search = signal('');
+
+  // Purely visual — CDK's own enter/exit events never fire here (the predicate
+  // always rejects), so this is driven independently via document-wide
+  // pointermove hit-testing, the same technique used for the seat hover ring
+  // (see SeatingTableCardComponent.onDocumentPointerMove).
+  readonly receivingDrop = signal(false);
+
+  @HostListener('document:pointermove', ['$event'])
+  onDocumentPointerMove(event: PointerEvent): void {
+    if (!this.showDropHint()) {
+      if (this.receivingDrop()) {
+        this.receivingDrop.set(false);
+      }
+      return;
+    }
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const isOverPanel = !!target && this.hostElement.nativeElement.contains(target);
+    if (isOverPanel !== this.receivingDrop()) {
+      this.receivingDrop.set(isOverPanel);
+    }
+  }
 
   readonly filteredGuests = computed(() => {
     const term = this.search().trim().toLowerCase();

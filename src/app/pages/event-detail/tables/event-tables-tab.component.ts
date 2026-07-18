@@ -69,6 +69,12 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
   readonly assigningGuestId = signal<string | null>(null);
   readonly announcement = signal('');
   readonly selectedTableId = signal<string | null>(null);
+  // Whether a seated guest's own chip is currently being dragged (not a
+  // floating-panel row) — drives the floating panel's own "droppable" look
+  // while such a drag is in progress, even though its cdkDropList always
+  // rejects the actual CDK drop (unseating is handled by DOM hit-testing in
+  // onSeatDragEndedOutside, not by list membership).
+  readonly isDraggingSeatedGuest = signal(false);
 
   readonly selectedTable = computed(
     () => this.store.tables().find((table) => table.id === this.selectedTableId()) ?? null,
@@ -176,16 +182,22 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
   // apart from a normal reassignment/unseat that a drop list already handled.
   onSeatDragStarted(): void {
     this.store.beginDragGesture();
+    this.isDraggingSeatedGuest.set(true);
   }
 
   // Fires on every seat drag release. If nothing claimed the gesture (no
-  // reassignment, no drop onto the floating panel) and the guest was released
-  // over the room panel or the floating-guests panel, treat it as "drop the
-  // guest out" — unseat them. Uses real DOM hit-testing (elementFromPoint),
-  // not bounding-box math, so it's correct regardless of scroll position,
-  // overlapping elements, or which exact sub-area (list, empty state, footer)
-  // was under the pointer.
+  // reassignment, no accepted drop) and the guest was released specifically
+  // onto the floating-guests panel, treat it as "drop the guest out" — unseat
+  // them. Any other miss (open room space, between tables, the table's own
+  // decorative surface) is left alone entirely: the guest simply stays at
+  // their current seat, since no store mutation ran for a miss in the first
+  // place — dragging a seated guest and missing every seat should snap them
+  // back, not unseat them. Uses real DOM hit-testing (elementFromPoint), not
+  // bounding-box math, so it's correct regardless of scroll position,
+  // overlapping elements, or which exact sub-area of the floating panel
+  // (list, empty state, footer) was under the pointer.
   onSeatDragEndedOutside(payload: SeatDragEndedOutside): void {
+    this.isDraggingSeatedGuest.set(false);
     if (this.store.wasDragGestureConsumed()) {
       return;
     }
@@ -193,9 +205,8 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
     if (!target) {
       return;
     }
-    const droppedInRoom = target.closest('.tables-tab__room-panel') !== null;
     const droppedOnFloatingPanel = target.closest('[data-testid="floating-guests-panel"]') !== null;
-    if (droppedInRoom || droppedOnFloatingPanel) {
+    if (droppedOnFloatingPanel) {
       this.onGuestUnseated(payload.guestId);
     }
   }

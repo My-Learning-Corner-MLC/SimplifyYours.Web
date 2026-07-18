@@ -186,6 +186,28 @@ describe('EventTablesTabComponent', () => {
       expect(fixture.componentInstance.assigningGuestId()).toBeNull();
     });
 
+    it('marks isDraggingSeatedGuest true on seat drag start, false once the drag ends (drives the floating panel\'s drop hint)', () => {
+      // jsdom does not implement elementFromPoint — stub it so
+      // onSeatDragEndedOutside's own hit-testing doesn't throw.
+      const hadElementFromPoint = 'elementFromPoint' in document;
+      document.elementFromPoint = vi.fn().mockReturnValue(null);
+      try {
+        const { fixture } = setup({ getLayout: () => of(layout()) });
+        expect(fixture.componentInstance.isDraggingSeatedGuest()).toBe(false);
+
+        fixture.componentInstance.onSeatDragStarted();
+        expect(fixture.componentInstance.isDraggingSeatedGuest()).toBe(true);
+
+        fixture.componentInstance.onSeatDragEndedOutside({ guestId: 'g1', dropPoint: { x: 0, y: 0 } });
+        expect(fixture.componentInstance.isDraggingSeatedGuest()).toBe(false);
+      } finally {
+        if (!hadElementFromPoint) {
+          // @ts-expect-error - removing the jsdom-incompatible stub after the test
+          delete document.elementFromPoint;
+        }
+      }
+    });
+
     it('force-flushes pending changes when switching Grid <-> Floor plan', () => {
       const applyAssignmentsBatch = vi.fn(() => of({ layout: layout({ tables: [tableWithSeats()] }), opResults: [] }));
       const { fixture, store } = setup(
@@ -239,7 +261,7 @@ describe('EventTablesTabComponent', () => {
     });
   });
 
-  describe('drop guest out of a table (release inside the room panel, not onto a seat)', () => {
+  describe('a missed seat drop only unseats the guest when released onto the floating-guests panel', () => {
     const guestApiWithG1: Partial<GuestApiClient> = {
       listGuests: () =>
         of([
@@ -284,7 +306,7 @@ describe('EventTablesTabComponent', () => {
       delete document.elementFromPoint;
     });
 
-    it('unseats the guest when the drag was not claimed by any drop list and the release landed inside the room panel', () => {
+    it('leaves the guest seated when the drag was not claimed by any drop list and the release landed inside the room panel but not on the floating panel — only a genuine drop onto the floating panel unseats', () => {
       const { fixture, store } = setup({ getLayout: () => of(layout({ tables: [seatedTable()] })) });
       const roomPanel = fixture.nativeElement.querySelector('.tables-tab__room-panel');
       stubElementFromPoint(roomPanel);
@@ -292,8 +314,7 @@ describe('EventTablesTabComponent', () => {
 
       fixture.componentInstance.onSeatDragEndedOutside({ guestId: 'g1', dropPoint: { x: 250, y: 250 } });
 
-      expect(store.tables()[0].seats[0].guestId).toBeNull();
-      expect(fixture.componentInstance.announcement()).toContain('Amara Okoye');
+      expect(store.tables()[0].seats[0].guestId).toBe('g1');
     });
 
     it('unseats the guest when the release landed on the floating-guests panel', () => {

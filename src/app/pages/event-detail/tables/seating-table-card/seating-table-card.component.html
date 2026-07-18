@@ -19,6 +19,11 @@
   >
     <span class="table-card__surface" aria-hidden="true">{{ shapeLabel() }} · {{ table().seatCount }}</span>
     @for (seatVm of seats(); track seatVm.seat.seatIndex) {
+      <!-- The `guestId !== $event.item.data` guard on entered/exited skips the
+           ring entirely when the seat being hovered is the dragged guest's own
+           current seat — seatEnterPredicate still accepts it as a valid (no-op)
+           drop target, but re-hovering your own seat shouldn't light it up as
+           if it were an available target. -->
       <span
         class="table-card__seat-slot"
         cdkDropList
@@ -28,8 +33,8 @@
         [cdkDropListData]="seatVm.seat"
         [cdkDropListEnterPredicate]="seatEnterPredicate"
         (cdkDropListDropped)="onSeatDropped($event, seatVm.seat.seatIndex)"
-        (cdkDropListEntered)="onSeatEnter(seatVm.seat.seatIndex)"
-        (cdkDropListExited)="onSeatExit(seatVm.seat.seatIndex)"
+        (cdkDropListEntered)="seatVm.seat.guestId !== $any($event.item.data) && onSeatEnter(seatVm.seat.seatIndex)"
+        (cdkDropListExited)="seatVm.seat.guestId !== $any($event.item.data) && onSeatExit(seatVm.seat.seatIndex)"
         [style.left.%]="seatVm.xPercent"
         [style.top.%]="seatVm.yPercent"
       >

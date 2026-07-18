@@ -22,6 +22,16 @@ $hairline: #ece2d2;
   color: $plum-ink;
   overflow: hidden;
   max-height: 760px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  // Visually invites the drop while a seated guest is being dragged toward
+  // this panel — see FloatingGuestsPanelComponent.showDropHint/receivingDrop.
+  // The list itself never actually accepts the CDK drop (rejectAllEnterPredicate),
+  // so this is driven independently, not by cdkDropListEntered/Exited.
+  &--receiving {
+    border-color: $coral;
+    box-shadow: 0 0 0 3px rgba(224, 123, 90, 0.18);
+  }
 
   &__head {
     padding: 20px 22px 16px;
@@ -219,6 +229,20 @@ $hairline: #ece2d2;
     font-size: 11.5px;
     color: $muted;
     flex-shrink: 0;
+    transition: border-color 150ms ease;
+  }
+
+  &--receiving &__footer {
+    border-color: rgba(224, 123, 90, 0.5);
+  }
+
+  &__drop-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: $coral;
+    text-transform: uppercase;
   }
 
   &__tip-label {

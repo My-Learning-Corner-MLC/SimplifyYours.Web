@@ -1,6 +1,7 @@
 <aside
   class="floating-panel"
   data-testid="floating-guests-panel"
+  [class.floating-panel--receiving]="receivingDrop()"
 >
   <header class="floating-panel__head">
     <div class="floating-panel__head-row">
@@ -73,6 +74,10 @@
   }
 
   <footer class="floating-panel__footer" aria-hidden="true">
-    <span class="floating-panel__tip-label">Tip</span> · drag a name onto any seat, or drop a seated guest here to unseat them
+    @if (receivingDrop()) {
+      <span class="floating-panel__drop-hint">DROP TO UNSEAT</span>
+    } @else {
+      <span class="floating-panel__tip-label">Tip</span> · drag a name onto any available seat, or drop a seated guest here to unseat them
+    }
   </footer>
 </aside>
