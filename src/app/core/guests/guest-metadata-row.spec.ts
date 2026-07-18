@@ -7,11 +7,13 @@ describe('describeGuestMetadata', () => {
       side: 'Bride',
       plusOnes: 2,
       dietaryNotes: 'Vegan',
+      tags: ['College friends'],
     });
 
     expect(info.group).toBe("Family · bride's side");
     expect(info.plusOnes).toBe(2);
     expect(info.dietaryNotes).toBe('Vegan');
+    expect(info.tags).toEqual(['College friends']);
   });
 
   it('has no group text for birthday events', () => {
@@ -20,12 +22,13 @@ describe('describeGuestMetadata', () => {
     expect(info.group).toBe('');
     expect(info.plusOnes).toBe(3);
     expect(info.dietaryNotes).toBe('Nut allergy');
+    expect(info.tags).toEqual([]);
   });
 
   it('returns empty info for event types with no registered mapper', () => {
     const info = describeGuestMetadata('launch', { plusOnes: 5 });
 
-    expect(info).toEqual({ group: '', plusOnes: 0, dietaryNotes: null });
+    expect(info).toEqual({ group: '', plusOnes: 0, dietaryNotes: null, tags: [] });
   });
 
   it('returns empty info when eventMetadata is null', () => {
@@ -33,6 +36,7 @@ describe('describeGuestMetadata', () => {
       group: '',
       plusOnes: 0,
       dietaryNotes: null,
+      tags: [],
     });
   });
 });

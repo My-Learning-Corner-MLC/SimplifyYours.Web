@@ -5,9 +5,10 @@ export interface GuestMetadataRowInfo {
   readonly group: string;
   readonly plusOnes: number;
   readonly dietaryNotes: string | null;
+  readonly tags: readonly string[];
 }
 
-const EMPTY_ROW_INFO: GuestMetadataRowInfo = { group: '', plusOnes: 0, dietaryNotes: null };
+const EMPTY_ROW_INFO: GuestMetadataRowInfo = { group: '', plusOnes: 0, dietaryNotes: null, tags: [] };
 
 /**
  * Narrows a Guest's opaque `eventMetadata` based on the owning event's actual type — mirrors the
@@ -26,11 +27,17 @@ export function describeGuestMetadata(eventType: string, eventMetadata: unknown)
         group: groupParts.join(' · '),
         plusOnes: metadata?.plusOnes ?? 0,
         dietaryNotes: metadata?.dietaryNotes ?? null,
+        tags: metadata?.tags ?? [],
       };
     }
     case 'birthday': {
       const metadata = asBirthdayGuestMetadata(eventMetadata);
-      return { group: '', plusOnes: metadata?.plusOnes ?? 0, dietaryNotes: metadata?.dietaryNotes ?? null };
+      return {
+        group: '',
+        plusOnes: metadata?.plusOnes ?? 0,
+        dietaryNotes: metadata?.dietaryNotes ?? null,
+        tags: [],
+      };
     }
     default:
       return EMPTY_ROW_INFO;

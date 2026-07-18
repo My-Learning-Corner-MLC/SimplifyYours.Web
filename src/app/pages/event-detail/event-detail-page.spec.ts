@@ -169,6 +169,20 @@ describe('EventDetailPage', () => {
     expect(testId(root, 'guests-empty')).not.toBeNull();
   });
 
+  it('opens the Add Guest modal from the empty guest-list state', () => {
+    const guestApi = new GuestApiStub();
+    guestApi.listGuests = vi.fn(() => of<Guest[]>([]));
+    const fixture = setup(new ApiStub(), guestApi);
+    const root = html(fixture);
+
+    testId(root, 'event-detail-tab-guests')!.click();
+    fixture.detectChanges();
+    testId(root, 'event-detail-add-first-guest')!.click();
+    fixture.detectChanges();
+
+    expect(testId(root, 'add-guest-modal')).not.toBeNull();
+  });
+
   it('shows the guest error state with retry', () => {
     const guestApi = new GuestApiStub();
     const err: ListGuestsError = { kind: 'server', message: 'Could not load the guest list.' };
