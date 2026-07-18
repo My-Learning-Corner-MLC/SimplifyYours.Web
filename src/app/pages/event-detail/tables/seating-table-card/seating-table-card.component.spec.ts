@@ -446,5 +446,184 @@ describe('SeatingTableCardComponent', () => {
       expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
       expect(fixture.componentInstance.receivingDrop()).toBe(true);
     });
+
+    it('rejects every seat on a full table, even an empty one', () => {
+      const fixture = setup(makeTable({ isFull: true }));
+      const drop = { data: { seatIndex: 1, guestId: null, guestName: null } } as never;
+
+      expect(fixture.componentInstance.seatEnterPredicate({ data: 'g2' } as never, drop)).toBe(false);
+    });
+
+    it('still allows a guest to re-enter their own seat on a full table (no-op reassignment)', () => {
+      const fixture = setup(makeTable({ isFull: true }));
+      const ownSeatDrop = { data: { seatIndex: 0, guestId: 'g1', guestName: 'Amara Okoye' } } as never;
+
+      expect(fixture.componentInstance.seatEnterPredicate({ data: 'g1' } as never, ownSeatDrop)).toBe(true);
+    });
+
+    it('clears any stale hover ring when a full table rejects a drop (BUG-005)', () => {
+      const fixture = setup(makeTable({ isFull: true }));
+      fixture.componentInstance.onSeatEnter(1);
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+
+      const drop = { data: { seatIndex: 1, guestId: null, guestName: null } } as never;
+      fixture.componentInstance.seatEnterPredicate({ data: 'g2' } as never, drop);
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+  });
+
+  describe('hover ring cleanup (BUG-003)', () => {
+    beforeEach(() => {
+      // jsdom does not implement elementFromPoint at all — stub it so vi.spyOn
+      // has a real property to replace.
+      if (!document.elementFromPoint) {
+        document.elementFromPoint = () => null;
+      }
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('clears the hover ring once the pointer has left every seat, even if the final exit event reports a different seat than the current hover', () => {
+      const fixture = setup(makeTable());
+
+      fixture.componentInstance.onSeatEnter(1);
+      fixture.componentInstance.onSeatEnter(2);
+      // Overlapping seat hit-boxes can fire a duplicate/mismatched exit for the
+      // seat left behind rather than the currently hovered one.
+      fixture.componentInstance.onSeatExit(1);
+      fixture.componentInstance.onSeatExit(1);
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+
+    it('clears the hover ring on pointermove once the pointer drags off the card into open space, even though CDK never fires a matching exit there', () => {
+      // Reproduces the real bug: CDK's DragRef only calls `exit()` when the
+      // pointer enters a *different accepting* drop list. Moving to blank page
+      // area with no connected drop list underneath skips the exit call
+      // entirely, so onSeatExit never runs — this pointermove fallback is the
+      // only thing that can catch it.
+      const fixture = setup(makeTable());
+      fixture.componentInstance.onSeatEnter(1);
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(null);
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 999, clientY: 999 }));
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+
+    it('keeps the hover ring while the pointer is still over the same seat slot on pointermove', () => {
+      const fixture = setup(makeTable());
+      fixture.componentInstance.onSeatEnter(1);
+
+      const seatSlots = fixture.nativeElement.querySelectorAll('.table-card__seat-slot');
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(seatSlots[1] as Element);
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 10, clientY: 10 }));
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+      expect(fixture.componentInstance.receivingDrop()).toBe(true);
+    });
+
+    it('clears the hover ring on pointermove when the point lands on a seat slot belonging to a different table card', () => {
+      const fixture = setup(makeTable());
+      fixture.componentInstance.onSeatEnter(1);
+
+      const foreignSlot = document.createElement('span');
+      foreignSlot.className = 'table-card__seat-slot';
+      document.body.appendChild(foreignSlot);
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(foreignSlot);
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 1, clientY: 1 }));
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      document.body.removeChild(foreignSlot);
+    });
+
+    it('stays unhovered on pointermove over open space when nothing was hovered to begin with', () => {
+      const fixture = setup(makeTable());
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(null);
+
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 5, clientY: 5 }));
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      expect(fixture.componentInstance.receivingDrop()).toBe(false);
+    });
+
+    describe('re-entering a seat after CDK loses track of the drag (the actual regression)', () => {
+      let dragMarker: HTMLElement;
+
+      beforeEach(() => {
+        // Stand-in for the class Angular CDK stamps on the element being
+        // dragged for the duration of a real drag gesture.
+        dragMarker = document.createElement('div');
+        dragMarker.className = 'cdk-drag-dragging';
+        document.body.appendChild(dragMarker);
+      });
+
+      afterEach(() => {
+        document.body.removeChild(dragMarker);
+      });
+
+      it('re-lights the ring when the pointer comes back to the same empty seat after leaving to open space', () => {
+        const fixture = setup(makeTable());
+        const seatSlot = fixture.nativeElement.querySelector('[data-seat-index="1"]') as Element;
+        const elementFromPoint = vi.spyOn(document, 'elementFromPoint');
+
+        // 1. Drag onto seat 1 (real CDK entered event).
+        fixture.componentInstance.onSeatEnter(1);
+        expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+
+        // 2. Drag out to open space — CDK skips its own exit call here (per
+        // BUG-003's root cause), so only the pointermove fallback clears this.
+        elementFromPoint.mockReturnValue(null);
+        document.dispatchEvent(new PointerEvent('pointermove', { clientX: 500, clientY: 500 }));
+        expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+
+        // 3. Drag back onto seat 1. Because CDK's own internal container
+        // reference never actually left seat 1 in step 2, its real
+        // `cdkDropListEntered` will not fire again here — only the
+        // pointermove fallback's own DOM hit-test can re-light the ring.
+        elementFromPoint.mockReturnValue(seatSlot);
+        document.dispatchEvent(new PointerEvent('pointermove', { clientX: 10, clientY: 10 }));
+
+        expect(fixture.componentInstance.hoveredSeatIndex()).toBe(1);
+        expect(fixture.componentInstance.receivingDrop()).toBe(true);
+      });
+
+      it('does not light the ring over an occupied seat', () => {
+        const fixture = setup(makeTable());
+        const seatSlot = fixture.nativeElement.querySelector('[data-seat-index="0"]') as Element; // seat 0 is filled (g1)
+        vi.spyOn(document, 'elementFromPoint').mockReturnValue(seatSlot);
+
+        document.dispatchEvent(new PointerEvent('pointermove', { clientX: 10, clientY: 10 }));
+
+        expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      });
+
+      it('does not light the ring over any seat on a full table', () => {
+        const fixture = setup(makeTable({ isFull: true }));
+        const seatSlot = fixture.nativeElement.querySelector('[data-seat-index="1"]') as Element;
+        vi.spyOn(document, 'elementFromPoint').mockReturnValue(seatSlot);
+
+        document.dispatchEvent(new PointerEvent('pointermove', { clientX: 10, clientY: 10 }));
+
+        expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+      });
+    });
+
+    it('does not light the ring merely from ordinary mouse movement with no drag in progress', () => {
+      const fixture = setup(makeTable());
+      const seatSlot = fixture.nativeElement.querySelector('[data-seat-index="1"]') as Element;
+      vi.spyOn(document, 'elementFromPoint').mockReturnValue(seatSlot);
+
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 10, clientY: 10 }));
+
+      expect(fixture.componentInstance.hoveredSeatIndex()).toBeNull();
+    });
   });
 });

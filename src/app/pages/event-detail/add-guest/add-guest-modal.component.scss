@@ -17,91 +17,9 @@ $err-bg: #f4e2dd;
 $err-border: #e3b9ac;
 $err-ink: #8a3a25;
 
-@keyframes ag-overlay-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes ag-modal-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes ag-overlay-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-
-@keyframes ag-modal-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(10px) scale(0.98);
-  }
-}
-
-.ag-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  overflow-y: auto;
-  padding: 40px 16px;
-  // Solid plum-ink (same hue as the modal's own drop shadow) rather than a
-  // purple gradient wash, so the backdrop reads as depth behind the card
-  // instead of a competing color. Slightly stronger blur + a touch of
-  // desaturation keeps the parchment page visible but clearly backgrounded.
-  background: rgba(42, 31, 45, 0.55);
-  backdrop-filter: blur(8px) saturate(0.85);
-  animation: ag-overlay-in 1s ease both;
-
-  &--closing {
-    animation: ag-overlay-out 0.3s ease both;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
-
-.ag-modal {
-  position: relative;
-  width: 100%;
-  // Wide enough for two-column fields at full comfortable size (~720px) so the
-  // form fits without scrolling on desktop/tablet; collapses back to a single
-  // narrow column on small viewports (see the media query below).
-  max-width: 720px;
-  background: $linen;
-  border-radius: 14px;
-  box-shadow: 0 24px 64px rgba(42, 31, 45, 0.32);
-  overflow: hidden;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  color: $plum-ink;
-  animation: ag-modal-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
-
-  &--closing {
-    animation: ag-modal-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
-
-  @media (max-width: 640px) {
-    max-width: 480px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
+// The overlay/backdrop/card shell (blur, animation, positioning) now lives in
+// the shared app-modal component — this file only styles the content
+// projected into its header/body/footer slots.
 
 // ---- Header ------------------------------------------------------------
 .ag-head {

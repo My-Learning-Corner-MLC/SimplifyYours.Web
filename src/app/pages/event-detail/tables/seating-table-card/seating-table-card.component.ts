@@ -1,5 +1,16 @@
 import { CdkDrag, CdkDragDrop, CdkDragEnd, CdkDropList, DragDropModule } from '@angular/cdk/drag-drop';
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Output, computed, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Output,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { NgStyle } from '@angular/common';
 
 import { computeSeatPositions } from '../../../../core/seating/seat-geometry';
@@ -67,6 +78,8 @@ export interface SeatDragEndedOutside {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SeatingTableCardComponent {
+  private readonly hostElement = inject(ElementRef<HTMLElement>);
+
   readonly table = input.required<SeatingTable>();
   readonly assigningGuestId = input<string | null>(null);
 
@@ -114,7 +127,16 @@ export class SeatingTableCardComponent {
   // guestId is null, so it isn't a valid drop target.
   readonly seatEnterPredicate = (drag: CdkDrag<string>, drop: CdkDropList<SeatingSeat>): boolean => {
     const seat = drop.data;
-    const isValidTarget = (seat.guestId === null && !seat.isReservedForParty) || seat.guestId === drag.data;
+    const isOwnSeat = seat.guestId === drag.data;
+    // A table marked full rejects every seat except a guest re-entering their
+    // own current seat (harmless no-op reassignment, not a new occupant).
+    if (this.table().isFull && !isOwnSeat) {
+      this.dropEnterCount = 0;
+      this.receivingDrop.set(false);
+      this.hoveredSeatIndex.set(null);
+      return false;
+    }
+    const isValidTarget = (seat.guestId === null && !seat.isReservedForParty) || isOwnSeat;
     if (!isValidTarget) {
       // CDK only fires `cdkDropListExited` on the previously active container
       // when the pointer enters a *different accepting* container — moving
@@ -142,7 +164,13 @@ export class SeatingTableCardComponent {
   onSeatExit(seatIndex: number): void {
     this.dropEnterCount = Math.max(0, this.dropEnterCount - 1);
     if (this.dropEnterCount === 0) {
+      // Unconditional clear: with overlapping seat hit-boxes, the exit event
+      // that brings the counter to zero can report a different seatIndex than
+      // the one currently hovered, so the equality check below would miss it
+      // and leave the ring stuck until the drag ends.
       this.receivingDrop.set(false);
+      this.hoveredSeatIndex.set(null);
+      return;
     }
     if (this.hoveredSeatIndex() === seatIndex) {
       this.hoveredSeatIndex.set(null);
@@ -166,6 +194,68 @@ export class SeatingTableCardComponent {
     this.dropEnterCount = 0;
     this.receivingDrop.set(false);
     this.hoveredSeatIndex.set(null);
+  }
+
+  // Fallback that also re-derives entry, not just exit — both directions of
+  // the same underlying CDK quirk. Angular CDK's `_updateActiveDropContainer`
+  // only calls `exit()`/`enter()` when its own *internal* notion of the active
+  // container actually changes to a different one. Moving to open space finds
+  // no candidate container at all, so CDK skips the exit call and keeps
+  // privately believing it's still "inside" the seat just left — meaning if
+  // the pointer comes straight back to that same seat, CDK sees no container
+  // change and never fires a fresh `cdkDropListEntered` either, leaving the
+  // ring stuck off even though the pointer is back on a valid target. A
+  // document-wide `pointermove` listener sidesteps CDK's internal bookkeeping
+  // entirely: it re-derives "which seat, if any, is under the pointer" by
+  // direct DOM hit-testing every move, so it can't be left out of sync by
+  // whatever CDK's own container-change detection does or doesn't fire.
+  @HostListener('document:pointermove', ['$event'])
+  onDocumentPointerMove(event: PointerEvent): void {
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const seatSlot = target?.closest('.table-card__seat-slot') ?? null;
+    const ownSeatSlot = seatSlot && this.hostElement.nativeElement.contains(seatSlot) ? seatSlot : null;
+
+    if (!ownSeatSlot) {
+      if (this.hoveredSeatIndex() !== null) {
+        this.dropEnterCount = 0;
+        this.receivingDrop.set(false);
+        this.hoveredSeatIndex.set(null);
+      }
+      return;
+    }
+
+    // Only synthesize a fresh "enter" while a drag is actually in progress
+    // (CDK stamps the dragged element with this class) — otherwise plain
+    // mouse movement with no drag at all would light up the ring.
+    const isDragActive = document.querySelector('.cdk-drag-dragging') !== null;
+    if (!isDragActive) {
+      return;
+    }
+    const seatIndex = this.seatIndexFromSlot(ownSeatSlot);
+    if (seatIndex !== null && seatIndex !== this.hoveredSeatIndex() && this.isValidDropTarget(seatIndex)) {
+      this.onSeatEnter(seatIndex);
+    }
+  }
+
+  private seatIndexFromSlot(slot: Element): number | null {
+    const raw = slot.getAttribute('data-seat-index');
+    if (raw === null) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  // Visual-only approximation of seatEnterPredicate's validity check (no
+  // access to the dragged guest's id here, so it can't grant the "re-enter
+  // your own seat" exception) — acceptable because the actual drop is still
+  // gated by seatEnterPredicate regardless of what the ring shows.
+  private isValidDropTarget(seatIndex: number): boolean {
+    if (this.table().isFull) {
+      return false;
+    }
+    const seat = this.table().seats[seatIndex];
+    return !!seat && seat.guestId === null && !seat.isReservedForParty;
   }
 
   onSeatDropped(event: CdkDragDrop<SeatingSeat, SeatingSeat, string>, seatIndex: number): void {

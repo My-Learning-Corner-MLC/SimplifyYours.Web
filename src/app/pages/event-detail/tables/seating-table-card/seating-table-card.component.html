@@ -24,6 +24,7 @@
         cdkDropList
         [cdkDropListSortingDisabled]="true"
         [id]="seatVm.dropListId"
+        [attr.data-seat-index]="seatVm.seat.seatIndex"
         [cdkDropListData]="seatVm.seat"
         [cdkDropListEnterPredicate]="seatEnterPredicate"
         (cdkDropListDropped)="onSeatDropped($event, seatVm.seat.seatIndex)"

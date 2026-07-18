@@ -1,112 +1,176 @@
-<p-dialog
-  [visible]="visible"
-  [modal]="true"
-  [closable]="false"
-  [showHeader]="false"
-  [style]="{ width: '28rem', maxWidth: '92vw' }"
-  styleClass="table-form-dialog"
-  (visibleChange)="!$event && close()"
->
-  <form class="table-form" [formGroup]="form" (ngSubmit)="submit()" data-testid="table-form-modal">
-    <header class="table-form__head">
-      <h2 class="table-form__title">{{ isEditMode ? 'Edit table' : 'Add a table' }}</h2>
-      <button type="button" class="table-form__close" aria-label="Close" (click)="close()">&times;</button>
-    </header>
-
-    <div class="table-form__field">
-      <label for="table-name">Name</label>
-      <input
-        id="table-name"
-        type="text"
-        formControlName="name"
-        placeholder="e.g. Head table"
-        [attr.aria-invalid]="form.controls.name.invalid && form.controls.name.touched"
-        aria-describedby="table-name-error"
-      />
-      @if (form.controls.name.invalid && form.controls.name.touched) {
-        <span id="table-name-error" class="table-form__error" role="alert">Name is required.</span>
-      }
+<form class="table-form" [formGroup]="form" (ngSubmit)="submit()" data-testid="table-form-modal">
+  <app-modal
+    #modal
+    [open]="visible"
+    ariaLabelledby="table-form-title"
+    maxWidth="30rem"
+    [disableClose]="saving()"
+    (closed)="close()"
+  >
+    <div modalHeader>
+      <header class="table-form__head">
+        <div>
+          <div class="table-form__eyebrow">{{ isEditMode ? 'EDIT TABLE' : 'ADD TABLE' }}</div>
+          <h2 class="table-form__title" id="table-form-title">
+            A name for the <span class="table-form__italic">table.</span>
+          </h2>
+        </div>
+        <button type="button" class="table-form__close" aria-label="Close" (click)="modal.requestClose()">&times;</button>
+      </header>
+      <div class="table-form__rule"></div>
     </div>
 
-    <div class="table-form__field">
-      <span id="table-shape-label">Shape</span>
-      <div class="table-form__shape-toggle" role="group" aria-labelledby="table-shape-label">
-        @for (shape of shapes; track shape) {
-          <button
-            type="button"
-            class="table-form__shape-btn"
-            [class.table-form__shape-btn--active]="form.controls.shape.value === shape"
-            [attr.aria-pressed]="form.controls.shape.value === shape"
-            (click)="form.controls.shape.setValue(shape)"
-          >
-            {{ shape }}
-          </button>
-        }
-      </div>
-    </div>
-
-    <div class="table-form__field">
-      <label for="table-seat-count">Seats</label>
-      <input
-        id="table-seat-count"
-        type="number"
-        formControlName="seatCount"
-        min="1"
-        max="20"
-        [attr.aria-invalid]="form.controls.seatCount.invalid && form.controls.seatCount.touched"
-      />
-    </div>
-
-    @if (!isEditMode) {
+    <div class="table-form__body">
       <div class="table-form__field">
-        <label for="table-bulk-count">How many tables?</label>
-        <input id="table-bulk-count" type="number" formControlName="bulkCount" min="1" max="20" />
-      </div>
-    }
-
-    @if (previewNames().length > 0) {
-      <div class="table-form__preview" aria-label="Tables to be created">
-        @for (name of previewNames(); track name) {
-          <span class="table-form__preview-chip">{{ name }}</span>
+        <label for="table-name">Table name<span class="table-form__required" aria-hidden="true">*</span></label>
+        <div class="table-form__help">Family table, bride's side, kids — whatever you call it.</div>
+        <input
+          id="table-name"
+          type="text"
+          class="table-form__input"
+          [class.table-form__input--error]="showError('name')"
+          formControlName="name"
+          placeholder="e.g. Head table"
+          [attr.aria-invalid]="showError('name')"
+          aria-describedby="table-name-error"
+          autocomplete="off"
+        />
+        @if (showError('name')) {
+          <div id="table-name-error" class="table-form__error" role="alert">
+            <span class="table-form__error-mark">!</span>Table name is required
+          </div>
         }
       </div>
-    }
 
-    @if (error()) {
-      <p class="table-form__error table-form__error--form" role="alert">{{ error() }}</p>
-    }
-
-    <footer class="table-form__actions">
-      @if (confirmingDelete()) {
-        <button type="button" class="table-form__btn table-form__btn--ghost" (click)="cancelDelete()">
-          Never mind
-        </button>
-        <span class="table-form__spacer"></span>
-        <button
-          type="button"
-          class="table-form__btn table-form__btn--danger"
-          (click)="requestDelete()"
-          [disabled]="saving()"
+      <div class="table-form__field">
+        <span id="table-shape-label">Shape<span class="table-form__required" aria-hidden="true">*</span></span>
+        <div
+          class="table-form__shape-toggle"
+          role="group"
+          aria-labelledby="table-shape-label"
+          [style.--shape-count]="shapes.length"
         >
-          {{ saving() ? 'Deleting…' : 'Click again to confirm' }}
-        </button>
-      } @else {
-        @if (isEditMode) {
+          <span class="table-form__shape-pill" [style.--shape-index]="activeShapeIndex" aria-hidden="true"></span>
+          @for (shape of shapes; track shape) {
+            <button
+              type="button"
+              class="table-form__shape-btn"
+              [class.table-form__shape-btn--active]="form.controls.shape.value === shape"
+              [attr.aria-pressed]="form.controls.shape.value === shape"
+              (click)="form.controls.shape.setValue(shape)"
+            >
+              <span class="table-form__shape-glyph table-form__shape-glyph--{{ shape.toLowerCase() }}" aria-hidden="true"></span>
+              {{ shape }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="table-form__field">
+        <label for="table-seat-count">Seats<span class="table-form__required" aria-hidden="true">*</span></label>
+        <div class="table-form__stepper" role="group" aria-label="Seats">
           <button
             type="button"
-            class="table-form__btn table-form__btn--danger"
-            (click)="requestDelete()"
-            [disabled]="saving()"
+            class="table-form__stepper-btn"
+            aria-label="Decrease seats"
+            [disabled]="seatCount <= 1"
+            (click)="changeSeats(-1)"
           >
-            Delete table
+            &minus;
           </button>
-        }
-        <span class="table-form__spacer"></span>
-        <button type="button" class="table-form__btn table-form__btn--ghost" (click)="close()">Cancel</button>
-        <button type="submit" class="table-form__btn table-form__btn--primary" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : isEditMode ? 'Save changes' : 'Add table' }}
-        </button>
+          <div class="table-form__stepper-value" id="table-seat-count" aria-live="polite">{{ seatCount }}</div>
+          <button
+            type="button"
+            class="table-form__stepper-btn"
+            aria-label="Increase seats"
+            [disabled]="seatCount >= 20"
+            (click)="changeSeats(1)"
+          >
+            +
+          </button>
+        </div>
+        <div class="table-form__help">A {{ form.controls.shape.value.toLowerCase() }} table seats up to 10 comfortably.</div>
+      </div>
+
+      @if (!isEditMode) {
+        <div class="table-form__bulk">
+          <div class="table-form__bulk-row">
+            <div class="table-form__bulk-text">
+              <label for="table-bulk-count">
+                How many tables?
+                <span class="table-form__bulk-badge">BULK</span>
+              </label>
+              <div class="table-form__help">
+                Create several at once with this same shape and seat count. We'll number them
+                <em>{{ form.controls.name.value || 'Name' }} · 1</em>, <em>{{ form.controls.name.value || 'Name' }} · 2</em>&hellip;
+              </div>
+            </div>
+            <div class="table-form__stepper table-form__stepper--compact">
+              <button
+                type="button"
+                class="table-form__stepper-btn table-form__stepper-btn--sm"
+                aria-label="Decrease number of tables"
+                [disabled]="bulkCount <= 1"
+                (click)="changeBulkCount(-1)"
+              >
+                &minus;
+              </button>
+              <div class="table-form__stepper-value table-form__stepper-value--sm" id="table-bulk-count" aria-live="polite">
+                {{ bulkCount }}
+              </div>
+              <button
+                type="button"
+                class="table-form__stepper-btn table-form__stepper-btn--sm"
+                aria-label="Increase number of tables"
+                [disabled]="bulkCount >= 20"
+                (click)="changeBulkCount(1)"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          @if (previewChips().length > 0) {
+            <div class="table-form__preview" aria-label="Tables to be created">
+              @for (chip of previewChips(); track chip) {
+                <span class="table-form__preview-chip">{{ chip }}</span>
+              }
+            </div>
+          }
+        </div>
       }
-    </footer>
-  </form>
-</p-dialog>
+
+      @if (error()) {
+        <p class="table-form__error table-form__error--form" role="alert">{{ error() }}</p>
+      }
+    </div>
+
+    <div modalFooter>
+      <footer class="table-form__foot">
+        @if (submitted() && invalidCount() > 0) {
+          <div class="table-form__foot-note table-form__foot-note--error">
+            {{ invalidCount() }} field{{ invalidCount() === 1 ? '' : 's' }} need attention
+          </div>
+        } @else {
+          <div class="table-form__foot-note">* Required fields</div>
+        }
+        <div class="table-form__foot-actions">
+          <button type="button" class="table-form__btn table-form__btn--ghost" [disabled]="saving()" (click)="modal.requestClose()">
+            Cancel
+          </button>
+          <button type="submit" class="table-form__btn table-form__btn--primary" [disabled]="saving()">
+            {{
+              saving()
+                ? (isEditMode ? 'Saving…' : 'Adding…')
+                : isEditMode
+                  ? 'Save changes'
+                  : bulkCount > 1
+                    ? 'Create ' + bulkCount + ' tables'
+                    : 'Add table'
+            }}
+          </button>
+        </div>
+      </footer>
+    </div>
+  </app-modal>
+</form>

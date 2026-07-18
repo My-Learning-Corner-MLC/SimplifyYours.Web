@@ -1,8 +1,7 @@
 import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Observable, Subject, debounceTime, forkJoin, tap } from 'rxjs';
+import { Observable, Subject, debounceTime, tap } from 'rxjs';
 
-import { GuestApiClient } from '../guests/guest-api-client';
-import { Guest } from '../guests/guest.model';
+import { GuestListStore } from '../guests/guest-list-store';
 import { withAreaMoved, withGuestAssigned, withGuestUnassigned, withTableMoved } from './seating-layout-mutations';
 import { SeatingApiClient } from './seating-api-client';
 import { AreaPositionInput, SeatingBatchOp, TablePositionInput } from './seating-batch.model';
@@ -34,7 +33,7 @@ const MAX_PENDING_OPS = 100;
 @Injectable()
 export class SeatingStore implements OnDestroy {
   private readonly api = inject(SeatingApiClient);
-  private readonly guestApi = inject(GuestApiClient);
+  private readonly guestListStore = inject(GuestListStore);
 
   private eventId = '';
 
@@ -43,7 +42,6 @@ export class SeatingStore implements OnDestroy {
   readonly saveState = signal<SaveState>('idle');
   readonly actionError = signal<string | null>(null);
   private readonly layout = signal<SeatingLayout | null>(null);
-  private readonly guests = signal<Guest[]>([]);
 
   private readonly pendingAssignOps = new Map<string, SeatingBatchOp>();
   private readonly pendingPositionOps = new Map<string, TablePositionInput>();
@@ -81,7 +79,7 @@ export class SeatingStore implements OnDestroy {
       tableCount: tables.length,
       seatCount: tables.reduce((sum, table) => sum + table.seatCount, 0),
       seatedCount,
-      floatingCount: Math.max(this.guests().length - seatedCount, 0),
+      floatingCount: Math.max(this.guestListStore.guests().length - seatedCount, 0),
     };
   });
 
@@ -92,7 +90,7 @@ export class SeatingStore implements OnDestroy {
         .map((seat) => seat.guestId)
         .filter((id): id is string => id !== null),
     );
-    return this.guests().filter((guest) => !seatedGuestIds.has(guest.id));
+    return this.guestListStore.guests().filter((guest) => !seatedGuestIds.has(guest.id));
   });
 
   load(eventId: string, force = false): void {
@@ -111,7 +109,11 @@ export class SeatingStore implements OnDestroy {
     this.pendingPositionOps.clear();
     this.pendingAreaPositionOps.clear();
 
-    this.fetchLayoutAndGuests().subscribe({
+    // Cache-first: if the Guests tab already loaded this event's guest list,
+    // reuse it instead of fetching it again.
+    this.guestListStore.load(eventId);
+
+    this.fetchLayout().subscribe({
       next: () => this.state.set('ready'),
       error: (error: SeatingError | { kind: string; message: string }) => {
         this.loadError.set({ kind: this.normalizeErrorKind(error.kind), message: error.message });
@@ -152,7 +154,7 @@ export class SeatingStore implements OnDestroy {
   }
 
   assignGuest(guestId: string, tableId: string, seatIndex: number): void {
-    const guest = this.guests().find((g) => g.id === guestId);
+    const guest = this.guestListStore.guests().find((g) => g.id === guestId);
     const current = this.layout();
     if (!guest || !current) {
       return;
@@ -381,21 +383,13 @@ export class SeatingStore implements OnDestroy {
     return this.api.deleteArea(this.eventId, areaId).pipe(tap(() => this.silentReload()));
   }
 
-  /** Refreshes layout/guests signals in place without disturbing `state` (no loading skeleton flash). */
+  /** Refreshes the layout signal in place without disturbing `state` (no loading skeleton flash). */
   private silentReload(): void {
-    this.fetchLayoutAndGuests().subscribe();
+    this.fetchLayout().subscribe();
   }
 
-  private fetchLayoutAndGuests(): Observable<{ layout: SeatingLayout; guests: Guest[] }> {
-    return forkJoin({
-      layout: this.api.getLayout(this.eventId),
-      guests: this.guestApi.listGuests(this.eventId),
-    }).pipe(
-      tap(({ layout, guests }) => {
-        this.layout.set(layout);
-        this.guests.set(guests);
-      }),
-    );
+  private fetchLayout(): Observable<SeatingLayout> {
+    return this.api.getLayout(this.eventId).pipe(tap((layout) => this.layout.set(layout)));
   }
 
   private normalizeErrorKind(kind: string): SeatingError['kind'] {

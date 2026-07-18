@@ -66,22 +66,55 @@ describe('TableFormModalComponent', () => {
     expect(fixture.componentInstance.form.controls.name.touched).toBe(true);
   });
 
-  it('previewNames shows Name · N chips when bulk count > 1', () => {
+  it('previewChips shows Name · N · shape · seats chips when bulk count > 1', () => {
     const fixture = setup({});
     const c = fixture.componentInstance;
     c.form.controls.name.setValue('Table');
+    c.form.controls.shape.setValue('Round');
+    c.form.controls.seatCount.setValue(8);
     c.form.controls.bulkCount.setValue(3);
 
-    expect(c.previewNames()).toEqual(['Table · 1', 'Table · 2', 'Table · 3']);
+    expect(c.previewChips()).toEqual(['Table · 1 · round · 8', 'Table · 2 · round · 8', 'Table · 3 · round · 8']);
   });
 
-  it('previewNames shows just the plain name when bulk count is 1', () => {
+  it('previewChips shows a single Name · shape · seats chip when bulk count is 1', () => {
     const fixture = setup({});
     const c = fixture.componentInstance;
     c.form.controls.name.setValue('Table');
+    c.form.controls.shape.setValue('Long');
+    c.form.controls.seatCount.setValue(6);
     c.form.controls.bulkCount.setValue(1);
 
-    expect(c.previewNames()).toEqual(['Table']);
+    expect(c.previewChips()).toEqual(['Table · long · 6']);
+  });
+
+  it('changeSeats increments and decrements, clamped between 1 and 20', () => {
+    const fixture = setup({});
+    const c = fixture.componentInstance;
+    c.form.controls.seatCount.setValue(1);
+
+    c.changeSeats(-1);
+    expect(c.seatCount).toBe(1);
+
+    c.form.controls.seatCount.setValue(20);
+    c.changeSeats(1);
+    expect(c.seatCount).toBe(20);
+
+    c.form.controls.seatCount.setValue(8);
+    c.changeSeats(1);
+    expect(c.seatCount).toBe(9);
+  });
+
+  it('changeBulkCount increments and decrements, clamped between 1 and 20', () => {
+    const fixture = setup({});
+    const c = fixture.componentInstance;
+    c.form.controls.bulkCount.setValue(1);
+
+    c.changeBulkCount(-1);
+    expect(c.bulkCount).toBe(1);
+
+    c.changeBulkCount(1);
+    expect(c.bulkCount).toBe(2);
   });
 
   it('calls createTables with the form values and closes on success', () => {
@@ -128,20 +161,6 @@ describe('TableFormModalComponent', () => {
     expect(closedSpy).not.toHaveBeenCalled();
   });
 
-  it('requires a second click to actually delete', () => {
-    const deleteTable = vi.fn(() => of(undefined));
-    const fixture = setup({ deleteTable });
-    fixture.componentInstance.table = makeTable();
-    fixture.componentInstance.ngOnChanges({ visible: { currentValue: true, previousValue: true, firstChange: false, isFirstChange: () => false } });
-
-    fixture.componentInstance.requestDelete();
-    expect(fixture.componentInstance.confirmingDelete()).toBe(true);
-    expect(deleteTable).not.toHaveBeenCalled();
-
-    fixture.componentInstance.requestDelete();
-    expect(deleteTable).toHaveBeenCalledWith('t1');
-  });
-
   it('shows a saving indicator while a mutation is pending', () => {
     const pending = new Subject<SeatingTable[]>();
     const fixture = setup({ createTables: () => pending.asObservable() });
@@ -150,5 +169,27 @@ describe('TableFormModalComponent', () => {
     fixture.componentInstance.submit();
 
     expect(fixture.componentInstance.saving()).toBe(true);
+  });
+
+  it('reports an invalid field count when the name is blank, and clears once filled in', () => {
+    const fixture = setup({});
+    const c = fixture.componentInstance;
+
+    c.form.controls.name.setValue('');
+    c.submit();
+    expect(c.invalidCount()).toBe(1);
+
+    c.form.controls.name.setValue('Table');
+    expect(c.invalidCount()).toBe(0);
+  });
+
+  it('does not render a Delete table action', () => {
+    const fixture = setup({});
+    fixture.componentInstance.table = makeTable();
+    fixture.componentInstance.ngOnChanges({ visible: { currentValue: true, previousValue: true, firstChange: false, isFirstChange: () => false } });
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('Delete table');
   });
 });

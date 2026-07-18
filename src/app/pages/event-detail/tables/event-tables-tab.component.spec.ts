@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 
 import { GuestApiClient } from '../../../core/guests/guest-api-client';
+import { GuestListStore } from '../../../core/guests/guest-list-store';
 import { SeatingApiClient } from '../../../core/seating/seating-api-client';
 import { SeatingLayout } from '../../../core/seating/seating-layout.model';
 import { SeatingStore } from '../../../core/seating/seating-store';
@@ -27,6 +28,7 @@ function setup(seatingApi: Partial<SeatingApiClient>, guestApi: Partial<GuestApi
     imports: [EventTablesTabComponent],
     providers: [
       SeatingStore,
+      GuestListStore,
       { provide: SeatingApiClient, useValue: seatingApiWithDefaults },
       { provide: GuestApiClient, useValue: guestApi },
     ],

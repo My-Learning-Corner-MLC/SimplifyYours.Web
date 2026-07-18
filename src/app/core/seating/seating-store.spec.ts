@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { GuestApiClient } from '../guests/guest-api-client';
+import { GuestListStore } from '../guests/guest-list-store';
 import { Guest } from '../guests/guest.model';
 import { SeatingApiClient } from './seating-api-client';
 import { SeatingLayout } from './seating-layout.model';
@@ -41,6 +42,7 @@ function createStore(
   TestBed.configureTestingModule({
     providers: [
       SeatingStore,
+      GuestListStore,
       { provide: SeatingApiClient, useValue: seatingApiWithDefaults },
       { provide: GuestApiClient, useValue: guestApi },
     ],
