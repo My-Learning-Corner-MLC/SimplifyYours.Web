@@ -26,6 +26,7 @@ export const routes: Routes = [
     path: 'events/:id',
     loadComponent: () =>
       import('./pages/event-detail/event-detail-page').then((m) => m.EventDetailPage),
+    canActivate: [authenticatedGuard],
   },
   {
     path: 'auth/callback',

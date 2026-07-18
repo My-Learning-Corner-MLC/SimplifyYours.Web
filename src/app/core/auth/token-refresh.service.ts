@@ -48,7 +48,15 @@ export class TokenRefreshService {
     }
     const bundle = this.tokenStorage.read();
     if (!bundle) {
-      return Promise.resolve(null);
+      // Share the in-flight slot so concurrent 401s racing in with no stored
+      // bundle don't each independently call fail() and duplicate the
+      // session-expired redirect/toast.
+      const promise = Promise.resolve(null).finally(() => {
+        this.inFlightRefresh = null;
+      });
+      this.inFlightRefresh = promise;
+      this.fail();
+      return promise;
     }
     return this.refresh(bundle.refreshToken);
   }
