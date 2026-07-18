@@ -421,5 +421,44 @@ describe('EventTablesTabComponent', () => {
       expect(fixture.componentInstance.formModalOpen()).toBe(true);
       expect(fixture.componentInstance.editingTable()?.id).toBe('t1');
     });
+
+    it('createRoomElement creates the preset area directly, without opening the modal', () => {
+      const createArea = vi.fn(() =>
+        of({
+          id: 'a1',
+          name: 'Stage',
+          kind: 'Stage' as const,
+          shape: 'Rect' as const,
+          width: 3.4,
+          height: 0.9,
+          positionX: null,
+          positionY: null,
+          rotation: 0,
+          color: '#5A2849',
+          capacity: null,
+        }),
+      );
+      const { fixture } = setup({ getLayout: () => of(layout()), createArea });
+
+      fixture.componentInstance.createRoomElement({
+        kind: 'Stage',
+        label: 'Stage',
+        defaultShape: 'Rect',
+        defaultWidth: 3.4,
+        defaultHeight: 0.9,
+        defaultColor: '#5A2849',
+      });
+
+      expect(createArea).toHaveBeenCalledWith('e1', {
+        name: 'Stage',
+        kind: 'Stage',
+        shape: 'Rect',
+        width: 3.4,
+        height: 0.9,
+        color: '#5A2849',
+        capacity: null,
+      });
+      expect(fixture.componentInstance.areaModalOpen()).toBe(false);
+    });
   });
 });

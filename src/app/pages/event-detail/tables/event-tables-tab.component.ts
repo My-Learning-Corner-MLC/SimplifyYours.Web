@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 
 import { guestFullName } from '../../../core/guests/guest.model';
+import { AreaPreset } from '../../../core/seating/area-kind.model';
 import { SeatingStore } from '../../../core/seating/seating-store';
 import { SeatingTable } from '../../../core/seating/seating-table.model';
 import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
@@ -138,6 +139,24 @@ export class EventTablesTabComponent implements OnInit, OnChanges {
 
   closeAreaModal(): void {
     this.areaModalOpen.set(false);
+  }
+
+  // Room-elements palette: creates the preset directly (no modal) — a
+  // one-click shortcut for the common venue fixtures. Position is left null;
+  // the floor-plan canvas auto-arranges any unplaced area into view, same as
+  // an unplaced table, and the organizer drags it from there.
+  createRoomElement(preset: AreaPreset): void {
+    this.store
+      .createArea({
+        name: preset.label,
+        kind: preset.kind,
+        shape: preset.defaultShape,
+        width: preset.defaultWidth,
+        height: preset.defaultHeight,
+        color: preset.defaultColor,
+        capacity: null,
+      })
+      .subscribe();
   }
 
   toggleFull(table: SeatingTable): void {

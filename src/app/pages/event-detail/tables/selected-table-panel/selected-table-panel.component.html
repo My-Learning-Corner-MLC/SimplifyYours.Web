@@ -44,7 +44,24 @@
   }
 
   <div class="selected-panel__palette">
-    <span class="selected-panel__palette-label">Room elements</span>
+    <div class="selected-panel__palette-head">
+      <span class="selected-panel__palette-hint">Drag into the room</span>
+      <span class="selected-panel__palette-label">Palette</span>
+    </div>
+    <div class="selected-panel__palette-grid" role="group" aria-label="Room elements">
+      @for (preset of roomElementPresets; track preset.kind) {
+        <button
+          type="button"
+          class="selected-panel__palette-tile"
+          data-testid="room-element-tile"
+          [attr.data-kind]="preset.kind"
+          (click)="addRoomElement.emit(preset)"
+        >
+          <span class="selected-panel__palette-swatch" [class]="swatchClass(preset.kind)" aria-hidden="true"></span>
+          {{ preset.label }}
+        </button>
+      }
+    </div>
     <button
       type="button"
       class="selected-panel__add-area-btn"
@@ -53,5 +70,6 @@
     >
       + Add a custom area
     </button>
+    <p class="selected-panel__palette-help">Photo booth, kids' corner, gift table — name it, draw a rectangle in the room.</p>
   </div>
 </aside>
