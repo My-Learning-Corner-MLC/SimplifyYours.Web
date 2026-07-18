@@ -56,6 +56,16 @@ describe('app routes', () => {
       await router.navigate(['/create-event']);
       expect(location.path()).toBe('/home');
     });
+
+    // Regression: events/:id had no guard, so an unauthenticated user reached
+    // the component, the detail request 401'd, and the page was stuck on its
+    // loading skeleton forever instead of being redirected.
+    it('redirects the authenticated-only "/events/:id" route to "/home"', async () => {
+      const router = TestBed.inject(Router);
+      const location = TestBed.inject(Location);
+      await router.navigate(['/events/0dbfdfc7-ac69-430b-9d76-2f0002e3bfd9']);
+      expect(location.path()).toBe('/home');
+    });
   });
 
   describe('signed in', () => {
@@ -87,6 +97,13 @@ describe('app routes', () => {
       const location = TestBed.inject(Location);
       await router.navigate(['/create-event']);
       expect(location.path()).toBe('/create-event');
+    });
+
+    it('resolves /events/:id to the event-detail page', async () => {
+      const router = TestBed.inject(Router);
+      const location = TestBed.inject(Location);
+      await router.navigate(['/events/0dbfdfc7-ac69-430b-9d76-2f0002e3bfd9']);
+      expect(location.path()).toBe('/events/0dbfdfc7-ac69-430b-9d76-2f0002e3bfd9');
     });
   });
 

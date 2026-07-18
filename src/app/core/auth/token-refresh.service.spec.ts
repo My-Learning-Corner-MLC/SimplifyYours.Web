@@ -173,7 +173,10 @@ describe('TokenRefreshService', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
-  it('ensureFreshToken resolves to null when there is no stored bundle', async () => {
+  it('ensureFreshToken resolves to null and calls onFailure when there is no stored bundle', async () => {
+    // Regression: a 401 with no token bundle used to resolve to null silently,
+    // leaving callers (e.g. the bearer-token interceptor) with no failure signal
+    // and consumers like event-detail-page stuck on their loading state forever.
     const fetchImpl = vi.fn();
     vi.stubGlobal('fetch', fetchImpl);
 
@@ -181,6 +184,7 @@ describe('TokenRefreshService', () => {
 
     expect(result).toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
+    expect(failure).toHaveBeenCalledTimes(1);
   });
 
   it('ensureFreshToken performs a refresh and returns the new bundle', async () => {
@@ -222,6 +226,23 @@ describe('TokenRefreshService', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(first?.accessToken).toBe('a2');
     expect(second?.accessToken).toBe('a2');
+  });
+
+  it('ensureFreshToken calls onFailure only once when concurrent callers race with no stored bundle', async () => {
+    // Regression: the no-bundle branch used to bypass the in-flight dedup, so
+    // two concurrent 401s with no token bundle each called fail() and stacked
+    // duplicate "session expired" redirects/toasts.
+    const fetchImpl = vi.fn();
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const [first, second] = await Promise.all([
+      service.ensureFreshToken(),
+      service.ensureFreshToken(),
+    ]);
+
+    expect(first).toBeNull();
+    expect(second).toBeNull();
+    expect(failure).toHaveBeenCalledTimes(1);
   });
 
   it('ensureFreshToken resolves to null and calls onFailure when the refresh fails', async () => {
