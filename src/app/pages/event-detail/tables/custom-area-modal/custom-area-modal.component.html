@@ -1,158 +1,167 @@
-<p-dialog
-  [visible]="visible"
-  [modal]="true"
-  [closable]="false"
-  [draggable]="false"
-  styleClass="area-modal"
-  (onHide)="close()"
->
-  <ng-template pTemplate="header">
-    <div class="area-modal__header">
-      <span class="area-modal__label">{{ isEditMode ? 'EDIT AREA' : 'ADD A CUSTOM AREA' }}</span>
-      <h2 class="area-modal__title">{{ isEditMode ? 'Update this room element' : 'Add a room element' }}</h2>
-    </div>
-  </ng-template>
-
-  <form
-    class="area-modal__body"
-    [formGroup]="form"
-    (ngSubmit)="submit()"
-    data-testid="area-form"
-    id="area-form"
-    novalidate
+<form class="area-form" [formGroup]="form" (ngSubmit)="submit()" data-testid="area-form">
+  <app-modal
+    #modal
+    [open]="visible"
+    ariaLabelledby="area-form-title"
+    maxWidth="34rem"
+    [disableClose]="saving()"
+    (closed)="close()"
   >
-    <!-- Preset chips -->
-    <div class="area-modal__field">
-      <span class="area-modal__field-label">Quick presets</span>
-      <div class="area-modal__presets" role="group" aria-label="Area presets">
-        @for (preset of presets; track preset.kind) {
-          <button
-            type="button"
-            class="area-modal__preset"
-            [class.area-modal__preset--selected]="form.controls.kind.value === preset.kind"
-            (click)="applyPreset(preset)"
-          >{{ preset.label }}</button>
-        }
-      </div>
+    <div modalHeader>
+      <header class="area-form__head">
+        <div>
+          <div class="area-form__eyebrow">{{ isEditMode ? 'EDIT AREA' : 'ADD A CUSTOM AREA' }}</div>
+          <h2 class="area-form__title" id="area-form-title">
+            @if (isEditMode) {
+              Update this <span class="area-form__italic">corner.</span>
+            } @else {
+              A corner for <span class="area-form__italic">something special.</span>
+            }
+          </h2>
+        </div>
+        <button type="button" class="area-form__close" aria-label="Close" (click)="modal.requestClose()">&times;</button>
+      </header>
+      <div class="area-form__rule"></div>
     </div>
 
-    <!-- Name -->
-    <div class="area-modal__field">
-      <label class="area-modal__field-label" for="area-name">Name</label>
-      <input
-        id="area-name"
-        type="text"
-        class="area-modal__input"
-        formControlName="name"
-        placeholder="e.g. Photo booth"
-        autocomplete="off"
-        data-testid="area-name-input"
-      />
-    </div>
-
-    <!-- Shape -->
-    <div class="area-modal__field">
-      <span class="area-modal__field-label">Shape</span>
-      <div class="area-modal__shape-toggle" role="group" aria-label="Area shape">
-        @for (shape of shapes; track shape) {
-          <button
-            type="button"
-            class="area-modal__shape-btn"
-            [class.area-modal__shape-btn--active]="form.controls.shape.value === shape"
-            (click)="form.controls.shape.setValue(shape)"
-          >{{ shape }}</button>
-        }
-      </div>
-    </div>
-
-    <!-- Dimensions -->
-    <div class="area-modal__row">
-      <div class="area-modal__field">
-        <label class="area-modal__field-label" for="area-width">Width (m)</label>
+    <div class="area-form__body">
+      <div class="area-form__field">
+        <label for="area-name">Area name</label>
+        <div class="area-form__help">Photo booth, gift table, kids' corner — guests will see this on the seating chart.</div>
         <input
-          id="area-width"
-          type="number"
-          class="area-modal__input area-modal__input--sm"
-          formControlName="width"
-          min="0.5"
-          max="50"
-          step="0.5"
+          id="area-name"
+          type="text"
+          class="area-form__input"
+          formControlName="name"
+          placeholder="e.g. Photo booth"
+          autocomplete="off"
+          data-testid="area-name-input"
         />
       </div>
-      <div class="area-modal__field">
-        <label class="area-modal__field-label" for="area-height">Depth (m)</label>
-        <input
-          id="area-height"
-          type="number"
-          class="area-modal__input area-modal__input--sm"
-          formControlName="height"
-          min="0.5"
-          max="50"
-          step="0.5"
-        />
+
+      <div class="area-form__field">
+        <span>Start from a preset <span class="area-form__optional">(optional)</span></span>
+        <div class="area-form__presets" role="group" aria-label="Area presets">
+          @for (preset of presets; track preset.key) {
+            <button
+              type="button"
+              class="area-form__preset"
+              [class.area-form__preset--selected]="isPresetSelected(preset)"
+              (click)="applyPreset(preset)"
+            ><span aria-hidden="true">{{ preset.icon }}</span> {{ preset.label }}</button>
+          }
+        </div>
       </div>
-      <div class="area-modal__field">
-        <label class="area-modal__field-label" for="area-capacity">Capacity (optional)</label>
-        <input
-          id="area-capacity"
-          type="number"
-          class="area-modal__input area-modal__input--sm"
-          formControlName="capacity"
-          placeholder="—"
-          min="1"
-        />
+
+      <div class="area-form__row">
+        <div class="area-form__field">
+          <span id="area-shape-label">Shape</span>
+          <div class="area-form__shape-toggle" role="group" aria-labelledby="area-shape-label">
+            @for (shape of shapes; track shape) {
+              <button
+                type="button"
+                class="area-form__shape-btn"
+                [class.area-form__shape-btn--active]="form.controls.shape.value === shape"
+                [attr.aria-pressed]="form.controls.shape.value === shape"
+                (click)="form.controls.shape.setValue(shape)"
+              >
+                <span class="area-form__shape-glyph area-form__shape-glyph--{{ shape.toLowerCase() }}" aria-hidden="true"></span>
+                {{ shape }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="area-form__field">
+          <span>Size <span class="area-form__size-readout">{{ width }} &times; {{ height }} m</span></span>
+          <div class="area-form__dims">
+            <label class="area-form__dim">
+              <span>W</span>
+              <input type="number" formControlName="width" min="0.5" max="50" step="0.1" aria-label="Width in metres" />
+            </label>
+            <label class="area-form__dim">
+              <span>H</span>
+              <input type="number" formControlName="height" min="0.5" max="50" step="0.1" aria-label="Height in metres" />
+            </label>
+          </div>
+        </div>
       </div>
+
+      <div class="area-form__row">
+        <div class="area-form__field">
+          <span>Color</span>
+          <div class="area-form__swatches" role="group" aria-label="Area colour">
+            @for (swatch of swatches; track swatch) {
+              <button
+                type="button"
+                class="area-form__swatch"
+                [class.area-form__swatch--selected]="form.controls.color.value === swatch"
+                [style.background]="swatch"
+                [attr.aria-label]="'Colour ' + swatch"
+                [attr.aria-pressed]="form.controls.color.value === swatch"
+                (click)="selectColor(swatch)"
+              ></button>
+            }
+            <label class="area-form__swatch area-form__swatch--custom" aria-label="Pick a custom colour">
+              +
+              <input type="color" formControlName="color" />
+            </label>
+          </div>
+        </div>
+
+        <div class="area-form__field">
+          <span>Capacity <span class="area-form__optional">(optional)</span></span>
+          <div class="area-form__stepper" role="group" aria-label="Capacity">
+            <button type="button" class="area-form__stepper-btn" aria-label="Decrease capacity" (click)="changeCapacity(-1)">&minus;</button>
+            <div class="area-form__stepper-value" id="area-capacity" aria-live="polite">
+              {{ capacityDisplay }}
+              @if (form.controls.capacity.value === null) {
+                <span class="area-form__na">N/A</span>
+              }
+            </div>
+            <button type="button" class="area-form__stepper-btn" aria-label="Increase capacity" (click)="changeCapacity(1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="area-form__preview-wrap">
+        <span class="area-form__preview-label">Preview in the room</span>
+        <div class="area-form__preview">
+          <div
+            class="area-form__preview-shape"
+            [class.area-form__preview-shape--round]="form.controls.shape.value === 'Round'"
+            [style.background]="form.controls.color.value + '33'"
+            [style.border-color]="form.controls.color.value"
+          >
+            <span class="area-form__preview-name">{{ form.controls.name.value || 'Area name' }}</span>
+            <span class="area-form__preview-size">{{ width }} &times; {{ height }} m</span>
+          </div>
+        </div>
+        <p class="area-form__preview-hint">Place it after saving — drag anywhere in the room.</p>
+      </div>
+
+      @if (error()) {
+        <p class="area-form__error" role="alert" data-testid="area-form-error">{{ error() }}</p>
+      }
     </div>
 
-    <!-- Colour swatches -->
-    <div class="area-modal__field">
-      <span class="area-modal__field-label">Colour</span>
-      <div class="area-modal__swatches" role="group" aria-label="Area colour">
-        @for (swatch of swatches; track swatch) {
+    <div modalFooter>
+      <footer class="area-form__foot">
+        <div class="area-form__foot-note">Saved areas live alongside tables on the floor plan</div>
+        <div class="area-form__foot-actions">
+          <button type="button" class="area-form__btn area-form__btn--ghost" [disabled]="saving()" (click)="modal.requestClose()">
+            Cancel
+          </button>
           <button
-            type="button"
-            class="area-modal__swatch"
-            [class.area-modal__swatch--selected]="form.controls.color.value === swatch"
-            [style.background]="swatch"
-            [attr.aria-label]="'Colour ' + swatch"
-            [attr.aria-pressed]="form.controls.color.value === swatch"
-            (click)="selectColor(swatch)"
-          ></button>
-        }
-      </div>
+            type="submit"
+            class="area-form__btn area-form__btn--primary"
+            [disabled]="form.invalid || saving()"
+            data-testid="area-form-submit"
+          >
+            @if (saving()) { Saving… } @else { {{ isEditMode ? 'Save changes' : 'Add to floor plan' }} }
+          </button>
+        </div>
+      </footer>
     </div>
-
-    <!-- Preview -->
-    <div class="area-modal__preview-wrap">
-      <span class="area-modal__field-label">Preview</span>
-      <div
-        class="area-modal__preview"
-        [class.area-modal__preview--round]="form.controls.shape.value === 'Round'"
-        [style.background]="form.controls.color.value + '66'"
-        [style.border-color]="form.controls.color.value"
-      >{{ form.controls.name.value || 'Area name' }}</div>
-    </div>
-
-    @if (error()) {
-      <p class="area-modal__error" role="alert" data-testid="area-form-error">{{ error() }}</p>
-    }
-  </form>
-
-  <ng-template pTemplate="footer">
-    <div class="area-modal__footer">
-      <button type="button" class="area-modal__btn area-modal__btn--ghost" [disabled]="saving()" (click)="close()">
-        Cancel
-      </button>
-      <button
-        type="submit"
-        form="area-form"
-        class="area-modal__btn area-modal__btn--primary"
-        [disabled]="form.invalid || saving()"
-        data-testid="area-form-submit"
-        (click)="submit()"
-      >
-        @if (saving()) { Saving… } @else { {{ isEditMode ? 'Save changes' : 'Add area' }} }
-      </button>
-    </div>
-  </ng-template>
-</p-dialog>
+  </app-modal>
+</form>
