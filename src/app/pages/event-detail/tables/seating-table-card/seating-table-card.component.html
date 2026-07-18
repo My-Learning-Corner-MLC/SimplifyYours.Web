@@ -34,15 +34,33 @@
         [style.top.%]="seatVm.yPercent"
       >
         @if (seatVm.seat.guestId !== null) {
-          <!-- Only a filled seat is a drag source (move to another seat); an empty
-               or reserved seat carries no cdkDrag at all — CDK still treats a
-               disabled cdkDrag as a sortable list member and transforms it out of
-               place when another drag enters this slot's drop list. -->
-          <button
-            type="button"
+          <!-- Visual: always rendered from the seat's own data, and NOT itself
+               the cdkDrag element. Angular CDK relocates a drag item's
+               placeholder out of its origin drop-list the instant the pointer
+               merely hovers a different *accepting* connected list (see
+               DragRef._updateActiveDropContainer's exit()/enter() pair) — well
+               before any actual drop. If the guest's initial lived inside the
+               dragged element itself, the origin seat would visibly go blank
+               the moment a different seat is hovered, looking like the guest
+               had already moved. Keeping it as a separate sibling — untouched
+               by that relocation — means the seat keeps showing its occupant
+               until a real drop actually reassigns them. -->
+          <span
             class="table-card__seat table-card__seat--filled"
             [class.table-card__seat--drop-target]="hoveredSeatIndex() === seatVm.seat.seatIndex"
             [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
+            aria-hidden="true"
+          >{{ seatVm.initial }}</span>
+
+          <!-- Interaction: an invisible drag handle overlaying the visual above,
+               purely to capture the gesture — cdkDrag's own placeholder can be
+               shuffled between connected seat drop-lists all it wants, since it
+               carries no visible content of its own. Its floating drag preview
+               is rendered separately below so dragging still shows the guest's
+               chip following the pointer. -->
+          <button
+            type="button"
+            class="table-card__seat-handle"
             cdkDrag
             [cdkDragData]="seatVm.seat.guestId"
             [attr.aria-label]="seatLabel(seatVm.seat)"
@@ -50,7 +68,14 @@
             (click)="onSeatClick(seatVm.seat)"
             (cdkDragStarted)="onSeatDragStarted()"
             (cdkDragEnded)="onSeatDragEnded(seatVm.seat, $event)"
-          >{{ seatVm.initial }}</button>
+          >
+            <ng-template cdkDragPreview [matchSize]="false">
+              <span
+                class="table-card__seat table-card__seat--filled"
+                [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
+              >{{ seatVm.initial }}</span>
+            </ng-template>
+          </button>
         } @else {
           <button
             type="button"

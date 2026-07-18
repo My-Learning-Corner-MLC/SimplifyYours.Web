@@ -100,6 +100,29 @@ $hairline: #ece2d2;
     transform: translate(-50%, -50%);
   }
 
+  // Invisible overlay used purely to capture the drag/click gesture on a
+  // filled seat — see the template comment on why the visible avatar lives in
+  // a separate, non-draggable sibling instead of inside this element.
+  &__seat-handle {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    opacity: 0;
+    cursor: grab;
+
+    &:focus-visible {
+      opacity: 1;
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+
   &__seat {
     display: flex;
     align-items: center;

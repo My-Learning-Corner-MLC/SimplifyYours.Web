@@ -49,7 +49,7 @@ describe('SeatingTableCardComponent', () => {
     expect(filled[0].textContent.trim()).toBe('A');
   });
 
-  it('only makes filled seats a cdkDrag source — empty/reserved seats carry no cdkDrag, so CDK cannot transform them out of place while a guest chip drags over their drop list', () => {
+  it('only makes a filled seat\'s drag handle a cdkDrag source — empty/reserved seats carry no cdkDrag at all, and a filled seat\'s own visible avatar is not the dragged element either', () => {
     const fixture = setup(
       makeTable({
         seats: [
@@ -62,10 +62,18 @@ describe('SeatingTableCardComponent', () => {
     );
 
     const seats = fixture.nativeElement.querySelectorAll('.table-card__seat');
-    expect(seats[0].classList.contains('cdk-drag')).toBe(true);
+    // The visible avatar span itself must NOT be the drag item — see BUG-007:
+    // CDK relocates a drag item's placeholder out of its origin drop-list the
+    // moment a different seat is merely hovered, which would make this seat
+    // look vacated before any drop if its own avatar were the dragged element.
+    expect(seats[0].classList.contains('cdk-drag')).toBe(false);
     expect(seats[1].classList.contains('cdk-drag')).toBe(false);
     expect(seats[2].classList.contains('cdk-drag')).toBe(false);
     expect(seats[3].classList.contains('cdk-drag')).toBe(false);
+
+    const handle = fixture.nativeElement.querySelector('.table-card__seat-handle');
+    expect(handle).not.toBeNull();
+    expect(handle.classList.contains('cdk-drag')).toBe(true);
   });
 
   it('re-renders seats and the footer when the table input changes', () => {

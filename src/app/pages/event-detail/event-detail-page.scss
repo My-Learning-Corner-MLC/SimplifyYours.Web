@@ -223,25 +223,29 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
   }
 
   // ---- Tabs (sliding underline) ----------------------------------------
-  // `nowrap` + horizontal scroll (not `flex-wrap: wrap`) keeps every tab on a
-  // single row — the sliding indicator is positioned via one shared bottom
-  // edge, so a wrapped second row would put the active tab's underline in
-  // the wrong place.
+  // `nowrap` (not `flex-wrap: wrap`) keeps every tab on a single row at every
+  // width — the sliding indicator is positioned via one shared bottom edge,
+  // so a wrapped second row would put the active tab's underline in the
+  // wrong place. `overflow-x` stays the browser default (visible) outside the
+  // mobile breakpoint: making this a scroll container unconditionally was
+  // measurably janking the indicator's transform transition on desktop/tablet
+  // (nothing there ever needs to scroll — four tabs fit comfortably), so it's
+  // now scoped to only the narrow viewports where tabs can actually overflow.
   &__tabs {
     position: relative;
     display: flex;
     flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
     padding: 0 56px;
     border-bottom: 1px solid $hairline;
 
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
     @media (max-width: 640px) {
       padding: 0 32px;
+      overflow-x: auto;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
     }
   }
 
