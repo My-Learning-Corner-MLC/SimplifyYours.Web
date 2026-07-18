@@ -1,11 +1,10 @@
 import { guestMetadataFieldsFor } from './guest-metadata-field-config';
 
 describe('guestMetadataFieldsFor', () => {
-  it('returns all five fields for wedding events', () => {
+  it('returns the wedding metadata fields (tags now live on the guest, not per-event-type)', () => {
     expect(guestMetadataFieldsFor('wedding')).toEqual([
       'relationship',
       'side',
-      'tags',
       'plusOnes',
       'dietaryNotes',
     ]);

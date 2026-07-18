@@ -9,6 +9,8 @@ export interface AddGuestRequest {
     readonly lastName: string;
     readonly phoneNumber: string;
     readonly emailAddress: string;
+    // Free-text seating labels (e.g. "College friends"). Applies to every event type.
+    readonly tags?: readonly string[];
     readonly eventMetadata?: Record<string, unknown> | null;
   };
 }

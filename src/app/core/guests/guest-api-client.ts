@@ -33,6 +33,7 @@ interface AddGuestResponseBody {
     readonly phoneNumber: string;
     readonly emailAddress: string | null;
     readonly eventMetadata: unknown;
+    readonly tags: readonly string[];
   };
   readonly createdAt: string;
 }
@@ -73,6 +74,7 @@ export class GuestApiClient {
       emailAddress: body.guestInfo.emailAddress,
       phoneNumber: body.guestInfo.phoneNumber,
       eventMetadata: body.guestInfo.eventMetadata,
+      tags: body.guestInfo.tags ?? [],
       createdAt: body.createdAt,
     };
   }

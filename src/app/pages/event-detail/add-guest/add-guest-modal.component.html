@@ -168,49 +168,47 @@
           </div>
         }
 
-        <!-- Table tag — which guests should sit together; wedding-only, see guestMetadataFieldsFor. -->
-        @if (hasField('tags')) {
-          <div class="ag-field" data-testid="add-guest-tags">
-            <label class="ag-label" for="ag-tag-input">Table tag <span class="ag-optional">(optional)</span></label>
-            <div class="ag-help">Group guests who'll sit together — speeds up seating in the next step.</div>
-            <div class="ag-tags-input">
-              @for (tag of tags(); track tag; let i = $index) {
-                <span class="ag-tag-chip">
-                  {{ tag }}
-                  <button
-                    type="button"
-                    class="ag-tag-remove"
-                    [attr.aria-label]="'Remove tag ' + tag"
-                    (click)="removeTag(i)"
-                  >
-                    ×
-                  </button>
-                </span>
-              }
-              <input
-                id="ag-tag-input"
-                type="text"
-                class="ag-tag-field"
-                [value]="tagDraft()"
-                [disabled]="tags().length >= maxTags"
-                placeholder="Add another tag…"
-                autocomplete="off"
-                (input)="setTagDraft($any($event.target).value)"
-                (keydown)="onTagInputKeydown($event)"
-                (blur)="addTag()"
-              />
-            </div>
-            @if (availableSuggestions().length > 0) {
-              <div class="ag-tag-suggestions">
-                @for (suggestion of availableSuggestions(); track suggestion) {
-                  <button type="button" class="ag-tag-suggestion" (click)="addTag(suggestion)">
-                    + {{ suggestion }}
-                  </button>
-                }
-              </div>
+        <!-- Table tag — free-text seating labels; applies to every event type. -->
+        <div class="ag-field" data-testid="add-guest-tags">
+          <label class="ag-label" for="ag-tag-input">Table tag <span class="ag-optional">(optional)</span></label>
+          <div class="ag-help">Group guests who'll sit together — speeds up seating in the next step.</div>
+          <div class="ag-tags-input">
+            @for (tag of tags(); track tag; let i = $index) {
+              <span class="ag-tag-chip">
+                {{ tag }}
+                <button
+                  type="button"
+                  class="ag-tag-remove"
+                  [attr.aria-label]="'Remove tag ' + tag"
+                  (click)="removeTag(i)"
+                >
+                  ×
+                </button>
+              </span>
             }
+            <input
+              id="ag-tag-input"
+              type="text"
+              class="ag-tag-field"
+              [value]="tagDraft()"
+              [disabled]="tags().length >= maxTags"
+              placeholder="Add another tag…"
+              autocomplete="off"
+              (input)="setTagDraft($any($event.target).value)"
+              (keydown)="onTagInputKeydown($event)"
+              (blur)="addTag()"
+            />
           </div>
-        }
+          @if (availableSuggestions().length > 0) {
+            <div class="ag-tag-suggestions">
+              @for (suggestion of availableSuggestions(); track suggestion) {
+                <button type="button" class="ag-tag-suggestion" (click)="addTag(suggestion)">
+                  + {{ suggestion }}
+                </button>
+              }
+            </div>
+          }
+        </div>
 
         <!-- Plus-ones / Dietary notes — which of these render (if any) depends on the event's
              type; see guestMetadataFieldsFor. -->

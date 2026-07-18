@@ -12,7 +12,6 @@ export interface WeddingGuestMetadata {
   readonly side: GuestSide | null;
   readonly plusOnes: number;
   readonly dietaryNotes: string | null;
-  readonly tags: readonly string[];
 }
 
 /** Narrows a Guest's opaque `eventMetadata` to the wedding shape; null when absent/malformed. */
@@ -27,6 +26,5 @@ export function asWeddingGuestMetadata(eventMetadata: unknown): WeddingGuestMeta
     side: value.side ?? null,
     plusOnes: value.plusOnes ?? 0,
     dietaryNotes: value.dietaryNotes ?? null,
-    tags: value.tags ?? [],
   };
 }

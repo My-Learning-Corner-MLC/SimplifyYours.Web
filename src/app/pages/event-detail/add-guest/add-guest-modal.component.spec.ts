@@ -14,6 +14,7 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
   eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: null },
+  tags: [],
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });
@@ -217,9 +218,14 @@ describe('AddGuestModalComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="add-guest-tags"]')).not.toBeNull();
   });
 
-  it('hides the Table tag field for birthday events', () => {
+  it('shows the Table tag field for birthday events (tags are guest-level, not per event type)', () => {
     const { fixture } = setup('birthday');
-    expect(fixture.nativeElement.querySelector('[data-testid="add-guest-tags"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="add-guest-tags"]')).not.toBeNull();
+  });
+
+  it('shows the Table tag field for event types with no registered metadata mapper', () => {
+    const { fixture } = setup('launch');
+    expect(fixture.nativeElement.querySelector('[data-testid="add-guest-tags"]')).not.toBeNull();
   });
 
   it('adds a tag from the draft input and clears the draft', () => {
@@ -280,7 +286,7 @@ describe('AddGuestModalComponent', () => {
     expect(component.tags().length).toBe(component.maxTags);
   });
 
-  it('includes tags in the eventMetadata payload for wedding events', () => {
+  it('sends tags at the top level of guestInfo, not inside eventMetadata', () => {
     const { component, guestApi } = setup('wedding');
     fill(component, validValues);
     component.addTag('College friends');
@@ -288,16 +294,19 @@ describe('AddGuestModalComponent', () => {
     component.submit();
 
     const request = guestApi.addGuest.mock.calls[0][0];
-    expect(request.guestInfo.eventMetadata?.['tags']).toEqual(['College friends']);
+    expect(request.guestInfo.tags).toEqual(['College friends']);
+    expect(request.guestInfo.eventMetadata).not.toHaveProperty('tags');
   });
 
-  it('does not send tags for birthday events', () => {
+  it('sends tags for every event type, including birthday', () => {
     const { component, guestApi } = setup('birthday');
     fill(component, validValues);
+    component.addTag('Cake table');
 
     component.submit();
 
     const request = guestApi.addGuest.mock.calls[0][0];
+    expect(request.guestInfo.tags).toEqual(['Cake table']);
     expect(request.guestInfo.eventMetadata).not.toHaveProperty('tags');
   });
 });

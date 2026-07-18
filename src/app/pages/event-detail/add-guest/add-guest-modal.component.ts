@@ -36,8 +36,8 @@ const RELATIONSHIPS: readonly Relationship[] = ['Family', 'Friend', 'Colleague']
 const SIDES: readonly GuestSide[] = ['Bride', 'Groom'];
 const MAX_PLUS_ONES = 20;
 
-// Mirrors GuestManagementService.Domain.Guests.Wedding.WeddingGuestMetadata's tag limits —
-// enforced again server-side, but checked here first so the guest gets instant feedback.
+// Mirrors GuestManagementService.Domain.Guests.Guest's tag limits — enforced again server-side,
+// but checked here first so the guest gets instant feedback. Applies to every event type.
 const MAX_TAGS = 10;
 const MAX_TAG_LENGTH = 32;
 const TAG_SUGGESTIONS: readonly string[] = ['Family', 'Head table', "Groom's coworkers"];
@@ -250,9 +250,6 @@ export class AddGuestModalComponent implements OnInit {
     if (this.hasField('dietaryNotes')) {
       eventMetadata['dietaryNotes'] = (value.dietaryNotes ?? '').trim() || null;
     }
-    if (this.hasField('tags')) {
-      eventMetadata['tags'] = this.tags();
-    }
 
     const request: AddGuestRequest = {
       eventId: this.eventId,
@@ -261,6 +258,7 @@ export class AddGuestModalComponent implements OnInit {
         lastName: (value.lastName ?? '').trim(),
         phoneNumber: (value.phone ?? '').trim(),
         emailAddress: (value.email ?? '').trim(),
+        tags: this.tags(),
         eventMetadata: Object.keys(eventMetadata).length > 0 ? eventMetadata : null,
       },
     };
