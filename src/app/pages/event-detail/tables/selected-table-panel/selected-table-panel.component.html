@@ -1,0 +1,75 @@
+<aside class="selected-panel" data-testid="selected-table-panel">
+  @if (table(); as t) {
+    <header class="selected-panel__head">
+      <h3 class="selected-panel__name">{{ t.name }}</h3>
+      <span class="selected-panel__shape">{{ t.shape }}</span>
+    </header>
+
+    <dl class="selected-panel__meta">
+      <div>
+        <dt>Position</dt>
+        <dd>
+          @if (t.positionX !== null && t.positionY !== null) {
+            {{ t.positionX | number: '1.0-0' }}, {{ t.positionY | number: '1.0-0' }}
+          } @else {
+            Not placed yet
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Seated</dt>
+        <dd>{{ occupiedSeatCount() }} / {{ t.seatCount }}</dd>
+      </div>
+    </dl>
+
+    @if (seatedGuests().length > 0) {
+      <ul class="selected-panel__guests" role="list">
+        @for (seat of seatedGuests(); track seat.seatIndex) {
+          <li>{{ seat.guestName }}</li>
+        }
+      </ul>
+    }
+
+    <div class="selected-panel__actions">
+      <button type="button" class="selected-panel__btn" (click)="editTable.emit()">Edit table</button>
+      <button type="button" class="selected-panel__btn" (click)="markFull.emit()">
+        {{ t.isFull ? 'Mark as not full' : 'Mark as full' }}
+      </button>
+      <button type="button" class="selected-panel__btn selected-panel__btn--danger" (click)="deleteTable.emit()">
+        Delete table
+      </button>
+    </div>
+  } @else {
+    <p class="selected-panel__empty">Select a table on the floor plan to see its details.</p>
+  }
+
+  <div class="selected-panel__palette">
+    <div class="selected-panel__palette-head">
+      <span class="selected-panel__palette-hint">Drag into the room</span>
+      <span class="selected-panel__palette-label">Palette</span>
+    </div>
+    <div class="selected-panel__palette-grid" role="group" aria-label="Room elements">
+      @for (preset of roomElementPresets; track preset.kind) {
+        <button
+          type="button"
+          class="selected-panel__palette-tile"
+          data-testid="room-element-tile"
+          [attr.data-kind]="preset.kind"
+          (click)="addRoomElement.emit(preset)"
+        >
+          <span class="selected-panel__palette-swatch" [class]="swatchClass(preset.kind)" aria-hidden="true"></span>
+          {{ preset.label }}
+        </button>
+      }
+    </div>
+    <button
+      type="button"
+      class="selected-panel__add-area-btn"
+      data-testid="add-area-btn"
+      (click)="addArea.emit()"
+    >
+      + Add a custom area
+    </button>
+    <p class="selected-panel__palette-help">Photo booth, kids' corner, gift table — name it, draw a rectangle in the room.</p>
+  </div>
+</aside>

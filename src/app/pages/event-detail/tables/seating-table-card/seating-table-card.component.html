@@ -1,0 +1,138 @@
+<article
+  class="table-card"
+  data-testid="table-card"
+  [class.table-card--receiving]="receivingDrop()"
+  [attr.aria-label]="table().name"
+>
+  <header class="table-card__head">
+    <span class="table-card__name">{{ table().name }}</span>
+    @if (table().isFull) {
+      <span class="table-card__full-badge">Full</span>
+    }
+  </header>
+
+  <div
+    class="table-card__ring"
+    [class.table-card__ring--round]="table().shape === 'Round'"
+    [class.table-card__ring--long]="table().shape === 'Long'"
+    [class.table-card__ring--square]="table().shape === 'Square'"
+  >
+    <span class="table-card__surface" aria-hidden="true">{{ shapeLabel() }} · {{ table().seatCount }}</span>
+    @for (seatVm of seats(); track seatVm.seat.seatIndex) {
+      <!-- The `guestId !== $event.item.data` guard on entered/exited skips the
+           ring entirely when the seat being hovered is the dragged guest's own
+           current seat — seatEnterPredicate still accepts it as a valid (no-op)
+           drop target, but re-hovering your own seat shouldn't light it up as
+           if it were an available target. -->
+      <span
+        class="table-card__seat-slot"
+        cdkDropList
+        [cdkDropListSortingDisabled]="true"
+        [id]="seatVm.dropListId"
+        [attr.data-seat-index]="seatVm.seat.seatIndex"
+        [cdkDropListData]="seatVm.seat"
+        [cdkDropListEnterPredicate]="seatEnterPredicate"
+        (cdkDropListDropped)="onSeatDropped($event, seatVm.seat.seatIndex)"
+        (cdkDropListEntered)="seatVm.seat.guestId !== $any($event.item.data) && onSeatEnter(seatVm.seat.seatIndex)"
+        (cdkDropListExited)="seatVm.seat.guestId !== $any($event.item.data) && onSeatExit(seatVm.seat.seatIndex)"
+        [style.left.%]="seatVm.xPercent"
+        [style.top.%]="seatVm.yPercent"
+      >
+        @if (seatVm.seat.guestId !== null) {
+          <!-- Visual: always rendered from the seat's own data, and NOT itself
+               the cdkDrag element. Angular CDK relocates a drag item's
+               placeholder out of its origin drop-list the instant the pointer
+               merely hovers a different *accepting* connected list (see
+               DragRef._updateActiveDropContainer's exit()/enter() pair) — well
+               before any actual drop. If the guest's initial lived inside the
+               dragged element itself, the origin seat would visibly go blank
+               the moment a different seat is hovered, looking like the guest
+               had already moved. Keeping it as a separate sibling — untouched
+               by that relocation — means the seat keeps showing its occupant
+               until a real drop actually reassigns them. -->
+          <span
+            class="table-card__seat table-card__seat--filled"
+            [class.table-card__seat--drop-target]="hoveredSeatIndex() === seatVm.seat.seatIndex"
+            [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
+            aria-hidden="true"
+          >{{ seatVm.initial }}</span>
+
+          <!-- Interaction: an invisible drag handle overlaying the visual above,
+               purely to capture the gesture — cdkDrag's own placeholder can be
+               shuffled between connected seat drop-lists all it wants, since it
+               carries no visible content of its own. Its floating drag preview
+               is rendered separately below so dragging still shows the guest's
+               chip following the pointer. -->
+          <button
+            type="button"
+            class="table-card__seat-handle"
+            cdkDrag
+            [cdkDragData]="seatVm.seat.guestId"
+            [attr.aria-label]="seatLabel(seatVm.seat)"
+            [attr.title]="seatVm.seat.guestName ?? 'Guest'"
+            (click)="onSeatClick(seatVm.seat)"
+            (cdkDragStarted)="onSeatDragStarted()"
+            (cdkDragEnded)="onSeatDragEnded(seatVm.seat, $event)"
+          >
+            <ng-template cdkDragPreview [matchSize]="false">
+              <span
+                class="table-card__seat table-card__seat--filled"
+                [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
+              >{{ seatVm.initial }}</span>
+            </ng-template>
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="table-card__seat"
+            [class.table-card__seat--filled]="seatVm.isOccupied"
+            [class.table-card__seat--reserved]="seatVm.seat.isReservedForParty"
+            [class.table-card__seat--targetable]="assigningGuestId() && !seatVm.isOccupied"
+            [class.table-card__seat--drop-target]="hoveredSeatIndex() === seatVm.seat.seatIndex"
+            [ngStyle]="seatVm.tint ? { background: seatVm.tint, 'border-color': seatVm.tint } : {}"
+            [attr.aria-label]="seatLabel(seatVm.seat)"
+            [attr.title]="seatVm.seat.isReservedForParty ? 'Reserved seat' : 'Empty seat'"
+            (click)="onSeatClick(seatVm.seat)"
+          >
+            @if (seatVm.seat.isReservedForParty) {
+              &#9679;
+            } @else {
+              +
+            }
+          </button>
+        }
+      </span>
+    }
+  </div>
+
+  <footer class="table-card__foot">
+    <span class="table-card__tally">{{ seatedCount() }} / {{ table().seatCount }} seated</span>
+    @if (receivingDrop()) {
+      <span class="table-card__drop-hint" aria-hidden="true">DROP TO SEAT</span>
+    } @else {
+      <div class="table-card__actions" role="group" [attr.aria-label]="'Actions for ' + table().name">
+        <button
+          type="button"
+          class="table-card__action-btn"
+          title="Edit table"
+          [attr.aria-label]="'Edit ' + table().name"
+          (click)="editTable.emit()"
+        >&#9998;</button>
+        <button
+          type="button"
+          class="table-card__action-btn"
+          [title]="table().isFull ? 'Mark as not full' : 'Mark as full'"
+          [attr.aria-label]="(table().isFull ? 'Mark as not full: ' : 'Mark as full: ') + table().name"
+          (click)="markFull.emit()"
+        >&#10003;</button>
+        <button
+          type="button"
+          class="table-card__action-btn table-card__action-btn--danger"
+          title="Delete table"
+          [attr.aria-label]="'Delete ' + table().name"
+          (click)="deleteTable.emit()"
+        >&#9003;</button>
+      </div>
+    }
+  </footer>
+</article>

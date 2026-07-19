@@ -20,12 +20,13 @@ import { EventApiClient } from '../../core/events/event-api-client';
 import { EventDetail } from '../../core/events/event-detail.model';
 import { EventDetailError } from '../../core/events/event-detail-error.model';
 import { EventTypeTint, eventTypeLabel, eventTypeTint } from '../../core/events/event-type-display';
-import { GuestApiClient } from '../../core/guests/guest-api-client';
+import { GuestListStore } from '../../core/guests/guest-list-store';
 import { Guest } from '../../core/guests/guest.model';
-import { ListGuestsError } from '../../core/guests/guest-error.model';
 import { describeGuestMetadata } from '../../core/guests/guest-metadata-row';
+import { SeatingStore } from '../../core/seating/seating-store';
 import { AddGuestModalComponent } from './add-guest/add-guest-modal.component';
 import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
+import { EventTablesTabComponent } from './tables/event-tables-tab.component';
 import {
   BUDGET_SUGGESTIONS_MOCK,
   BUDGET_SUMMARY_MOCK,
@@ -36,7 +37,6 @@ import {
 } from './event-detail-mocks';
 
 type DetailState = 'loading' | 'error' | 'not-found' | 'ready';
-type GuestsState = 'idle' | 'loading' | 'ready' | 'error';
 export type DetailTab = 'overview' | 'guests' | 'tables' | 'budget';
 export type SlideDirection = 'forward' | 'backward';
 
@@ -87,7 +87,8 @@ const WEEKS_THRESHOLD_DAYS = 21;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, EventEmptyTabComponent, AddGuestModalComponent],
+  imports: [RouterLink, EventEmptyTabComponent, EventTablesTabComponent, AddGuestModalComponent],
+  providers: [SeatingStore, GuestListStore],
   selector: 'app-event-detail-page',
   templateUrl: './event-detail-page.html',
   styleUrl: './event-detail-page.scss',
@@ -95,7 +96,7 @@ const WEEKS_THRESHOLD_DAYS = 21;
 })
 export class EventDetailPage implements OnInit, AfterViewInit {
   private readonly api = inject(EventApiClient);
-  private readonly guestApi = inject(GuestApiClient);
+  private readonly guestListStore = inject(GuestListStore);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -111,11 +112,11 @@ export class EventDetailPage implements OnInit, AfterViewInit {
   readonly activeTab = signal<DetailTab>('overview');
   readonly slideDirection = signal<SlideDirection>('forward');
 
-  // Guests tab: real data loaded lazily the first time the tab is opened.
-  readonly guestsState = signal<GuestsState>('idle');
-  readonly guestLoadError = signal<string | null>(null);
+  // Guests tab: backed by the shared GuestListStore (also used by the Table
+  // Management tab), loaded lazily the first time either tab is opened.
+  readonly guestsState = this.guestListStore.state;
+  readonly guestLoadError = computed(() => this.guestListStore.error()?.message ?? null);
   readonly addGuestOpen = signal(false);
-  private readonly guestList = signal<readonly Guest[]>([]);
 
   private readonly event = signal<EventDetail | null>(null);
 
@@ -148,11 +149,11 @@ export class EventDetailPage implements OnInit, AfterViewInit {
   readonly guestStatusLabel = GUEST_STATUS_LABEL;
 
   readonly guestRows = computed<GuestRowVm[]>(() =>
-    this.guestList().map((guest, index) => this.toGuestRow(guest, index)),
+    this.guestListStore.guests().map((guest, index) => this.toGuestRow(guest, index)),
   );
 
   readonly guestFilters = computed<GuestFilterVm[]>(() => {
-    const total = this.guestList().length;
+    const total = this.guestListStore.guests().length;
     // No RSVP data yet, so every guest is Awaiting; confirmed/declined are zero.
     return [
       { label: 'All', count: total },
@@ -223,10 +224,9 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     }
     this.state.set('loading');
     this.loadError.set(null);
-    // Reset guest state so switching between events reloads the correct list.
-    this.guestsState.set('idle');
-    this.guestList.set([]);
-    this.guestLoadError.set(null);
+    // Clear the shared guest cache if this is a different event (no fetch yet —
+    // the Guests and Table Management tabs each trigger their own load lazily).
+    this.guestListStore.resetForEvent(this.eventId);
     this.addGuestOpen.set(false);
     this.api.getEventDetails(this.eventId).subscribe({
       next: (event) => {
@@ -250,7 +250,8 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     }
     this.slideDirection.set(this.tabIndexOf(tab) > this.activeTabIndex() ? 'forward' : 'backward');
     this.activeTab.set(tab);
-    if (tab === 'guests' && this.guestsState() === 'idle') {
+    if (tab === 'guests') {
+      // Cache-first — reuses the list if Table Management already loaded it.
       this.loadGuests();
     }
     // Wait for the active-tab class (and its font-weight) to land before measuring.
@@ -276,22 +277,11 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     if (!this.eventId) {
       return;
     }
-    this.guestsState.set('loading');
-    this.guestLoadError.set(null);
-    this.guestApi.listGuests(this.eventId).subscribe({
-      next: (guests) => {
-        this.guestList.set(guests);
-        this.guestsState.set('ready');
-      },
-      error: (error: ListGuestsError) => {
-        this.guestLoadError.set(error.message);
-        this.guestsState.set('error');
-      },
-    });
+    this.guestListStore.load(this.eventId);
   }
 
   retryGuests(): void {
-    this.loadGuests();
+    this.guestListStore.retry();
   }
 
   openAddGuest(): void {
@@ -302,12 +292,10 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     this.addGuestOpen.set(false);
   }
 
-  // No success popup: append the created guest to the list and close the modal.
+  // No success popup: append the created guest to the shared cache (both this
+  // tab and Table Management's floating-guests list pick it up) and close the modal.
   onGuestAdded(guest: Guest): void {
-    this.guestList.update((guests) => [...guests, guest]);
-    if (this.guestsState() !== 'ready') {
-      this.guestsState.set('ready');
-    }
+    this.guestListStore.addGuest(guest);
     this.addGuestOpen.set(false);
   }
 

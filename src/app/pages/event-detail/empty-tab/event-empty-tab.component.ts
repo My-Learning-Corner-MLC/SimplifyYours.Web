@@ -21,6 +21,7 @@ export class EventEmptyTabComponent {
   @Input() suggestions: readonly string[] = [];
 
   @Output() readonly seeGuestList = new EventEmitter<void>();
+  @Output() readonly addFirstTable = new EventEmitter<void>();
 
   // Eight evenly-spaced seats around the empty-table illustration.
   readonly seats = Array.from({ length: 8 }, (_, i) => i * 45);

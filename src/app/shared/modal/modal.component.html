@@ -1,0 +1,26 @@
+@if (shouldRender()) {
+  <div
+    class="modal-overlay"
+    [class.modal-overlay--closing]="closing()"
+    (click)="onBackdropClick($event)"
+  >
+    <div
+      class="modal-card"
+      [class.modal-card--closing]="closing()"
+      [style.--modal-max-width]="maxWidth()"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="ariaLabelledby()"
+    >
+      <div class="modal-card__header">
+        <ng-content select="[modalHeader]" />
+      </div>
+      <div class="modal-card__body">
+        <ng-content />
+      </div>
+      <div class="modal-card__footer">
+        <ng-content select="[modalFooter]" />
+      </div>
+    </div>
+  </div>
+}

@@ -223,15 +223,34 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
   }
 
   // ---- Tabs (sliding underline) ----------------------------------------
+  // `nowrap` (not `flex-wrap: wrap`) keeps every tab on a single row at every
+  // width — the sliding indicator is positioned via one shared bottom edge,
+  // so a wrapped second row would put the active tab's underline in the
+  // wrong place. `overflow-x` stays the browser default (visible) outside the
+  // mobile breakpoint: making this a scroll container unconditionally was
+  // measurably janking the indicator's transform transition on desktop/tablet
+  // (nothing there ever needs to scroll — four tabs fit comfortably), so it's
+  // now scoped to only the narrow viewports where tabs can actually overflow.
   &__tabs {
     position: relative;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     padding: 0 56px;
     border-bottom: 1px solid $hairline;
+
+    @media (max-width: 640px) {
+      padding: 0 32px;
+      overflow-x: auto;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
   }
 
   &__tab {
+    flex: none;
     padding: 14px 20px;
     margin-bottom: -1px;
     background: none;
@@ -240,6 +259,7 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     color: $body-text;
     font: inherit;
     font-size: 13.5px;
+    white-space: nowrap;
     cursor: pointer;
     transition: color 160ms ease-out;
 
@@ -276,6 +296,10 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
   &__body {
     padding: 40px 56px 56px;
     overflow: hidden;
+
+    @media (max-width: 640px) {
+      padding: 32px;
+    }
 
     // Re-triggers on every tab switch because the @switch block replaces the
     // panel element; direction mirrors whether the new tab is later/earlier.

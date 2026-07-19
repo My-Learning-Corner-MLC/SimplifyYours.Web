@@ -1,0 +1,90 @@
+<div class="floor-plan" data-testid="floor-plan-canvas">
+  <div class="floor-plan__toolbar">
+    <button
+      type="button"
+      class="floor-plan__snap-btn"
+      [class.floor-plan__snap-btn--active]="snapToGrid()"
+      [attr.aria-pressed]="snapToGrid()"
+      (click)="toggleSnap()"
+    >
+      Snap to grid
+    </button>
+  </div>
+
+  <div class="floor-plan__room">
+    <div class="floor-plan__compass" aria-hidden="true">
+      <span class="floor-plan__compass-badge">N</span>
+      <span class="floor-plan__compass-scale">— 1 sq = 0.5 m</span>
+    </div>
+
+    @for (vm of areaVms(); track vm.area.id) {
+      <div
+        class="floor-plan__area"
+        [class]="vm.kindClass"
+        [class.floor-plan__area--round]="vm.area.shape === 'Round'"
+        data-testid="floor-plan-area"
+        [attr.aria-label]="vm.area.name"
+        [style.left.px]="vm.x"
+        [style.top.px]="vm.y"
+        [style.width.px]="vm.widthPx"
+        [style.height.px]="vm.heightPx"
+        [ngStyle]="vm.area.color ? { 'background-color': vm.area.color + '33', 'border-color': vm.area.color } : {}"
+        cdkDrag
+        [cdkDragFreeDragPosition]="zeroOffset"
+        (cdkDragEnded)="onAreaDragEnded(vm, $event)"
+      >
+        <span class="floor-plan__area-label">
+          @if (vm.area.kind === 'Entrance') {
+            <span aria-hidden="true">&#8595;</span>
+          }
+          {{ vm.area.name }}
+        </span>
+      </div>
+    }
+
+    @for (vm of tableVms(); track vm.table.id) {
+      <div
+        class="floor-plan__table"
+        [class.floor-plan__table--selected]="selectedTableId() === vm.table.id"
+        [class.floor-plan__table--round]="vm.table.shape === 'Round'"
+        [class.floor-plan__table--square]="vm.table.shape === 'Square'"
+        [class.floor-plan__table--long]="vm.table.shape === 'Long'"
+        data-testid="floor-plan-table"
+        role="button"
+        [attr.aria-label]="vm.table.name"
+        [attr.aria-pressed]="selectedTableId() === vm.table.id"
+        [style.left.px]="vm.x"
+        [style.top.px]="vm.y"
+        [style.width.px]="vm.containerWidth"
+        [style.height.px]="vm.containerHeight"
+        cdkDrag
+        [cdkDragFreeDragPosition]="zeroOffset"
+        (cdkDragEnded)="onTableDragEnded(vm, $event)"
+        (click)="selectTable(vm.table.id)"
+        (keydown.enter)="selectTable(vm.table.id)"
+        tabindex="0"
+      >
+        <span class="floor-plan__table-core">
+          <span class="floor-plan__table-name">{{ vm.table.name }}</span>
+          <span class="floor-plan__table-tally">{{ vm.occupiedCount }}/{{ vm.table.seatCount }}</span>
+        </span>
+        @for (dot of vm.seatDots; track $index) {
+          <span
+            class="floor-plan__seat-dot"
+            [class.floor-plan__seat-dot--occupied]="dot.isOccupied"
+            [style.left.%]="dot.xPercent"
+            [style.top.%]="dot.yPercent"
+            [ngStyle]="dot.tint ? { background: dot.tint } : {}"
+          ></span>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="floor-plan__legend" aria-hidden="true">
+    <span class="floor-plan__legend-item"><span class="floor-plan__legend-swatch floor-plan__legend-swatch--table"></span>Placed table</span>
+    <span class="floor-plan__legend-item"><span class="floor-plan__legend-swatch floor-plan__legend-swatch--selected"></span>Selected</span>
+    <span class="floor-plan__legend-item"><span class="floor-plan__legend-swatch floor-plan__legend-swatch--stage"></span>Stage</span>
+    <span class="floor-plan__legend-item"><span class="floor-plan__legend-swatch floor-plan__legend-swatch--dance"></span>Dance floor</span>
+  </div>
+</div>

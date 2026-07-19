@@ -1,0 +1,278 @@
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+
+import { guestFullName } from '../../../core/guests/guest.model';
+import { AreaPreset } from '../../../core/seating/area-kind.model';
+import { SeatingStore } from '../../../core/seating/seating-store';
+import { SeatingTable } from '../../../core/seating/seating-table.model';
+import { EventEmptyTabComponent } from '../empty-tab/event-empty-tab.component';
+import { FloatingGuestsPanelComponent } from './floating-guests-panel/floating-guests-panel.component';
+import { AreaMoveIntent, FloorPlanCanvasComponent, TableMoveIntent } from './floor-plan-canvas/floor-plan-canvas.component';
+import { SeatDragEndedOutside, SeatDropIntent, SeatingTableCardComponent } from './seating-table-card/seating-table-card.component';
+import { SelectedTablePanelComponent } from './selected-table-panel/selected-table-panel.component';
+import { TableFormModalComponent } from './table-form-modal/table-form-modal.component';
+import { CustomAreaModalComponent } from './custom-area-modal/custom-area-modal.component';
+import { SeatingArea } from '../../../core/seating/seating-area.model';
+
+export type TablesView = 'grid' | 'floor';
+
+/**
+ * Container for the event-detail "Table management" tab. Owns the seating layout
+ * + guest load (via SeatingStore, scoped to this component instance) and the
+ * Grid ⇄ Floor-plan view toggle; child components (added in later slices) render
+ * the actual table cards, floating-guests panel, and floor-plan canvas.
+ */
+@Component({
+  standalone: true,
+  selector: 'app-event-tables-tab',
+  imports: [
+    EventEmptyTabComponent,
+    SeatingTableCardComponent,
+    FloatingGuestsPanelComponent,
+    TableFormModalComponent,
+    FloorPlanCanvasComponent,
+    SelectedTablePanelComponent,
+    CustomAreaModalComponent,
+    CdkDropListGroup,
+    NgTemplateOutlet,
+  ],
+  templateUrl: './event-tables-tab.component.html',
+  styleUrl: './event-tables-tab.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class EventTablesTabComponent implements OnInit, OnChanges {
+  @Input({ required: true }) eventId!: string;
+  @Input() eventType = '';
+  @Input() confirmedGuestCount = 0;
+
+  @Output() readonly seeGuestList = new EventEmitter<void>();
+
+  protected readonly store = inject(SeatingStore);
+  readonly view = signal<TablesView>('grid');
+  readonly formModalOpen = signal(false);
+  readonly editingTable = signal<SeatingTable | null>(null);
+  readonly areaModalOpen = signal(false);
+  readonly editingArea = signal<SeatingArea | null>(null);
+  readonly assigningGuestId = signal<string | null>(null);
+  readonly announcement = signal('');
+  readonly selectedTableId = signal<string | null>(null);
+  // Whether a seated guest's own chip is currently being dragged (not a
+  // floating-panel row) — drives the floating panel's own "droppable" look
+  // while such a drag is in progress, even though its cdkDropList always
+  // rejects the actual CDK drop (unseating is handled by DOM hit-testing in
+  // onSeatDragEndedOutside, not by list membership).
+  readonly isDraggingSeatedGuest = signal(false);
+
+  readonly selectedTable = computed(
+    () => this.store.tables().find((table) => table.id === this.selectedTableId()) ?? null,
+  );
+
+  ngOnInit(): void {
+    this.store.load(this.eventId);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    const eventIdChange = changes['eventId'];
+    if (eventIdChange && !eventIdChange.firstChange) {
+      this.store.load(this.eventId);
+    }
+  }
+
+  // Grid<->Floor is a strong force-flush trigger — don't leave a view with
+  // in-flight drag changes still sitting in the debounce window.
+  setView(view: TablesView): void {
+    this.store.forceFlush();
+    this.view.set(view);
+  }
+
+  @HostListener('window:beforeunload')
+  onBeforeUnload(): void {
+    this.store.forceFlush();
+  }
+
+  @HostListener('window:keydown.escape')
+  onEscape(): void {
+    this.assigningGuestId.set(null);
+  }
+
+  retry(): void {
+    this.store.retry();
+  }
+
+  openCreateModal(): void {
+    this.editingTable.set(null);
+    this.formModalOpen.set(true);
+  }
+
+  openEditModal(table: SeatingTable): void {
+    this.editingTable.set(table);
+    this.formModalOpen.set(true);
+  }
+
+  closeModal(): void {
+    this.formModalOpen.set(false);
+  }
+
+  openCreateAreaModal(): void {
+    this.editingArea.set(null);
+    this.areaModalOpen.set(true);
+  }
+
+  openEditAreaModal(area: SeatingArea): void {
+    this.editingArea.set(area);
+    this.areaModalOpen.set(true);
+  }
+
+  closeAreaModal(): void {
+    this.areaModalOpen.set(false);
+  }
+
+  // Room-elements palette: creates the preset directly (no modal) — a
+  // one-click shortcut for the common venue fixtures. Position is left null;
+  // the floor-plan canvas auto-arranges any unplaced area into view, same as
+  // an unplaced table, and the organizer drags it from there.
+  createRoomElement(preset: AreaPreset): void {
+    this.store
+      .createArea({
+        name: preset.label,
+        kind: preset.kind,
+        shape: preset.defaultShape,
+        width: preset.defaultWidth,
+        height: preset.defaultHeight,
+        color: preset.defaultColor,
+        capacity: null,
+      })
+      .subscribe();
+  }
+
+  toggleFull(table: SeatingTable): void {
+    this.store
+      .updateTable(table.id, {
+        name: table.name,
+        shape: table.shape,
+        seatCount: table.seatCount,
+        isFull: !table.isFull,
+      })
+      .subscribe();
+  }
+
+  quickDelete(table: SeatingTable): void {
+    if (!confirm(`Delete "${table.name}"? Any seated guests will be unseated.`)) {
+      return;
+    }
+    this.store.deleteTable(table.id).subscribe();
+  }
+
+  // ---- Seat assignment: drag-and-drop + the click/keyboard fallback ----
+
+  onSeatDrop(table: SeatingTable, intent: SeatDropIntent): void {
+    this.assigningGuestId.set(null);
+    const guestName = this.guestDisplayName(intent.guestId);
+    this.store.assignGuest(intent.guestId, table.id, intent.seatIndex);
+    this.announcement.set(`${guestName} seated at ${table.name}, seat ${intent.seatIndex + 1}.`);
+  }
+
+  onGuestSelected(guestId: string): void {
+    this.assigningGuestId.update((current) => (current === guestId ? null : guestId));
+  }
+
+  onGuestUnseated(guestId: string): void {
+    const guestName = this.guestDisplayName(guestId);
+    this.store.unassignGuest(guestId);
+    this.announcement.set(`${guestName} moved back to the floating list.`);
+  }
+
+  // A seat drag started — reset the per-gesture "was this claimed by a drop
+  // list" flag so onSeatDragEndedOutside can tell a genuine open-space release
+  // apart from a normal reassignment/unseat that a drop list already handled.
+  onSeatDragStarted(): void {
+    this.store.beginDragGesture();
+    this.isDraggingSeatedGuest.set(true);
+  }
+
+  // Fires on every seat drag release. If nothing claimed the gesture (no
+  // reassignment, no accepted drop) and the guest was released specifically
+  // onto the floating-guests panel, treat it as "drop the guest out" — unseat
+  // them. Any other miss (open room space, between tables, the table's own
+  // decorative surface) is left alone entirely: the guest simply stays at
+  // their current seat, since no store mutation ran for a miss in the first
+  // place — dragging a seated guest and missing every seat should snap them
+  // back, not unseat them. Uses real DOM hit-testing (elementFromPoint), not
+  // bounding-box math, so it's correct regardless of scroll position,
+  // overlapping elements, or which exact sub-area of the floating panel
+  // (list, empty state, footer) was under the pointer.
+  onSeatDragEndedOutside(payload: SeatDragEndedOutside): void {
+    this.isDraggingSeatedGuest.set(false);
+    if (this.store.wasDragGestureConsumed()) {
+      return;
+    }
+    const target = document.elementFromPoint(payload.dropPoint.x, payload.dropPoint.y);
+    if (!target) {
+      return;
+    }
+    const droppedOnFloatingPanel = target.closest('[data-testid="floating-guests-panel"]') !== null;
+    if (droppedOnFloatingPanel) {
+      this.onGuestUnseated(payload.guestId);
+    }
+  }
+
+  // ---- Floor-plan view ----
+
+  selectTable(tableId: string): void {
+    this.selectedTableId.set(tableId);
+  }
+
+  onTableMoved(intent: TableMoveIntent): void {
+    this.store.moveTable(intent.tableId, intent.positionX, intent.positionY, intent.rotation);
+  }
+
+  onAreaMoved(intent: AreaMoveIntent): void {
+    this.store.moveArea(intent.areaId, intent.positionX, intent.positionY, intent.rotation);
+  }
+
+  editSelectedTable(): void {
+    const table = this.selectedTable();
+    if (table) {
+      this.openEditModal(table);
+    }
+  }
+
+  toggleFullSelectedTable(): void {
+    const table = this.selectedTable();
+    if (table) {
+      this.toggleFull(table);
+    }
+  }
+
+  deleteSelectedTable(): void {
+    const table = this.selectedTable();
+    if (table) {
+      this.quickDelete(table);
+      this.selectedTableId.set(null);
+    }
+  }
+
+  private guestDisplayName(guestId: string): string {
+    const table = this.store.tables().find((t) => t.seats.some((seat) => seat.guestId === guestId));
+    const seatName = table?.seats.find((s) => s.guestId === guestId)?.guestName;
+    if (seatName) {
+      return seatName;
+    }
+    const floatingGuest = this.store.floatingGuests().find((g) => g.id === guestId);
+    return floatingGuest ? guestFullName(floatingGuest) : 'Guest';
+  }
+}

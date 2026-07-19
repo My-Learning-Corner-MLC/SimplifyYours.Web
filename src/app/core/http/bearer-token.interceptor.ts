@@ -14,7 +14,7 @@ import { TokenStorageService } from '../auth/token-storage.service';
  * of event-service calls never need their own unauthorized handling.
  */
 export const bearerTokenInterceptor: HttpInterceptorFn = (request, next) => {
-  const protectedOrigins = [environment.eventBaseUrl, environment.guestBaseUrl];
+  const protectedOrigins = [environment.eventBaseUrl, environment.guestManagementBaseUrl];
   if (!protectedOrigins.some((origin) => request.url.startsWith(`${origin}/`))) {
     return next(request);
   }

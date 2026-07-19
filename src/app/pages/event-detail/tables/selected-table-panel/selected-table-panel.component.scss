@@ -1,0 +1,259 @@
+// Occasion theme tokens (shared with the dashboard — see "SimplifyYours Occasion").
+$plum: #5a2849;
+$plum-hover: #4a1f3b;
+$plum-ink: #2a1f2d;
+$coral: #e07b5a;
+$parchment: #f5efe6;
+$linen: #fffcf5;
+$muted: #7a6b6e;
+$body-text: #4a4045;
+$hairline: #ece2d2;
+$olive: #7a8f5a;
+$amber: #c28840;
+$champagne: #c8a876;
+$blush: #efe3e8;
+
+:host {
+  display: block;
+}
+
+.selected-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  background: $linen;
+  border: 1px solid $hairline;
+  color: $plum-ink;
+
+  &__empty {
+    margin: 8px 0;
+    font-size: 12.5px;
+    color: $muted;
+    text-align: center;
+  }
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  &__name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  &__shape {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  &__meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 0;
+
+    dt {
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: $muted;
+    }
+
+    dd {
+      margin: 2px 0 0;
+      font-size: 13px;
+    }
+  }
+
+  &__guests {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12.5px;
+
+    li {
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: $parchment;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__palette {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid $hairline;
+  }
+
+  &__palette-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  &__palette-hint {
+    font-size: 12.5px;
+    color: $muted;
+  }
+
+  &__palette-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $plum;
+  }
+
+  &__palette-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  &__palette-tile {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px;
+    background: $linen;
+    border: 1px solid $hairline;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12px;
+    color: $body-text;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 120ms, background 120ms;
+
+    &:hover {
+      border-color: $plum;
+      background: $parchment;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+
+  &__palette-swatch {
+    flex-shrink: 0;
+    width: 18px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1.5px solid $plum;
+    background: $blush;
+
+    &--dance-floor {
+      border: 1.5px dashed $champagne;
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(200, 168, 118, 0.4) 0px,
+        rgba(200, 168, 118, 0.4) 3px,
+        transparent 3px,
+        transparent 6px
+      );
+    }
+
+    &--bar {
+      border-color: $olive;
+      background: rgba(122, 143, 90, 0.16);
+    }
+
+    &--entrance {
+      border: 1px dashed $champagne;
+      border-radius: 99px;
+      background: $linen;
+    }
+
+    &--buffet {
+      border-color: $amber;
+      background: rgba(194, 136, 64, 0.16);
+    }
+
+    &--cake {
+      border-color: $coral;
+      background: rgba(224, 123, 90, 0.16);
+      border-radius: 50%;
+      width: 14px;
+    }
+  }
+
+  &__palette-help {
+    margin: 0;
+    font-size: 10.5px;
+    color: $muted;
+    line-height: 1.45;
+  }
+
+  &__add-area-btn {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1.5px dashed $plum;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: $plum;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 120ms, background 120ms;
+
+    &:hover {
+      background: $parchment;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+  }
+
+  &__btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: $parchment;
+    border: 1px solid $hairline;
+    font: inherit;
+    font-size: 12.5px;
+    color: $body-text;
+    cursor: pointer;
+
+    &:hover {
+      background: $hairline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $plum;
+      outline-offset: 2px;
+    }
+
+    &--danger {
+      color: $coral;
+      border-color: rgba(224, 123, 90, 0.4);
+
+      &:hover {
+        background: rgba(224, 123, 90, 0.1);
+      }
+    }
+  }
+}

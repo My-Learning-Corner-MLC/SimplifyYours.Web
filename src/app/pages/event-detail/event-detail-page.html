@@ -279,9 +279,10 @@
               }
 
               @case ('tables') {
-                <app-event-empty-tab
-                  variant="tables"
-                  [confirmedCount]="rsvp.confirmed"
+                <app-event-tables-tab
+                  [eventId]="eventId"
+                  [eventType]="eventType()"
+                  [confirmedGuestCount]="rsvp.confirmed"
                   (seeGuestList)="setTab('guests')"
                 />
               }

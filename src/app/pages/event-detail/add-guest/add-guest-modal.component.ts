@@ -2,10 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
-  HostListener,
   Input,
   OnInit,
   Output,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -28,6 +28,7 @@ import {
 import { Guest } from '../../../core/guests/guest.model';
 import { GuestApiClient } from '../../../core/guests/guest-api-client';
 import { Relationship, GuestSide } from '../../../core/guests/wedding/wedding-guest-metadata.model';
+import { ModalComponent } from '../../../shared/modal/modal.component';
 import { SegmentedControlComponent } from '../../../shared/segmented-control/segmented-control.component';
 
 type ModalStatus = 'editing' | 'submitting';
@@ -35,10 +36,6 @@ type ModalStatus = 'editing' | 'submitting';
 const RELATIONSHIPS: readonly Relationship[] = ['Family', 'Friend', 'Colleague'];
 const SIDES: readonly GuestSide[] = ['Bride', 'Groom'];
 const MAX_PLUS_ONES = 20;
-
-// Matches the .ag-modal-out / .ag-overlay-out CSS animation duration so the
-// component isn't torn down mid-fade.
-const CLOSE_ANIMATION_MS = 300;
 
 // Stricter than Angular's built-in email check: requires a dotted domain so
 // "name@gmail" is rejected, matching the design's invalid-email state.
@@ -59,7 +56,7 @@ function phoneValidator(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, SegmentedControlComponent],
+  imports: [ReactiveFormsModule, ModalComponent, SegmentedControlComponent],
   selector: 'app-add-guest-modal',
   templateUrl: './add-guest-modal.component.html',
   styleUrl: './add-guest-modal.component.scss',
@@ -68,6 +65,8 @@ function phoneValidator(control: AbstractControl): ValidationErrors | null {
 export class AddGuestModalComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(GuestApiClient);
+
+  @ViewChild(ModalComponent) private modalRef!: ModalComponent;
 
   @Input({ required: true }) eventId = '';
   @Input() eventType = '';
@@ -82,7 +81,11 @@ export class AddGuestModalComponent implements OnInit {
   readonly submitted = signal(false);
   readonly serverError = signal<string | null>(null);
   readonly duplicate = signal(false);
-  readonly closing = signal(false);
+
+  /** Delegates to the shared modal shell, which owns the close animation. */
+  get closing() {
+    return this.modalRef.closing;
+  }
 
   // Bumped on every form edit so `invalidCount` (which reads non-signal control
   // validity) recomputes live as the guest fixes fields.
@@ -155,24 +158,9 @@ export class AddGuestModalComponent implements OnInit {
     this.form.get('plusOnes')?.setValue(next);
   }
 
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.cancel();
-  }
-
-  // Close only when the backdrop itself is clicked, not the modal card.
-  onBackdrop(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.cancel();
-    }
-  }
-
+  /** Delegates to the shared modal shell: plays the exit animation, then emits `closed`. */
   cancel(): void {
-    if (this.status() === 'submitting' || this.closing()) {
-      return;
-    }
-    this.closing.set(true);
-    setTimeout(() => this.closed.emit(), CLOSE_ANIMATION_MS);
+    this.modalRef.requestClose();
   }
 
   submit(): void {

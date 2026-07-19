@@ -11,3 +11,7 @@ export interface Guest {
   readonly eventMetadata: unknown;
   readonly createdAt: string;
 }
+
+export function guestFullName(guest: Pick<Guest, 'firstName' | 'lastName'>): string {
+  return `${guest.firstName} ${guest.lastName}`.trim();
+}

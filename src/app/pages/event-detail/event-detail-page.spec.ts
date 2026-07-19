@@ -8,7 +8,17 @@ import { EventDetailError } from '../../core/events/event-detail-error.model';
 import { GuestApiClient } from '../../core/guests/guest-api-client';
 import { Guest } from '../../core/guests/guest.model';
 import { ListGuestsError } from '../../core/guests/guest-error.model';
+import { SeatingApiClient } from '../../core/seating/seating-api-client';
+import { SeatingLayout } from '../../core/seating/seating-layout.model';
 import { EventDetailPage } from './event-detail-page';
+
+const emptyLayout: SeatingLayout = {
+  eventId: 'e1',
+  tables: [],
+  areas: [],
+  summary: { tableCount: 0, seatCount: 0, seatedCount: 0, floatingCount: 0 },
+};
+
 
 const makeDetail = (overrides: Partial<EventDetail> = {}): EventDetail => ({
   id: 'e1',
@@ -51,6 +61,7 @@ function setup(api: ApiStub, guestApi: GuestApiStub = new GuestApiStub(), id: st
     imports: [EventDetailPage],
     providers: [
       { provide: EventApiClient, useValue: api },
+      { provide: SeatingApiClient, useValue: { getLayout: () => of(emptyLayout) } },
       { provide: GuestApiClient, useValue: guestApi },
       {
         provide: ActivatedRoute,

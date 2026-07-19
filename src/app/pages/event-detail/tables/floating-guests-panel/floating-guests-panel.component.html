@@ -1,0 +1,83 @@
+<aside
+  class="floating-panel"
+  data-testid="floating-guests-panel"
+  [class.floating-panel--receiving]="receivingDrop()"
+>
+  <header class="floating-panel__head">
+    <div class="floating-panel__head-row">
+      <h3 class="floating-panel__title">Still floating</h3>
+      <span class="floating-panel__count" data-testid="floating-guests-count">{{ guests().length }} {{ guests().length === 1 ? 'guest' : 'guests' }}</span>
+    </div>
+    <div class="floating-panel__accent"></div>
+
+    <label class="floating-panel__search">
+      <span class="sr-only">Search floating guests</span>
+      <span class="floating-panel__search-icon" aria-hidden="true">&#8981;</span>
+      <input
+        type="search"
+        placeholder="Find a guest…"
+        [value]="search()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+    </label>
+  </header>
+
+  @if (filteredGuests().length === 0) {
+    <p class="floating-panel__empty">
+      {{ guests().length === 0 ? 'Everyone has a seat.' : 'No guests match your search.' }}
+    </p>
+  } @else {
+    <ul
+      class="floating-panel__list"
+      role="list"
+      cdkDropList
+      [id]="dropListId"
+      [cdkDropListSortingDisabled]="true"
+      [cdkDropListEnterPredicate]="rejectAllEnterPredicate"
+    >
+      @for (guest of filteredGuests(); track guest.id; let i = $index) {
+        <li
+          [class]="assigningGuestId() === guest.id ? 'floating-panel__row floating-panel__row--selected' : 'floating-panel__row'"
+          data-testid="floating-guest-row"
+          tabindex="0"
+          role="button"
+          cdkDrag
+          [cdkDragData]="guest.id"
+          [attr.aria-pressed]="assigningGuestId() === guest.id"
+          [attr.aria-label]="guestFullName(guest) + (assigningGuestId() === guest.id ? ', selected. Click a seat to place them.' : '')"
+          (click)="onRowClick(guest.id)"
+          (keydown.enter)="onRowClick(guest.id)"
+        >
+          <ng-template cdkDragPreview [matchSize]="false">
+            <span
+              class="floating-panel__preview-chip"
+              data-testid="floating-guest-preview-chip"
+              [ngStyle]="{ background: avatarTint(i) }"
+            >{{ guestFullName(guest).charAt(0).toUpperCase() }}</span>
+          </ng-template>
+          <span class="floating-panel__handle" aria-hidden="true">&#8942;&#8942;</span>
+          <span
+            class="floating-panel__avatar"
+            [ngStyle]="{ background: avatarTint(i) }"
+            aria-hidden="true"
+          >{{ guestFullName(guest).charAt(0).toUpperCase() }}</span>
+          <span class="floating-panel__info">
+            <span class="floating-panel__name">{{ guestFullName(guest) }}</span>
+            @if (guestDetail(guest)) {
+              <span class="floating-panel__detail">{{ guestDetail(guest) }}</span>
+            }
+          </span>
+          <span class="floating-panel__status" aria-label="RSVP status: Awaiting">&#9675;</span>
+        </li>
+      }
+    </ul>
+  }
+
+  <footer class="floating-panel__footer" aria-hidden="true">
+    @if (receivingDrop()) {
+      <span class="floating-panel__drop-hint">DROP TO UNSEAT</span>
+    } @else {
+      <span class="floating-panel__tip-label">Tip</span> · drag a name onto any available seat, or drop a seated guest here to unseat them
+    }
+  </footer>
+</aside>
