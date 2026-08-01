@@ -78,6 +78,40 @@ describe('bearerTokenInterceptor', () => {
     req.flush({});
   });
 
+  it('leaves the token-exchange request untouched even with a token in storage', () => {
+    // This is the actual call oidc-token-client.ts makes. Explicit coverage
+    // because it's the one class of request the interceptor must never touch.
+    tokenStorage.write(bundle);
+
+    http.post(`${environment.apiBaseUrl}/api/v1/identities/token`, {}).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/identities/token`);
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  it('does not attach a token to a path that merely starts with the same characters as a protected prefix', () => {
+    // Guards the boundary check: startsWith alone would wrongly treat this
+    // as a protected /api/v1/events request.
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.apiBaseUrl}/api/v1/eventsAdmin`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/eventsAdmin`);
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  it('does not attach a token to a same-path request against a different origin', () => {
+    tokenStorage.write(bundle);
+
+    http.get('https://not-the-gateway.example/api/v1/events').subscribe();
+
+    const req = httpMock.expectOne('https://not-the-gateway.example/api/v1/events');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
   it('leaves event-service requests untouched when no token is stored', () => {
     http.post(`${environment.apiBaseUrl}/api/v1/events`, {}).subscribe();
 
