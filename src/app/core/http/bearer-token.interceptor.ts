@@ -14,8 +14,16 @@ import { TokenStorageService } from '../auth/token-storage.service';
  * of event-service calls never need their own unauthorized handling.
  */
 export const bearerTokenInterceptor: HttpInterceptorFn = (request, next) => {
-  const protectedOrigins = [environment.eventBaseUrl, environment.guestBaseUrl];
-  if (!protectedOrigins.some((origin) => request.url.startsWith(`${origin}/`))) {
+  // Event/guest calls need a bearer token; identity calls (sign-up, sign-in,
+  // token exchange) are anonymous. Now that everything shares one origin
+  // (the gateway), origin alone can't distinguish them -- use path prefix.
+  // No trailing slash: createEvent posts to exactly .../api/v1/events with
+  // no remainder, which wouldn't match a "/api/v1/events/" prefix.
+  const protectedPathPrefixes = [
+    `${environment.apiBaseUrl}/api/v1/events`,
+    `${environment.apiBaseUrl}/api/v1/guests`,
+  ];
+  if (!protectedPathPrefixes.some((prefix) => request.url.startsWith(prefix))) {
     return next(request);
   }
 

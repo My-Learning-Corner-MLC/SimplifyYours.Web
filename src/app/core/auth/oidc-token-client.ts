@@ -6,7 +6,7 @@ export interface TokenResponse {
 }
 
 export interface AuthorizationCodeRequest {
-  identityBaseUrl: string;
+  apiBaseUrl: string;
   clientId: string;
   redirectUri: string;
   code: string;
@@ -14,7 +14,7 @@ export interface AuthorizationCodeRequest {
 }
 
 export interface RefreshTokenRequest {
-  identityBaseUrl: string;
+  apiBaseUrl: string;
   clientId: string;
   refreshToken: string;
 }
@@ -30,7 +30,7 @@ export async function exchangeAuthorizationCode(
     client_id: request.clientId,
     code_verifier: request.codeVerifier,
   });
-  return postToken(request.identityBaseUrl, body, fetchImpl);
+  return postToken(request.apiBaseUrl, body, fetchImpl);
 }
 
 export async function exchangeRefreshToken(
@@ -42,15 +42,15 @@ export async function exchangeRefreshToken(
     refresh_token: request.refreshToken,
     client_id: request.clientId,
   });
-  return postToken(request.identityBaseUrl, body, fetchImpl);
+  return postToken(request.apiBaseUrl, body, fetchImpl);
 }
 
 async function postToken(
-  origin: string,
+  apiBaseUrl: string,
   body: URLSearchParams,
   fetchImpl: typeof fetch,
 ): Promise<TokenResponse> {
-  const response = await fetchImpl(`${origin}/auth/token`, {
+  const response = await fetchImpl(`${apiBaseUrl}/api/v1/identities/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),

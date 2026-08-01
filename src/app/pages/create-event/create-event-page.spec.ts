@@ -19,7 +19,7 @@ describe('CreateEventPage', () => {
   let messageAdd: ReturnType<typeof vi.fn>;
   let navigateSpy: ReturnType<typeof vi.spyOn>;
 
-  const url = `${environment.eventBaseUrl}/events`;
+  const url = `${environment.apiBaseUrl}/api/v1/events`;
 
   const futureDate = (): string => {
     const date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);

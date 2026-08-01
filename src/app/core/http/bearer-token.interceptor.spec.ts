@@ -51,9 +51,9 @@ describe('bearerTokenInterceptor', () => {
   it('attaches the bearer token to event-service requests', () => {
     tokenStorage.write(bundle);
 
-    http.post(`${environment.eventBaseUrl}/events`, {}).subscribe();
+    http.post(`${environment.apiBaseUrl}/api/v1/events`, {}).subscribe();
 
-    const req = httpMock.expectOne(`${environment.eventBaseUrl}/events`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/events`);
     expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
     req.flush({});
   });
@@ -61,9 +61,9 @@ describe('bearerTokenInterceptor', () => {
   it('attaches the bearer token to guest-service requests', () => {
     tokenStorage.write(bundle);
 
-    http.get(`${environment.guestBaseUrl}/guests?eventId=e1`).subscribe();
+    http.get(`${environment.apiBaseUrl}/api/v1/guests?eventId=e1`).subscribe();
 
-    const req = httpMock.expectOne(`${environment.guestBaseUrl}/guests?eventId=e1`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests?eventId=e1`);
     expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
     req.flush({});
   });
@@ -71,17 +71,17 @@ describe('bearerTokenInterceptor', () => {
   it('leaves identity-service requests untouched', () => {
     tokenStorage.write(bundle);
 
-    http.post(`${environment.identityBaseUrl}/auth/sign-up`, {}).subscribe();
+    http.post(`${environment.apiBaseUrl}/api/v1/identities/sign-up`, {}).subscribe();
 
-    const req = httpMock.expectOne(`${environment.identityBaseUrl}/auth/sign-up`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/identities/sign-up`);
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 
   it('leaves event-service requests untouched when no token is stored', () => {
-    http.post(`${environment.eventBaseUrl}/events`, {}).subscribe();
+    http.post(`${environment.apiBaseUrl}/api/v1/events`, {}).subscribe();
 
-    const req = httpMock.expectOne(`${environment.eventBaseUrl}/events`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/events`);
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
@@ -92,18 +92,18 @@ describe('bearerTokenInterceptor', () => {
     tokenRefresh.ensureFreshToken.mockResolvedValue(refreshedBundle);
 
     let result: unknown;
-    http.post(`${environment.eventBaseUrl}/events`, {}).subscribe((response) => {
+    http.post(`${environment.apiBaseUrl}/api/v1/events`, {}).subscribe((response) => {
       result = response;
     });
 
-    const first = httpMock.expectOne(`${environment.eventBaseUrl}/events`);
+    const first = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/events`);
     expect(first.request.headers.get('Authorization')).toBe('Bearer access-123');
     first.flush({}, { status: 401, statusText: 'Unauthorized' });
 
     await Promise.resolve();
     await Promise.resolve();
 
-    const retried = httpMock.expectOne(`${environment.eventBaseUrl}/events`);
+    const retried = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/events`);
     expect(retried.request.headers.get('Authorization')).toBe('Bearer access-456');
     retried.flush({ ok: true });
 
@@ -117,7 +117,7 @@ describe('bearerTokenInterceptor', () => {
 
     let error: unknown;
     let completed = false;
-    http.post(`${environment.eventBaseUrl}/events`, {}).subscribe({
+    http.post(`${environment.apiBaseUrl}/api/v1/events`, {}).subscribe({
       error: (err: unknown) => {
         error = err;
       },
@@ -126,7 +126,7 @@ describe('bearerTokenInterceptor', () => {
       },
     });
 
-    const req = httpMock.expectOne(`${environment.eventBaseUrl}/events`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/events`);
     req.flush({}, { status: 401, statusText: 'Unauthorized' });
 
     await Promise.resolve();
@@ -141,13 +141,13 @@ describe('bearerTokenInterceptor', () => {
     tokenStorage.write(bundle);
 
     let error: HttpErrorResponse | undefined;
-    http.post(`${environment.eventBaseUrl}/events`, {}).subscribe({
+    http.post(`${environment.apiBaseUrl}/api/v1/events`, {}).subscribe({
       error: (err: HttpErrorResponse) => {
         error = err;
       },
     });
 
-    const req = httpMock.expectOne(`${environment.eventBaseUrl}/events`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/events`);
     req.flush({}, { status: 403, statusText: 'Forbidden' });
 
     await Promise.resolve();

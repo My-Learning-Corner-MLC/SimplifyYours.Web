@@ -47,12 +47,12 @@ describe('OidcRedirectService', () => {
     expect(assignSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('navigates to identity-server /auth/sign-in with every OIDC param URL-encoded', async () => {
+  it('navigates to the gateway /api/v1/identities/sign-in with every OIDC param URL-encoded', async () => {
     await service.startAuthorization();
 
     expect(assignSpy).toHaveBeenCalledTimes(1);
     const target = assignSpy.mock.calls[0][0] as string;
-    expect(target.startsWith(`${environment.identityBaseUrl}/auth/sign-in?`)).toBe(true);
+    expect(target.startsWith(`${environment.apiBaseUrl}/api/v1/identities/sign-in?`)).toBe(true);
 
     const url = new URL(target);
     expect(url.searchParams.get('client_id')).toBe('simplify-yours-web');
