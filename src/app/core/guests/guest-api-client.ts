@@ -42,7 +42,7 @@ export class GuestApiClient {
   private readonly http = inject(HttpClient);
 
   listGuests(eventId: string): Observable<Guest[]> {
-    const url = `${environment.apiBaseUrl}/api/v1/guests/guests/query`;
+    const url = `${environment.apiBaseUrl}/api/v1/guests/query`;
     return this.http
       .post<QueryGuestsResponseBody>(url, { eventId }, { withCredentials: false })
       .pipe(
@@ -54,7 +54,7 @@ export class GuestApiClient {
   }
 
   addGuest(request: AddGuestRequest): Observable<Guest> {
-    const url = `${environment.apiBaseUrl}/api/v1/guests/guest`;
+    const url = `${environment.apiBaseUrl}/api/v1/guests`;
     return this.http
       .post<AddGuestResponseBody>(url, request, { withCredentials: false })
       .pipe(

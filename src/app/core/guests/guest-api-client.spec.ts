@@ -45,7 +45,7 @@ describe('GuestApiClient', () => {
       let result: unknown;
       client.listGuests('e1').subscribe((guests) => (result = guests));
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests/guests/query`);
+      const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests/query`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ eventId: 'e1' });
       req.flush({
@@ -89,7 +89,7 @@ describe('GuestApiClient', () => {
       client.listGuests('missing').subscribe({ error: (e: ListGuestsError) => (error = e) });
 
       httpMock
-        .expectOne(`${environment.apiBaseUrl}/api/v1/guests/guests/query`)
+        .expectOne(`${environment.apiBaseUrl}/api/v1/guests/query`)
         .flush(null, { status: 404, statusText: 'Not Found' });
 
       expect(error?.kind).toBe('notFound');
@@ -100,7 +100,7 @@ describe('GuestApiClient', () => {
       client.listGuests('e1').subscribe({ error: (e: ListGuestsError) => (error = e) });
 
       httpMock
-        .expectOne(`${environment.apiBaseUrl}/api/v1/guests/guests/query`)
+        .expectOne(`${environment.apiBaseUrl}/api/v1/guests/query`)
         .flush(null, { status: 500, statusText: 'Server Error' });
 
       expect(error?.kind).toBe('server');
@@ -112,7 +112,7 @@ describe('GuestApiClient', () => {
       let result: unknown;
       client.addGuest(addRequest()).subscribe((guest) => (result = guest));
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests/guest`);
+      const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests`);
       expect(req.request.method).toBe('POST');
       req.flush({
         id: 'g1',
@@ -147,7 +147,7 @@ describe('GuestApiClient', () => {
       client.addGuest(addRequest()).subscribe({ error: (e: AddGuestError) => (error = e) });
 
       httpMock
-        .expectOne(`${environment.apiBaseUrl}/api/v1/guests/guest`)
+        .expectOne(`${environment.apiBaseUrl}/api/v1/guests`)
         .flush(null, { status: 409, statusText: 'Conflict' });
 
       expect(error?.kind).toBe('duplicate');
@@ -157,7 +157,7 @@ describe('GuestApiClient', () => {
       let error: AddGuestError | undefined;
       client.addGuest(addRequest()).subscribe({ error: (e: AddGuestError) => (error = e) });
 
-      httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests/guest`).flush(
+      httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests`).flush(
         { errors: { EmailAddress: ['Email is required.'] } },
         { status: 400, statusText: 'Bad Request' },
       );
@@ -171,7 +171,7 @@ describe('GuestApiClient', () => {
       client.addGuest(addRequest()).subscribe({ error: (e: AddGuestError) => (error = e) });
 
       httpMock
-        .expectOne(`${environment.apiBaseUrl}/api/v1/guests/guest`)
+        .expectOne(`${environment.apiBaseUrl}/api/v1/guests`)
         .flush(null, { status: 500, statusText: 'Server Error' });
 
       expect(error?.kind).toBe('server');
