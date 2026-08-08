@@ -35,12 +35,6 @@ export class OidcRedirectService {
       code_challenge_method: 'S256',
     });
 
-    // Full-page navigation to identity-service's own origin, not through
-    // apiBaseUrl/api-gateway -- the hosted sign-in page is server-rendered
-    // HTML with its own static assets, which break under a path-rewriting
-    // proxy (root-relative asset/form-action paths resolve against the
-    // wrong origin). Token exchange and sign-up stay same-origin JSON calls
-    // through apiBaseUrl since they don't render HTML.
     const url = `${environment.identityHostedUiBaseUrl}/auth/sign-in?${params.toString()}`;
     this.window.location.assign(url);
   }
