@@ -12,7 +12,8 @@ const EMPTY_ROW_INFO: GuestMetadataRowInfo = { group: '', plusOnes: 0, dietaryNo
 /**
  * Narrows a Guest's opaque `eventMetadata` based on the owning event's actual type — mirrors the
  * backend's per-event-type IGuestMetadataMapper resolution (GuestMetadataMapperFactory); never
- * assumes a shape. Add a case here when a new event type gets a backend mapper.
+ * assumes a shape. Add a case here when a new event type gets a backend mapper. Tags are NOT
+ * included here — they live at the guest's top level (`guest.tags`), not inside eventMetadata.
  */
 export function describeGuestMetadata(eventType: string, eventMetadata: unknown): GuestMetadataRowInfo {
   switch (eventType) {
@@ -30,7 +31,11 @@ export function describeGuestMetadata(eventType: string, eventMetadata: unknown)
     }
     case 'birthday': {
       const metadata = asBirthdayGuestMetadata(eventMetadata);
-      return { group: '', plusOnes: metadata?.plusOnes ?? 0, dietaryNotes: metadata?.dietaryNotes ?? null };
+      return {
+        group: '',
+        plusOnes: metadata?.plusOnes ?? 0,
+        dietaryNotes: metadata?.dietaryNotes ?? null,
+      };
     }
     default:
       return EMPTY_ROW_INFO;

@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
-export type EmptyTabVariant = 'tables' | 'budget';
+export type EmptyTabVariant = 'guests' | 'tables' | 'budget';
 
 /**
- * Presentational empty-state for the Table management and Budget tabs, matching
- * the design's "no tables yet" and "no budget set" frames. Purely presentational —
- * the parent owns the (mock) data and handles the actions.
+ * Presentational empty-state for the Guests, Table management, and Budget tabs,
+ * matching the design's "nobody's on the list yet" / "no tables yet" / "no budget
+ * set" frames. Purely presentational — the parent owns the (real or mock) data and
+ * handles the actions.
  */
 @Component({
   standalone: true,
@@ -21,6 +22,7 @@ export class EventEmptyTabComponent {
   @Input() suggestions: readonly string[] = [];
 
   @Output() readonly seeGuestList = new EventEmitter<void>();
+  @Output() readonly addGuest = new EventEmitter<void>();
 
   // Eight evenly-spaced seats around the empty-table illustration.
   readonly seats = Array.from({ length: 8 }, (_, i) => i * 45);
