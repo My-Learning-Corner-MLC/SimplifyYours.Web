@@ -1,8 +1,7 @@
 export const environment = {
   production: false,
-  identityBaseUrl: 'https://localhost:15200',
-  eventBaseUrl: 'https://localhost:15100',
-  guestBaseUrl: 'https://localhost:15300',
+  apiBaseUrl: 'https://localhost:5000',
+  identityHostedUiBaseUrl: 'https://localhost:15200',
   oidcClientId: 'simplify-yours-web',
   oidcRedirectUri: 'http://localhost:4200/auth/callback',
   oidcScopes: 'openid profile email offline_access',

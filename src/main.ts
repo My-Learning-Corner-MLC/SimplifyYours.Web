@@ -3,9 +3,9 @@ import { appConfig } from './app/app.config';
 import { App } from './app/app';
 import { environment } from './environments/environment';
 
-if (!environment.identityBaseUrl) {
+if (!environment.apiBaseUrl) {
   throw new Error(
-    'Identity URL is not configured. Set identityBaseUrl in the active environment file before building.',
+    'API gateway URL is not configured. Set apiBaseUrl in the active environment file before building.',
   );
 }
 

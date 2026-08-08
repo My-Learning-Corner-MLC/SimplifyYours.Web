@@ -287,14 +287,14 @@ describe('SignUpPage', () => {
   });
 
   describe('submit + loading + success', () => {
-    it('on valid submit, POSTs the full request body to /auth/sign-up', () => {
+    it('on valid submit, POSTs the full request body to /api/v1/identities/sign-up', () => {
       const fixture = create();
       fillValid(fixture);
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
 
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({
         fullName: 'Eleanor Whitmore',
@@ -326,7 +326,7 @@ describe('SignUpPage', () => {
       expect(btn.textContent).toContain('Creating your account');
       expect(fixture.componentInstance.form.disabled).toBe(true);
 
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush({
         userId: 'x',
         email: 'eleanor@whitmore.studio',
@@ -343,7 +343,7 @@ describe('SignUpPage', () => {
         new Event('submit'),
       );
 
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush({
         userId: '1',
         email: 'eleanor@whitmore.studio',
@@ -366,7 +366,7 @@ describe('SignUpPage', () => {
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush({
         userId: '1',
         email: 'eleanor@whitmore.studio',
@@ -389,7 +389,7 @@ describe('SignUpPage', () => {
         new Event('submit'),
       );
 
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush(
         { errors: { Email: ['already in use'] } },
         { status: 400, statusText: 'Bad Request' },
@@ -407,7 +407,7 @@ describe('SignUpPage', () => {
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush(body, { status: 400, statusText: 'Bad Request' });
       fixture.detectChanges();
     }
@@ -469,7 +469,7 @@ describe('SignUpPage', () => {
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush({ traceId: 'abc' }, { status: 500, statusText: 'Server Error' });
       fixture.detectChanges();
 
@@ -487,7 +487,7 @@ describe('SignUpPage', () => {
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.error(new ProgressEvent('error'), { status: 0, statusText: 'Network error' });
       fixture.detectChanges();
 
@@ -502,7 +502,7 @@ describe('SignUpPage', () => {
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush({}, { status: 500, statusText: 'Server Error' });
       fixture.detectChanges();
 
@@ -517,7 +517,7 @@ describe('SignUpPage', () => {
         new Event('submit'),
       );
       httpMock
-        .expectOne((r) => r.url.endsWith('/auth/sign-up'))
+        .expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'))
         .flush({}, { status: 500, statusText: 'Server Error' });
       fixture.detectChanges();
       expect(el(fixture, '[data-testid="page-error-banner"]')).toBeNull();
@@ -534,7 +534,7 @@ describe('SignUpPage', () => {
       fixture.detectChanges();
       expect(fixture.componentInstance.backendErrorCount()).toBe(0);
 
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush({
         userId: '1',
         email: 'eleanor@whitmore.studio',
@@ -550,7 +550,7 @@ describe('SignUpPage', () => {
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush(
         {
           errors: {
@@ -575,7 +575,7 @@ describe('SignUpPage', () => {
         new Event('submit'),
       );
       httpMock
-        .expectOne((r) => r.url.endsWith('/auth/sign-up'))
+        .expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'))
         .flush({ errors: { Email: ['Bad.'] } }, { status: 400, statusText: 'Bad Request' });
       fixture.detectChanges();
 
@@ -599,7 +599,7 @@ describe('SignUpPage', () => {
       el<HTMLFormElement>(fixture, '[data-testid="sign-up-form"]')!.dispatchEvent(
         new Event('submit'),
       );
-      const req = httpMock.expectOne((r) => r.url.endsWith('/auth/sign-up'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/v1/identities/sign-up'));
       req.flush({
         userId: '1',
         email: 'eleanor@whitmore.studio',

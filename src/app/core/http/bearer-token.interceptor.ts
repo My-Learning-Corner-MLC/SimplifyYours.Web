@@ -13,9 +13,26 @@ import { TokenStorageService } from '../auth/token-storage.service';
  * already clears the session and redirects to sign-in globally, so consumers
  * of event-service calls never need their own unauthorized handling.
  */
+// Event/guest calls need a bearer token; identity calls (sign-up, sign-in,
+// token exchange) are anonymous. Now that everything shares one origin (the
+// gateway), origin alone can't distinguish them -- use path prefix instead.
+const PROTECTED_PATH_PREFIXES = ['/api/v1/events', '/api/v1/guests'];
+
+// Matches the prefix exactly, or the prefix followed by "/" or "?" -- a bare
+// startsWith would also match an unrelated future route like
+// "/api/v1/eventsAdmin" that merely begins with the same characters.
+function isProtectedRequest(url: string): boolean {
+  const path = url.startsWith(environment.apiBaseUrl) ? url.slice(environment.apiBaseUrl.length) : null;
+  if (path === null) {
+    return false;
+  }
+  return PROTECTED_PATH_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`),
+  );
+}
+
 export const bearerTokenInterceptor: HttpInterceptorFn = (request, next) => {
-  const protectedOrigins = [environment.eventBaseUrl, environment.guestBaseUrl];
-  if (!protectedOrigins.some((origin) => request.url.startsWith(`${origin}/`))) {
+  if (!isProtectedRequest(request.url)) {
     return next(request);
   }
 

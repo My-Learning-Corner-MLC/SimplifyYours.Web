@@ -22,7 +22,7 @@ export class AuthApiClient {
   private readonly http = inject(HttpClient);
 
   signUp(request: SignUpRequest): Observable<SignUpResponse> {
-    const url = `${environment.identityBaseUrl}/auth/sign-up`;
+    const url = `${environment.apiBaseUrl}/api/v1/identities/sign-up`;
     return this.http
       .post<SignUpResponse>(url, request, { withCredentials: false })
       .pipe(
