@@ -1,0 +1,42 @@
+<section class="gallery" aria-labelledby="gallery-title">
+  <h2 class="gallery__title" id="gallery-title">Choose a design</h2>
+
+  @if (templates().length === 0) {
+    <p class="gallery__empty" role="status">
+      Invitation designs aren't available for this event type yet.
+    </p>
+  } @else {
+    <ul class="gallery__list">
+      @for (template of templates(); track template.id) {
+        <li
+          class="gallery__card"
+          [class.gallery__card--active]="activeId() === template.id"
+          [class.gallery__card--chosen]="isChosen(template)"
+        >
+          <button
+            type="button"
+            class="gallery__preview-button"
+            [attr.aria-pressed]="activeId() === template.id"
+            (click)="onFocus(template)"
+          >
+            <span class="gallery__swatches" aria-hidden="true">
+              @for (colour of template.palette; track colour) {
+                <span class="gallery__swatch" [style.background]="colour"></span>
+              }
+            </span>
+            <span class="gallery__name">{{ template.name }}</span>
+            <span class="gallery__tone">{{ template.tone }}</span>
+          </button>
+
+          @if (isChosen(template)) {
+            <p class="gallery__badge">Currently in use</p>
+          }
+
+          <button type="button" class="gallery__choose" (click)="onChoose(template)">
+            {{ isChosen(template) ? 'Edit details' : 'Choose this design' }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>
