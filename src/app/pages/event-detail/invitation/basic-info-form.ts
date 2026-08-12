@@ -28,7 +28,7 @@ const MULTILINE_FIELDS: readonly InvitationField[] = ['venueAddress', 'venueNote
  * so rather than letting the divergence come as a surprise.
  */
 @Component({
-  selector: 'sy-basic-info-form',
+  selector: 'app-basic-info-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule],
   templateUrl: './basic-info-form.html',

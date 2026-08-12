@@ -16,7 +16,7 @@ type PageState = 'loading' | 'ready' | 'not-found' | 'error';
  * rather than a missing one.
  */
 @Component({
-  selector: 'sy-invitation-page',
+  selector: 'app-invitation-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [InvitationFrame],
   templateUrl: './invitation-page.html',

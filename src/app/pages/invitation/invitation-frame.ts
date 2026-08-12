@@ -34,7 +34,7 @@ interface BridgeMessage {
  * RSVP" and nothing more — everything the form needs is read from state this app already holds.
  */
 @Component({
-  selector: 'sy-invitation-frame',
+  selector: 'app-invitation-frame',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <iframe

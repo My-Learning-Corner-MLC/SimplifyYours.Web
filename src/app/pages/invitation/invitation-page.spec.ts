@@ -45,7 +45,7 @@ describe('InvitationPage', () => {
     fixture.detectChanges();
   }
 
-  const frame = () => fixture.nativeElement.querySelector('sy-invitation-frame');
+  const frame = () => fixture.nativeElement.querySelector('app-invitation-frame');
   const text = () => fixture.nativeElement.textContent as string;
 
   it('shows a loading state before the invitation resolves', async () => {

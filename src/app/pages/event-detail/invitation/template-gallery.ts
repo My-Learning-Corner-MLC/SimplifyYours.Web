@@ -10,7 +10,7 @@ import { InvitationTemplate, templatesFor } from '../../../core/invitations/invi
  * invitation full of gaps, so the two are one decision.
  */
 @Component({
-  selector: 'sy-template-gallery',
+  selector: 'app-template-gallery',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './template-gallery.html',
   styleUrl: './template-gallery.scss',
