@@ -9,5 +9,11 @@ export interface Guest {
   readonly emailAddress: string | null;
   readonly phoneNumber: string;
   readonly eventMetadata: unknown;
+  // Two independent axes: a guest can respond through a link the organiser copied by hand, with
+  // no invitation ever sent, so delivery and response cannot collapse into one value.
+  readonly deliveryStatus: 'NotSent' | 'Queued' | 'Sent' | 'Failed';
+  readonly rsvpStatus: 'NoResponse' | 'Accepted' | 'Declined' | 'Maybe';
+  readonly respondedAt: string | null;
+  readonly plusOnesConfirmed: number | null;
   readonly createdAt: string;
 }

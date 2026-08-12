@@ -42,7 +42,21 @@ export type SlideDirection = 'forward' | 'backward';
 
 // New guests have no RSVP yet, so every guest shows as "Awaiting" until the RSVP
 // feature ships. Avatar tints cycle through the design's warm palette.
-const GUEST_STATUS_LABEL = '○ Awaiting';
+/** How each RSVP state reads in the guest table. */
+const RSVP_LABELS: Readonly<Record<string, string>> = {
+  NoResponse: '○ Awaiting',
+  Accepted: '✓ Attending',
+  Maybe: '~ Maybe',
+  Declined: '✕ Declined',
+};
+
+/** Delivery is only worth showing once something has actually been sent. */
+const DELIVERY_LABELS: Readonly<Record<string, string>> = {
+  NotSent: 'Not sent',
+  Queued: 'Sending…',
+  Sent: 'Sent',
+  Failed: 'Failed',
+};
 const AVATAR_TINTS = ['#f0d9b8', '#e8c9d8', '#d8e0c4', '#e5d3c0', '#d9cbe0'];
 
 interface GuestRowVm {
@@ -54,6 +68,9 @@ interface GuestRowVm {
   readonly party: string;
   readonly meal: string;
   readonly avatarBg: string;
+  readonly rsvpLabel: string;
+  readonly rsvpTone: string;
+  readonly deliveryLabel: string;
 }
 
 interface GuestFilterVm {
@@ -145,7 +162,10 @@ export class EventDetailPage implements OnInit, AfterViewInit {
   readonly budgetSuggestions = BUDGET_SUGGESTIONS_MOCK;
 
   // Guests tab view models, derived from the real guest list.
-  readonly guestStatusLabel = GUEST_STATUS_LABEL;
+  /** Copy-link state, keyed by guest id, so one row's spinner does not affect another. */
+  readonly copyingLinkFor = signal<string | null>(null);
+  readonly copiedLinkFor = signal<string | null>(null);
+  readonly copyLinkError = signal<string | null>(null);
 
   readonly guestRows = computed<GuestRowVm[]>(() =>
     this.guestList().map((guest, index) => this.toGuestRow(guest, index)),
@@ -311,6 +331,37 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     this.addGuestOpen.set(false);
   }
 
+  /**
+   * Fetches this guest's link and puts it on the clipboard.
+   *
+   * The link is requested per click rather than held in the row, so a token only ever exists in
+   * memory at the moment the organiser asked for it.
+   */
+  copyInvitationLink(guestId: string): void {
+    this.copyingLinkFor.set(guestId);
+    this.copyLinkError.set(null);
+    this.copiedLinkFor.set(null);
+
+    this.guestApi.getInvitationLink(guestId).subscribe({
+      next: async (link) => {
+        try {
+          await navigator.clipboard.writeText(link.invitationUrl);
+          this.copiedLinkFor.set(guestId);
+        } catch {
+          // Clipboard access can be refused outright (permissions, insecure context). Saying so
+          // beats a button that silently does nothing.
+          this.copyLinkError.set('Copying failed — check clipboard permissions.');
+        } finally {
+          this.copyingLinkFor.set(null);
+        }
+      },
+      error: () => {
+        this.copyingLinkFor.set(null);
+        this.copyLinkError.set("We couldn't get that guest's link. Please try again.");
+      },
+    });
+  }
+
   private toGuestRow(guest: Guest, index: number): GuestRowVm {
     const name = `${guest.firstName} ${guest.lastName}`.trim();
     const metadata = describeGuestMetadata(this.eventType(), guest.eventMetadata);
@@ -323,6 +374,9 @@ export class EventDetailPage implements OnInit, AfterViewInit {
       party: metadata.plusOnes > 0 ? `Party of ${metadata.plusOnes + 1}` : 'Solo',
       meal: metadata.dietaryNotes?.trim() || '—',
       avatarBg: AVATAR_TINTS[index % AVATAR_TINTS.length],
+      rsvpLabel: RSVP_LABELS[guest.rsvpStatus] ?? RSVP_LABELS['NoResponse'],
+      rsvpTone: guest.rsvpStatus.toLowerCase(),
+      deliveryLabel: DELIVERY_LABELS[guest.deliveryStatus] ?? DELIVERY_LABELS['NotSent'],
     };
   }
 
