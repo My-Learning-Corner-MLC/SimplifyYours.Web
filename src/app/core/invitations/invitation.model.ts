@@ -6,22 +6,6 @@ export const RSVP_CHOICES = ['Accepted', 'Maybe', 'Declined'] as const;
 
 export type RsvpChoice = (typeof RSVP_CHOICES)[number];
 
-export interface InvitationVenue {
-  readonly name: string | null;
-  readonly address: string | null;
-  readonly notes: string | null;
-}
-
-export interface InvitationEvent {
-  readonly name: string;
-  readonly date: string | null;
-  readonly startTime: string | null;
-  readonly endTime: string | null;
-  readonly timeZoneId: string | null;
-  readonly description: string | null;
-  readonly venue: InvitationVenue | null;
-}
-
 export interface InvitationRsvp {
   readonly status: RsvpStatus;
   /** The organiser's allowance. The guest can confirm up to this, never more. */
@@ -29,13 +13,20 @@ export interface InvitationRsvp {
   readonly plusOnesConfirmed: number | null;
   readonly dietaryNotes: string | null;
   readonly deadline: string | null;
+  /** When the guest first responded, if they have. Drives the "you responded" chip. */
+  readonly respondedAt?: string | null;
   /** False once the deadline has passed — governs edits as well as first responses. */
   readonly isOpen: boolean;
 }
 
 export interface Invitation {
   readonly guestName: string;
-  readonly event: InvitationEvent;
+  /**
+   * The organiser's saved invitation content, keyed by merge token. Shape depends on the event
+   * type — a wedding carries couple names, a birthday an event name — so it is a map rather than
+   * a fixed object.
+   */
+  readonly content: Readonly<Record<string, string | null>>;
   readonly rsvp: InvitationRsvp;
 }
 
