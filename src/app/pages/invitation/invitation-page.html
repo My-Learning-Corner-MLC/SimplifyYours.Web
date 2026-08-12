@@ -1,0 +1,43 @@
+<main class="invitation">
+  @switch (state()) {
+    @case ('loading') {
+      <div class="invitation__status" role="status" aria-live="polite">
+        <span class="invitation__spinner" aria-hidden="true"></span>
+        <p class="invitation__status-text">Opening your invitation…</p>
+      </div>
+    }
+
+    @case ('not-found') {
+      <div class="invitation__status" role="status">
+        <h1 class="invitation__heading">This invitation isn't available</h1>
+        <p class="invitation__status-text">
+          The link may be out of date, or the event may no longer be running. Ask whoever invited
+          you for an up-to-date link.
+        </p>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="invitation__status" role="alert">
+        <h1 class="invitation__heading">We couldn't load your invitation</h1>
+        <p class="invitation__status-text">Check your connection and try again.</p>
+        <button type="button" class="invitation__retry" (click)="load()">Try again</button>
+      </div>
+    }
+
+    @case ('ready') {
+      @if (!frameLoaded()) {
+        <div class="invitation__status invitation__status--overlay" role="status" aria-live="polite">
+          <span class="invitation__spinner" aria-hidden="true"></span>
+        </div>
+      }
+
+      <sy-invitation-frame
+        [src]="renderUrl()!"
+        [expectedOrigin]="apiOrigin"
+        (loaded)="onFrameLoaded()"
+        (rsvpRequested)="onRsvpRequested()"
+      />
+    }
+  }
+</main>

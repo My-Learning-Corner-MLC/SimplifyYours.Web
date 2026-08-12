@@ -29,6 +29,13 @@ export const routes: Routes = [
     canActivate: [authenticatedGuard],
   },
   {
+    // Public: a guest opening their link has no account and must never hit an auth guard.
+    // Registered before the '**' fallback so the wildcard cannot swallow it.
+    path: 'invitation/:token',
+    loadComponent: () =>
+      import('./pages/invitation/invitation-page').then((m) => m.InvitationPage),
+  },
+  {
     path: 'auth/callback',
     loadComponent: () =>
       import('./pages/auth-callback/auth-callback-page').then((m) => m.AuthCallbackPage),
