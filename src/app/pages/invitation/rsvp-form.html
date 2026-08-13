@@ -61,8 +61,7 @@
           <button
             type="button"
             class="rsvp__choice"
-            [class.rsvp__choice--selected]="choice() === 'Accepted' && !showsAsExisting('Accepted')"
-            [class.rsvp__choice--existing]="showsAsExisting('Accepted')"
+            [class.rsvp__choice--selected]="choice() === 'Accepted'"
             [attr.aria-pressed]="choice() === 'Accepted'"
             [disabled]="submitting()"
             (click)="chooseAttendance('Accepted')"
@@ -70,8 +69,7 @@
           <button
             type="button"
             class="rsvp__choice"
-            [class.rsvp__choice--selected]="choice() === 'Maybe' && !showsAsExisting('Maybe')"
-            [class.rsvp__choice--existing]="showsAsExisting('Maybe')"
+            [class.rsvp__choice--selected]="choice() === 'Maybe'"
             [attr.aria-pressed]="choice() === 'Maybe'"
             [disabled]="submitting()"
             (click)="chooseAttendance('Maybe')"
@@ -79,8 +77,7 @@
           <button
             type="button"
             class="rsvp__choice"
-            [class.rsvp__choice--selected]="choice() === 'Declined' && !showsAsExisting('Declined')"
-            [class.rsvp__choice--existing]="showsAsExisting('Declined')"
+            [class.rsvp__choice--selected]="choice() === 'Declined'"
             [attr.aria-pressed]="choice() === 'Declined'"
             [disabled]="submitting()"
             (click)="chooseAttendance('Declined')"

@@ -3,7 +3,6 @@
    be able to break its contrast. */
 :host {
   --rsvp-accent: #1e3a8a;
-  --rsvp-existing: #1f2937;
   --rsvp-text: #1f2937;
   --rsvp-muted: #6b7280;
   --rsvp-faint: #9ca3af;
@@ -101,12 +100,57 @@
   color: #ffffff;
 }
 
-/* An answer carried over from a previous visit fills dark neutral instead, so "what I said last
-   time" is distinguishable from "what I just picked". */
-.rsvp__choice--existing {
-  background: var(--rsvp-existing);
-  border-color: var(--rsvp-existing);
-  color: #ffffff;
+@media (hover: hover) {
+  .rsvp__choice:hover:not(:disabled) {
+    border-color: var(--rsvp-accent);
+    background: rgba(30, 58, 138, 0.04);
+  }
+
+  .rsvp__choice--selected:hover:not(:disabled) {
+    background: #16296b;
+    border-color: #16296b;
+  }
+
+  .rsvp__step:hover:not(:disabled) {
+    border-color: var(--rsvp-accent);
+    background: rgba(30, 58, 138, 0.06);
+  }
+
+  .rsvp__submit:hover:not(:disabled) {
+    background: #16296b;
+  }
+
+  .rsvp__secondary:hover:not(:disabled) {
+    border-color: var(--rsvp-accent);
+    background: rgba(30, 58, 138, 0.04);
+  }
+
+  .rsvp__close:hover {
+    border-color: var(--rsvp-muted);
+    color: var(--rsvp-body);
+    background: var(--rsvp-sunken);
+  }
+}
+
+.rsvp__choice,
+.rsvp__step,
+.rsvp__submit,
+.rsvp__secondary,
+.rsvp__close {
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp__choice,
+  .rsvp__step,
+  .rsvp__submit,
+  .rsvp__secondary,
+  .rsvp__close {
+    transition: none;
+  }
 }
 
 .rsvp__choice:focus-visible,

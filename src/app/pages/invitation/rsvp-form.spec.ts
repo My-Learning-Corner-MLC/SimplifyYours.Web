@@ -276,14 +276,18 @@ describe('RsvpForm', () => {
       expect(widths.size).toBe(1);
     });
 
-    it('shows a carried-over answer as existing rather than newly picked', async () => {
+    it('shows a carried-over answer exactly as a freshly picked one', async () => {
+      // Re-opening the link must look like the answer is still selected, not like a faded record
+      // of it — so the pre-filled choice gets the same treatment as one picked in this sitting.
       await render(invitation({ status: 'Maybe' }));
 
-      expect(selectedClassOf('Maybe')).toContain('rsvp__choice--existing');
+      const carriedOver = selectedClassOf('Maybe');
+
+      expect(carriedOver).toContain('rsvp__choice--selected');
 
       choose('Maybe');
 
-      expect(selectedClassOf('Maybe')).toContain('rsvp__choice--selected');
+      expect(selectedClassOf('Maybe')).toBe(carriedOver);
     });
 
     it('words the Maybe note as a deadline reminder', async () => {
