@@ -18,6 +18,14 @@ import { TokenStorageService } from '../auth/token-storage.service';
 // gateway), origin alone can't distinguish them -- use path prefix instead.
 const PROTECTED_PATH_PREFIXES = ['/api/v1/events', '/api/v1/guests'];
 
+// The public invitation endpoints live under /api/v1/guests but are deliberately anonymous -- the
+// invitation token is the only credential. They must be excluded for two reasons:
+//   1. An authenticated organiser opening an invitation link would otherwise send their bearer
+//      token to an endpoint that has no use for it.
+//   2. A guest has no session at all, so the 401 path here would silently swallow the response and
+//      redirect them to sign-in -- on a page whose entire premise is that they never sign in.
+const ANONYMOUS_PATH_PREFIXES = ['/api/v1/guests/invitations'];
+
 // Matches the prefix exactly, or the prefix followed by "/" or "?" -- a bare
 // startsWith would also match an unrelated future route like
 // "/api/v1/eventsAdmin" that merely begins with the same characters.
@@ -26,9 +34,14 @@ function isProtectedRequest(url: string): boolean {
   if (path === null) {
     return false;
   }
-  return PROTECTED_PATH_PREFIXES.some(
-    (prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`),
-  );
+  const matches = (prefix: string): boolean =>
+    path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`);
+
+  if (ANONYMOUS_PATH_PREFIXES.some(matches)) {
+    return false;
+  }
+
+  return PROTECTED_PATH_PREFIXES.some(matches);
 }
 
 export const bearerTokenInterceptor: HttpInterceptorFn = (request, next) => {

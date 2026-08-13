@@ -1,0 +1,169 @@
+<div class="rsvp">
+  <button type="button" class="rsvp__close" aria-label="Close" (click)="onClose()">✕</button>
+
+  @switch (mode()) {
+    @case ('closed') {
+      <p class="rsvp__lock" role="status">
+        🔒 Responses closed on {{ deadlineLabel() }}
+      </p>
+      <h2 class="rsvp__title">Your recorded response</h2>
+
+      <div class="rsvp__summary">
+        <p class="rsvp__summary-line">{{ summary() }}</p>
+        @if (invitation().rsvp.dietaryNotes) {
+          <p class="rsvp__summary-note">{{ invitation().rsvp.dietaryNotes }}</p>
+        }
+      </div>
+
+      <p class="rsvp__muted">
+        Need to change this? Contact the organiser directly — the form can no longer be edited.
+      </p>
+    }
+
+    @case ('success') {
+      <div class="rsvp__success">
+        <p class="rsvp__tick" aria-hidden="true">✓</p>
+        <h2 class="rsvp__title">Thanks — that's recorded</h2>
+        <p class="rsvp__muted">
+          We've saved that you're {{ summary().toLowerCase() }}. You can come back to this link any
+          time before {{ deadlineLabel() }} to change it.
+        </p>
+        <button type="button" class="rsvp__secondary" (click)="onClose()">Close</button>
+      </div>
+    }
+
+    @default {
+      <form (ngSubmit)="onSubmit()" novalidate>
+        @if (isEditing()) {
+          <p class="rsvp__chip">You responded{{ respondedLabel() ? ' · ' + respondedLabel() : '' }}</p>
+          <h2 class="rsvp__title">Update your response</h2>
+        } @else {
+          <p class="rsvp__eyebrow">Will you be attending?</p>
+          <h2 class="rsvp__title">{{ invitation().guestName }}, we'd love to know</h2>
+        }
+
+        @if (unattachedErrors().length > 0) {
+          <div class="rsvp__error-panel" role="alert">
+            @for (message of unattachedErrors(); track message) {
+              <p class="rsvp__error-title">{{ message }}</p>
+            }
+          </div>
+        }
+
+        @if (submitFailed()) {
+          <div class="rsvp__error-panel" role="alert">
+            <p class="rsvp__error-title">Couldn't send your response</p>
+            <p class="rsvp__error-body">Check your connection and try again — nothing was lost.</p>
+          </div>
+        }
+
+        <div class="rsvp__choices" role="group" aria-label="Will you be attending?">
+          <button
+            type="button"
+            class="rsvp__choice"
+            [class.rsvp__choice--selected]="choice() === 'Accepted'"
+            [attr.aria-pressed]="choice() === 'Accepted'"
+            [disabled]="submitting()"
+            (click)="chooseAttendance('Accepted')"
+          >Attending</button>
+          <button
+            type="button"
+            class="rsvp__choice"
+            [class.rsvp__choice--selected]="choice() === 'Maybe'"
+            [attr.aria-pressed]="choice() === 'Maybe'"
+            [disabled]="submitting()"
+            (click)="chooseAttendance('Maybe')"
+          >Maybe</button>
+          <button
+            type="button"
+            class="rsvp__choice"
+            [class.rsvp__choice--selected]="choice() === 'Declined'"
+            [attr.aria-pressed]="choice() === 'Declined'"
+            [disabled]="submitting()"
+            (click)="chooseAttendance('Declined')"
+          >Declined</button>
+        </div>
+
+        @if (choice() === null) {
+          <p class="rsvp__muted rsvp__muted--tight">
+            Guest numbers and notes appear once you choose.
+          </p>
+        }
+
+        @if (choice() === 'Maybe') {
+          <p class="rsvp__deadline-note">
+            No problem — just let us know before the deadline on
+            <strong>{{ deadlineLabel() }}</strong>.
+          </p>
+        }
+
+        @if (showsPlusOnes()) {
+          <div class="rsvp__field">
+            <p class="rsvp__label" id="plus-ones-label">Bringing guests?</p>
+            <div class="rsvp__stepper" role="group" aria-labelledby="plus-ones-label">
+              <button
+                type="button"
+                class="rsvp__step"
+                aria-label="One fewer guest"
+                [disabled]="submitting() || plusOnes() === 0"
+                (click)="adjustPlusOnes(-1)"
+              >–</button>
+              <output class="rsvp__count">{{ plusOnes() }}</output>
+              <button
+                type="button"
+                class="rsvp__step"
+                aria-label="One more guest"
+                [disabled]="submitting() || plusOnes() >= plusOnesAllowed()"
+                (click)="adjustPlusOnes(1)"
+              >+</button>
+              <span class="rsvp__allowance">up to {{ plusOnesAllowed() }} allowed</span>
+            </div>
+            @for (message of errorsFor('plusOnesConfirmed'); track message) {
+              <p class="rsvp__field-error">{{ message }}</p>
+            }
+          </div>
+        }
+
+        @if (choice() !== null) {
+          <div class="rsvp__field">
+            <label class="rsvp__label" for="rsvp-notes">
+              @if (choice() === 'Accepted') {
+                Dietary notes
+              } @else if (choice() === 'Maybe') {
+                Anything you'd like to add?
+              } @else {
+                Message for the hosts
+              }
+              <span class="rsvp__optional">(optional)</span>
+            </label>
+            <textarea
+              class="rsvp__textarea"
+              id="rsvp-notes"
+              rows="2"
+              [maxlength]="notesMaxLength"
+              [disabled]="submitting()"
+              [ngModel]="notes()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onNotesInput($event)"
+            ></textarea>
+            @for (message of errorsFor('dietaryNotes'); track message) {
+              <p class="rsvp__field-error">{{ message }}</p>
+            }
+          </div>
+        }
+
+        <button type="submit" class="rsvp__submit" [disabled]="!canSubmit()">
+          @if (submitting()) {
+            <span class="rsvp__spinner" aria-hidden="true"></span> Sending…
+          } @else if (submitFailed()) {
+            Try again
+          } @else if (isEditing()) {
+            Update response
+          } @else {
+            Submit response
+          }
+        </button>
+      </form>
+    }
+  }
+</div>

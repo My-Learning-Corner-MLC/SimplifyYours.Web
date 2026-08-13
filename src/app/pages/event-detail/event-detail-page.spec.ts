@@ -33,6 +33,10 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
   eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: 'Vegan' },
+  deliveryStatus: 'NotSent',
+  rsvpStatus: 'NoResponse',
+  respondedAt: null,
+  plusOnesConfirmed: null,
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });
@@ -44,6 +48,9 @@ class ApiStub {
 class GuestApiStub {
   listGuests = vi.fn(() => of<Guest[]>([makeGuest()]));
   addGuest = vi.fn(() => of(makeGuest()));
+  getInvitationLink = vi.fn(() =>
+    of({ guestId: 'g1', invitationToken: 'tok-abc', invitationUrl: 'https://app.test/invitation/tok-abc' }),
+  );
 }
 
 function setup(api: ApiStub, guestApi: GuestApiStub = new GuestApiStub(), id: string | null = 'e1') {
@@ -263,5 +270,76 @@ describe('EventDetailPage', () => {
 
     expect(api.getEventDetails).not.toHaveBeenCalled();
     expect(testId(root, 'event-detail-not-found')).not.toBeNull();
+  });
+
+  describe('invitation columns and copy link', () => {
+    async function renderGuests(guestApi = new GuestApiStub()) {
+      const fixture = setup(new ApiStub(), guestApi);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.componentInstance.setTab('guests');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('shows the RSVP state rather than a hardcoded label', async () => {
+      const guestApi = new GuestApiStub();
+      guestApi.listGuests = vi.fn(() => of([makeGuest({ rsvpStatus: 'Accepted' })]));
+
+      const fixture = await renderGuests(guestApi);
+
+      expect(fixture.nativeElement.textContent).toContain('Attending');
+    });
+
+    it('shows delivery separately from the RSVP answer', async () => {
+      // The two are independent: a copied link can produce a response with nothing ever sent.
+      const guestApi = new GuestApiStub();
+      guestApi.listGuests = vi.fn(() => of([makeGuest({ rsvpStatus: 'Accepted', deliveryStatus: 'NotSent' })]));
+
+      const fixture = await renderGuests(guestApi);
+      const text = fixture.nativeElement.textContent;
+
+      expect(text).toContain('Attending');
+      expect(text).toContain('Not sent');
+    });
+
+    it('fetches the link only when the organiser asks for it', async () => {
+      // The token is credential-like, so it is never carried in the list payload.
+      const guestApi = new GuestApiStub();
+      const fixture = await renderGuests(guestApi);
+
+      expect(guestApi.getInvitationLink).not.toHaveBeenCalled();
+
+      fixture.componentInstance.copyInvitationLink('g1');
+
+      expect(guestApi.getInvitationLink).toHaveBeenCalledWith('g1');
+    });
+
+    it('reports a clipboard refusal rather than failing silently', async () => {
+      const guestApi = new GuestApiStub();
+      const fixture = await renderGuests(guestApi);
+
+      Object.assign(navigator, {
+        clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
+      });
+
+      fixture.componentInstance.copyInvitationLink('g1');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(fixture.componentInstance.copyLinkError()).toContain('Copying failed');
+    });
+
+    it('surfaces a failed link fetch', async () => {
+      const guestApi = new GuestApiStub();
+      guestApi.getInvitationLink = vi.fn(() => throwError(() => new Error('boom')));
+
+      const fixture = await renderGuests(guestApi);
+      fixture.componentInstance.copyInvitationLink('g1');
+
+      expect(fixture.componentInstance.copyLinkError()).toContain("couldn't get");
+      expect(fixture.componentInstance.copyingLinkFor()).toBeNull();
+    });
   });
 });

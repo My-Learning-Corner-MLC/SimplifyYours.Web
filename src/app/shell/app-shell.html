@@ -1,5 +1,7 @@
-<app-site-header />
-<main>
+@if (!chromeless()) {
+  <app-site-header />
+}
+<main [class.shell__main--chromeless]="chromeless()">
   <router-outlet />
 </main>
 <p-toast />

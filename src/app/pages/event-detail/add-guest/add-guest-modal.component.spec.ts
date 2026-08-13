@@ -14,6 +14,10 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
   eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: null },
+  deliveryStatus: 'NotSent',
+  rsvpStatus: 'NoResponse',
+  respondedAt: null,
+  plusOnesConfirmed: null,
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });

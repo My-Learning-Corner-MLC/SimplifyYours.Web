@@ -1,0 +1,105 @@
+.invitation {
+  display: block;
+  /* The frame is viewport-tall and scrolls internally, so the host page must not add a second
+     scrollbar around it. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #e7e5df;
+}
+
+.invitation__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  min-height: 60vh;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.invitation__status--overlay {
+  min-height: 40vh;
+}
+
+.invitation__heading {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: #2a1f2d;
+}
+
+.invitation__status-text {
+  margin: 0;
+  max-width: 26rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #7a6b6e;
+}
+
+.invitation__retry {
+  appearance: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.8rem 1.6rem;
+  border: none;
+  border-radius: 10px;
+  background: #5a2849;
+  color: #fffcf5;
+  cursor: pointer;
+}
+
+.invitation__spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid rgba(90, 40, 73, 0.25);
+  border-top-color: #5a2849;
+  animation: invitation-spin 0.8s linear infinite;
+}
+
+@keyframes invitation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invitation__spinner {
+    animation: none;
+  }
+}
+
+/* The modal sits over the invitation frame, which is a separate document — so it has to be
+   positioned by the host page rather than anything inside the frame. */
+.invitation__backdrop {
+  position: fixed;
+  inset: 0;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: rgba(42, 31, 45, 0.35);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.invitation__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  display: grid;
+  /* Centred in both axes for every stage. Grid rather than flex because `align-items: center` on a
+     scroll container clips the top of anything taller than the viewport, whereas `safe center`
+     falls back to start — so a tall form stays reachable instead of losing its heading. */
+  place-items: safe center;
+  padding: 1.25rem;
+  /* Scrolls internally when a long form or an on-screen keyboard exceeds the viewport. */
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.invitation__modal > * {
+  pointer-events: auto;
+}

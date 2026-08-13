@@ -68,6 +68,51 @@ describe('bearerTokenInterceptor', () => {
     req.flush({});
   });
 
+  it('leaves the public invitation endpoints untouched even with a token in storage', () => {
+    // These live under /api/v1/guests but are deliberately anonymous. An organiser previewing a
+    // guest's link should not ship their access token to an endpoint that has no use for it.
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`);
+    expect(req.request.headers.get('Authorization')).toBeNull();
+    req.flush({});
+  });
+
+  it('leaves the invitation render and rsvp endpoints untouched', () => {
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/render`).subscribe();
+    httpMock
+      .expectOne(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/render`)
+      .flush('<html></html>');
+
+    http.post(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/rsvp`, {}).subscribe();
+    const rsvp = httpMock.expectOne(
+      `${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/rsvp`,
+    );
+    expect(rsvp.request.headers.get('Authorization')).toBeNull();
+    rsvp.flush({});
+  });
+
+  it('does not redirect a guest to sign-in when a public invitation request fails', async () => {
+    // A guest has no session at all. Running the 401 refresh path here would swallow the response
+    // and bounce them to a login page -- on the one page whose premise is that they never log in.
+    const error = new Promise<unknown>((resolve) => {
+      http
+        .get(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`)
+        .subscribe({ error: resolve });
+    });
+
+    httpMock
+      .expectOne(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`)
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    expect(await error).toBeInstanceOf(HttpErrorResponse);
+    expect(tokenRefresh.ensureFreshToken).not.toHaveBeenCalled();
+  });
+
   it('leaves identity-service requests untouched', () => {
     tokenStorage.write(bundle);
 

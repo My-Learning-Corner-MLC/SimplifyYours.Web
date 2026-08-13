@@ -37,9 +37,28 @@ interface AddGuestResponseBody {
   readonly createdAt: string;
 }
 
+export interface GuestInvitationLink {
+  readonly guestId: string;
+  readonly invitationToken: string;
+  readonly invitationUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GuestApiClient {
   private readonly http = inject(HttpClient);
+
+  /**
+   * Fetches one guest's invitation link.
+   *
+   * Deliberately per-guest rather than a field on the list: the token is credential-like — whoever
+   * holds it reads that guest's personal data without authenticating — so it is never carried in a
+   * paginated response that gets cached client-side and logged when something goes wrong.
+   */
+  getInvitationLink(guestId: string): Observable<GuestInvitationLink> {
+    const url = `${environment.apiBaseUrl}/api/v1/guests/${encodeURIComponent(guestId)}/invitation-link`;
+
+    return this.http.get<GuestInvitationLink>(url, { withCredentials: false });
+  }
 
   listGuests(eventId: string): Observable<Guest[]> {
     const url = `${environment.apiBaseUrl}/api/v1/guests/query`;
@@ -73,6 +92,12 @@ export class GuestApiClient {
       emailAddress: body.guestInfo.emailAddress,
       phoneNumber: body.guestInfo.phoneNumber,
       eventMetadata: body.guestInfo.eventMetadata,
+      // A freshly added guest has neither been invited nor replied. The add response does not
+      // carry these, and defaulting is honest rather than assumed: nothing has happened yet.
+      deliveryStatus: 'NotSent',
+      rsvpStatus: 'NoResponse',
+      respondedAt: null,
+      plusOnesConfirmed: null,
       createdAt: body.createdAt,
     };
   }

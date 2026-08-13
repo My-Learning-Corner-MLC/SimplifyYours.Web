@@ -1,0 +1,382 @@
+/* Deliberately theme-neutral system chrome rather than the invitation's palette: the form must
+   read as "the RSVP" and stay legible on top of any template, and a template redesign must never
+   be able to break its contrast. */
+:host {
+  --rsvp-accent: #1e3a8a;
+  --rsvp-text: #1f2937;
+  --rsvp-muted: #6b7280;
+  --rsvp-faint: #9ca3af;
+  --rsvp-body: #374151;
+  --rsvp-line: #e5e7eb;
+  --rsvp-surface: #ffffff;
+  --rsvp-sunken: #f3f4f6;
+  --rsvp-danger: #b42318;
+  --rsvp-danger-bg: #fdecea;
+
+  display: block;
+}
+
+.rsvp {
+  position: relative;
+  /* One width for every state and every choice. Only the height changes with what is shown, so
+     the modal never jumps sideways as the guest picks an option. */
+  width: 420px;
+  max-width: 100%;
+  background: var(--rsvp-surface);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(26, 29, 36, 0.16);
+  padding: 2.25rem 2.25rem 2rem;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--rsvp-text);
+}
+
+.rsvp__close {
+  position: absolute;
+  right: 1.25rem;
+  top: 1.25rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  border: 1px solid var(--rsvp-line);
+  background: transparent;
+  color: var(--rsvp-faint);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rsvp__eyebrow {
+  margin: 0;
+  font-size: 0.81rem;
+  font-weight: 500;
+  color: var(--rsvp-muted);
+}
+
+.rsvp__chip {
+  display: inline-block;
+  margin: 0;
+  padding: 0.25rem 0.7rem;
+  background: var(--rsvp-line);
+  color: #4b5563;
+  border-radius: 99px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.rsvp__title {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--rsvp-text);
+}
+
+.rsvp__choices {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 1.25rem;
+}
+
+.rsvp__choice {
+  flex: 1;
+  appearance: none;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.94rem 0;
+  border: 1.5px solid var(--rsvp-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rsvp-body);
+  cursor: pointer;
+}
+
+/* All three answers share one selected treatment — the choice is the guest's, and colour-coding
+   them differently editorialises about which answer is the good one. */
+.rsvp__choice--selected {
+  background: var(--rsvp-accent);
+  border-color: var(--rsvp-accent);
+  color: #ffffff;
+}
+
+@media (hover: hover) {
+  .rsvp__choice:hover:not(:disabled) {
+    border-color: var(--rsvp-accent);
+    background: rgba(30, 58, 138, 0.04);
+  }
+
+  .rsvp__choice--selected:hover:not(:disabled) {
+    background: #16296b;
+    border-color: #16296b;
+  }
+
+  .rsvp__step:hover:not(:disabled) {
+    border-color: var(--rsvp-accent);
+    background: rgba(30, 58, 138, 0.06);
+  }
+
+  .rsvp__submit:hover:not(:disabled) {
+    background: #16296b;
+  }
+
+  .rsvp__secondary:hover:not(:disabled) {
+    border-color: var(--rsvp-accent);
+    background: rgba(30, 58, 138, 0.04);
+  }
+
+  .rsvp__close:hover {
+    border-color: var(--rsvp-muted);
+    color: var(--rsvp-body);
+    background: var(--rsvp-sunken);
+  }
+}
+
+.rsvp__choice,
+.rsvp__step,
+.rsvp__submit,
+.rsvp__secondary,
+.rsvp__close {
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp__choice,
+  .rsvp__step,
+  .rsvp__submit,
+  .rsvp__secondary,
+  .rsvp__close {
+    transition: none;
+  }
+}
+
+.rsvp__choice:focus-visible,
+.rsvp__step:focus-visible,
+.rsvp__submit:focus-visible,
+.rsvp__secondary:focus-visible,
+.rsvp__textarea:focus-visible,
+.rsvp__close:focus-visible {
+  outline: 2px solid var(--rsvp-accent);
+  outline-offset: 2px;
+}
+
+.rsvp__deadline-note {
+  margin: 1.25rem 0 0;
+  padding: 0.8rem 0.94rem;
+  background: var(--rsvp-sunken);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--rsvp-body);
+}
+
+.rsvp__field {
+  margin-top: 1.35rem;
+}
+
+.rsvp__label {
+  display: block;
+  margin: 0 0 0.5rem;
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: var(--rsvp-body);
+}
+
+.rsvp__optional {
+  font-weight: 400;
+  color: var(--rsvp-faint);
+}
+
+.rsvp__stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rsvp__step {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--rsvp-line);
+  background: transparent;
+  color: var(--rsvp-accent);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rsvp__step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.rsvp__count {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 1.06rem;
+  font-weight: 500;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.rsvp__allowance {
+  font-size: 0.72rem;
+  color: var(--rsvp-faint);
+}
+
+.rsvp__textarea {
+  width: 100%;
+  padding: 0.81rem 0.88rem;
+  border: 1.5px solid var(--rsvp-line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.81rem;
+  background: var(--rsvp-surface);
+  color: var(--rsvp-text);
+  resize: vertical;
+}
+
+.rsvp__submit {
+  width: 100%;
+  margin-top: 1.375rem;
+  padding: 0.94rem 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--rsvp-accent);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+}
+
+.rsvp__submit:disabled {
+  background: var(--rsvp-line);
+  color: var(--rsvp-faint);
+  cursor: default;
+}
+
+.rsvp__secondary {
+  width: 100%;
+  margin-top: 1.375rem;
+  padding: 0.81rem 0;
+  border: 1.5px solid var(--rsvp-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rsvp-accent);
+  font: inherit;
+  font-size: 0.81rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rsvp__error-panel {
+  margin-top: 1.25rem;
+  padding: 0.81rem 0.94rem;
+  background: var(--rsvp-danger-bg);
+  border-radius: 8px;
+}
+
+.rsvp__error-title {
+  margin: 0;
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: var(--rsvp-danger);
+}
+
+.rsvp__error-body {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: var(--rsvp-danger);
+  opacity: 0.85;
+}
+
+.rsvp__field-error {
+  margin: 0.625rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--rsvp-danger);
+}
+
+.rsvp__muted {
+  margin: 0.625rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--rsvp-muted);
+}
+
+.rsvp__muted--tight {
+  margin-top: 0.875rem;
+  color: var(--rsvp-faint);
+}
+
+.rsvp__lock {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--rsvp-muted);
+}
+
+.rsvp__summary {
+  margin-top: 1rem;
+  padding: 1rem 1.125rem;
+  background: var(--rsvp-sunken);
+  border-radius: 8px;
+}
+
+.rsvp__summary-line {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--rsvp-text);
+}
+
+.rsvp__summary-note {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--rsvp-muted);
+}
+
+.rsvp__success {
+  text-align: center;
+}
+
+.rsvp__tick {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0.375rem auto 0;
+  border-radius: 50%;
+  background: var(--rsvp-accent);
+  color: #ffffff;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rsvp__spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: rsvp-spin 0.8s linear infinite;
+}
+
+@keyframes rsvp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp__spinner {
+    animation: none;
+  }
+}

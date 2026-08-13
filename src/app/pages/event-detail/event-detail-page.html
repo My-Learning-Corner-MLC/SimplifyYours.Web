@@ -246,9 +246,10 @@
                             <span role="columnheader">Guest</span>
                             <span role="columnheader">Email</span>
                             <span role="columnheader">Party</span>
-                            <span role="columnheader">Status</span>
+                            <span role="columnheader">RSVP</span>
+                            <span role="columnheader">Invitation</span>
                             <span role="columnheader">Meal</span>
-                            <span role="columnheader" class="detail__cell-right">Table</span>
+                            <span role="columnheader" class="detail__cell-right">Link</span>
                           </div>
                           @for (guest of guestRows(); track guest.id) {
                             <div class="detail__table-row" role="row">
@@ -265,13 +266,34 @@
                               <span class="detail__guest-email" role="cell">{{ guest.email }}</span>
                               <span class="detail__guest-party" role="cell">{{ guest.party }}</span>
                               <span role="cell">
-                                <span class="detail__status detail__status--awaiting">{{ guestStatusLabel }}</span>
+                                <span class="detail__status" [class]="'detail__status--' + guest.rsvpTone">{{ guest.rsvpLabel }}</span>
                               </span>
+                              <span class="detail__guest-delivery" role="cell">{{ guest.deliveryLabel }}</span>
                               <span class="detail__guest-meal" role="cell">{{ guest.meal }}</span>
-                              <span class="detail__guest-table" role="cell">—</span>
+                              <span class="detail__cell-right" role="cell">
+                                <button
+                                  type="button"
+                                  class="detail__copy-link"
+                                  [disabled]="copyingLinkFor() === guest.id"
+                                  [attr.aria-label]="'Copy invitation link for ' + guest.name"
+                                  (click)="copyInvitationLink(guest.id)"
+                                >
+                                  @if (copyingLinkFor() === guest.id) {
+                                    Copying…
+                                  } @else if (copiedLinkFor() === guest.id) {
+                                    Copied
+                                  } @else {
+                                    Copy link
+                                  }
+                                </button>
+                              </span>
                             </div>
                           }
                         </div>
+                      }
+
+                      @if (copyLinkError()) {
+                        <p class="detail__copy-error" role="alert">{{ copyLinkError() }}</p>
                       }
                     }
                   }

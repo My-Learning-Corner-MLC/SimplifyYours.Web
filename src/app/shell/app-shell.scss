@@ -41,3 +41,14 @@ main {
     cursor: pointer;
   }
 }
+
+/* A chromeless route owns the whole viewport: no header above it, and no page-level scrollbar
+   around content that already scrolls itself. */
+.shell__main--chromeless {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+}
