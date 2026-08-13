@@ -111,6 +111,11 @@ describe('InvitationFrame', () => {
     await fixture.whenStable();
 
     const element = iframe();
+
+    // Without this, a frame that never loaded at all would also report zero re-assignments and
+    // the test would pass while showing the guest nothing.
+    expect(element.src).toContain('/render');
+
     let assignments = 0;
     const actual = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'src')!;
 
@@ -131,22 +136,6 @@ describe('InvitationFrame', () => {
     await fixture.whenStable();
 
     expect(assignments).toBe(0);
-  });
-
-  it('keeps the same document URL across change detection', () => {
-    // The regression that caused 429s in local dev. bypassSecurityTrustResourceUrl returns a NEW
-    // object per call, and Angular's property binding compares by reference — so a fresh object
-    // each cycle re-sets src and reloads the framed document. With the height bridge that closes a
-    // loop: load → report height → change detection → reload → report height → …
-    //
-    // Asserted on object identity rather than iframe.src: re-assigning the same URL string leaves
-    // .src unchanged, so reading it cannot detect the reload.
-    const before = iframe().src;
-
-    post({ type: 'sy:unknown' });
-    fixture.detectChanges();
-
-    expect(iframe().src).toBe(before);
   });
 
 

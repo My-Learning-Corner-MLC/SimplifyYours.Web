@@ -139,6 +139,22 @@ describe('RsvpForm', () => {
     expect(byClass('rsvp__submit').textContent).toContain('Update response');
   });
 
+  it('dates the "You responded" chip', async () => {
+    // Prove-It: the backend response record had no respondedAt field at all, so this chip read
+    // "You responded" with no date for every returning guest. The form was always ready for it.
+    await render(invitation({ status: 'Maybe', respondedAt: '2026-04-02T09:15:00Z' }));
+
+    expect(byClass('rsvp__chip').textContent.replace(/\s+/g, ' ').trim()).toBe(
+      'You responded · April 2, 2026',
+    );
+  });
+
+  it('shows the chip without a date when the answer predates the field', async () => {
+    await render(invitation({ status: 'Maybe' }));
+
+    expect(byClass('rsvp__chip').textContent.trim()).toBe('You responded');
+  });
+
   it('pre-fills the existing answer', async () => {
     await render(invitation({ status: 'Accepted', plusOnesConfirmed: 2, dietaryNotes: 'No nuts' }));
 
