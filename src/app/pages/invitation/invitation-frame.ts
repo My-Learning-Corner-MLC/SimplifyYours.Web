@@ -3,14 +3,13 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  computed,
+  effect,
   inject,
   input,
   output,
   signal,
   viewChild,
 } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 /** Minimum frame height before the document reports its own, so nothing flashes at zero. */
 const MIN_HEIGHT_PX = 480;
@@ -45,7 +44,6 @@ interface BridgeMessage {
       sandbox="allow-scripts"
       referrerpolicy="no-referrer"
       [style.height.px]="height()"
-      [src]="safeSrc()"
       (load)="loaded.emit()"
     ></iframe>
   `,
@@ -76,7 +74,6 @@ export class InvitationFrame {
   protected readonly height = signal(MIN_HEIGHT_PX);
 
   private readonly frame = viewChild.required<ElementRef<HTMLIFrameElement>>('frame');
-  private readonly sanitizer = inject(DomSanitizer);
 
   constructor() {
     const listener = (event: MessageEvent): void => this.onMessage(event);
@@ -86,19 +83,33 @@ export class InvitationFrame {
   }
 
   /**
-   * Memoised per URL, and that memoisation is load-bearing rather than an optimisation.
+   * Applies the URL to the element directly rather than through a `[src]` binding.
    *
-   * `bypassSecurityTrustResourceUrl` returns a new object on every call, and Angular's property
-   * binding compares by reference — so a method here re-sets `src` on every change detection and
-   * reloads the framed document. That closes a loop with the height bridge: load → report height →
-   * signal change → change detection → new object → reload, which hammers the render endpoint
-   * until rate limiting rejects it.
+   * Assigning an iframe's `src` reloads its document even when the value is unchanged, so any
+   * re-application of the binding — for any reason — restarts the load. Paired with the height
+   * bridge that becomes a loop: load → report height → change detection → re-apply → reload, which
+   * re-requests the render endpoint until rate limiting rejects it.
+   *
+   * Guarding on the element's own resolved `src` makes the assignment idempotent, so the document
+   * loads exactly once per URL no matter how often change detection runs.
    *
    * The URL is built by this app from a configured origin, never from page content.
    */
-  protected readonly safeSrc = computed<SafeResourceUrl>(() =>
-    this.sanitizer.bypassSecurityTrustResourceUrl(this.src()),
-  );
+  private readonly applySrc = effect(() => {
+    const element = this.frame().nativeElement;
+    const url = this.src();
+
+    if (!url) {
+      return;
+    }
+
+    // `element.src` reports the resolved absolute URL, which is what we must compare against.
+    const resolved = new URL(url, document.baseURI).href;
+
+    if (element.src !== resolved) {
+      element.src = resolved;
+    }
+  });
 
   private onMessage(event: MessageEvent): void {
     // Both checks matter. Origin alone would accept a message from any other frame served by the

@@ -111,7 +111,36 @@ describe('InvitationFrame', () => {
     expect(iframe().style.height).toBe('900px');
   });
 
-  it('hands Angular the same SafeResourceUrl object every time', () => {
+  it('assigns the iframe src exactly once, however often change detection runs', async () => {
+    // The regression behind the 429s. Assigning an iframe's src reloads its document even when the
+    // value is unchanged, so a re-applied binding restarts the load. Paired with the height bridge
+    // that becomes a loop: load → report height → change detection → re-apply → reload.
+    await fixture.whenStable();
+
+    const element = iframe();
+    let assignments = 0;
+    const actual = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'src')!;
+
+    Object.defineProperty(element, 'src', {
+      configurable: true,
+      get: () => actual.get!.call(element),
+      set: (value: string) => {
+        assignments += 1;
+        actual.set!.call(element, value);
+      },
+    });
+
+    post({ type: 'sy:height', height: 900 });
+    fixture.detectChanges();
+    post({ type: 'sy:height', height: 1400 });
+    fixture.detectChanges();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(assignments).toBe(0);
+  });
+
+  it('keeps the same document URL across change detection', () => {
     // The regression that caused 429s in local dev. bypassSecurityTrustResourceUrl returns a NEW
     // object per call, and Angular's property binding compares by reference — so a fresh object
     // each cycle re-sets src and reloads the framed document. With the height bridge that closes a
@@ -119,14 +148,12 @@ describe('InvitationFrame', () => {
     //
     // Asserted on object identity rather than iframe.src: re-assigning the same URL string leaves
     // .src unchanged, so reading it cannot detect the reload.
-    const read = () => (fixture.componentInstance as unknown as { safeSrc: () => unknown }).safeSrc();
-
-    const first = read();
+    const before = iframe().src;
 
     post({ type: 'sy:height', height: 900 });
     fixture.detectChanges();
 
-    expect(read()).toBe(first);
+    expect(iframe().src).toBe(before);
   });
 
   it('does not react to height reports that would not move the frame', () => {
