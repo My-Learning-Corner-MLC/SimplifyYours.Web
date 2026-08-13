@@ -38,6 +38,9 @@ export class RsvpForm {
 
   protected readonly notesMaxLength = NOTES_MAX_LENGTH;
 
+  /** Whether the guest has picked in this sitting, as opposed to the answer we loaded. */
+  private readonly touchedChoice = signal(false);
+
   protected readonly mode = computed<RsvpFormMode>(() => {
     // Closed wins over everything: past the deadline there is nothing to submit, so no inputs
     // render at all rather than disabled ones the guest can still tab into.
@@ -87,10 +90,27 @@ export class RsvpForm {
       this.choice.set(rsvp.status === 'NoResponse' ? null : (rsvp.status as RsvpChoice));
       this.plusOnes.set(rsvp.plusOnesConfirmed ?? 0);
       this.notes.set(rsvp.dietaryNotes ?? '');
+      this.touchedChoice.set(false);
     });
   }
 
+  /**
+   * True while the shown answer is still the one carried over from a previous visit — the design
+   * fills that dark neutral rather than the accent, so "what I said last time" is distinguishable
+   * from "what I just picked". Once the guest touches the selector it becomes a new choice.
+   */
+  protected showsAsExisting(choice: RsvpChoice): boolean {
+    return (
+      !this.touchedChoice() &&
+      this.isEditing() &&
+      this.invitation().rsvp.status === choice &&
+      this.choice() === choice
+    );
+  }
+
   protected chooseAttendance(choice: RsvpChoice): void {
+    this.touchedChoice.set(true);
+
     this.choice.set(choice);
 
     // Anything other than Attending carries no guest count; clearing it here means the payload

@@ -1,56 +1,81 @@
+/* Deliberately theme-neutral system chrome rather than the invitation's palette: the form must
+   read as "the RSVP" and stay legible on top of any template, and a template redesign must never
+   be able to break its contrast. */
+:host {
+  --rsvp-accent: #1e3a8a;
+  --rsvp-existing: #1f2937;
+  --rsvp-text: #1f2937;
+  --rsvp-muted: #6b7280;
+  --rsvp-faint: #9ca3af;
+  --rsvp-body: #374151;
+  --rsvp-line: #e5e7eb;
+  --rsvp-surface: #ffffff;
+  --rsvp-sunken: #f3f4f6;
+  --rsvp-danger: #b42318;
+  --rsvp-danger-bg: #fdecea;
+
+  display: block;
+}
+
 .rsvp {
   position: relative;
-  width: min(26rem, 100%);
-  background: #fffcf5;
-  border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(42, 31, 45, 0.22);
-  padding: 2.2rem 2.2rem 2rem;
+  /* One width for every state and every choice. Only the height changes with what is shown, so
+     the modal never jumps sideways as the guest picks an option. */
+  width: 420px;
+  max-width: 100%;
+  background: var(--rsvp-surface);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(26, 29, 36, 0.16);
+  padding: 2.25rem 2.25rem 2rem;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--rsvp-text);
 }
 
 .rsvp__close {
   position: absolute;
-  right: 1.1rem;
-  top: 1.1rem;
-  width: 1.7rem;
-  height: 1.7rem;
+  right: 1.25rem;
+  top: 1.25rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 50%;
-  border: 1px solid #ece2d2;
+  border: 1px solid var(--rsvp-line);
   background: transparent;
-  color: #b8ac96;
+  color: var(--rsvp-faint);
   font-size: 0.75rem;
+  line-height: 1;
   cursor: pointer;
 }
 
 .rsvp__eyebrow {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.81rem;
   font-weight: 500;
-  color: #7a6b6e;
+  color: var(--rsvp-muted);
 }
 
 .rsvp__chip {
   display: inline-block;
   margin: 0;
   padding: 0.25rem 0.7rem;
-  background: #f1e9da;
-  color: #8a723f;
+  background: var(--rsvp-line);
+  color: #4b5563;
   border-radius: 99px;
-  font-size: 0.65rem;
+  font-size: 0.66rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .rsvp__title {
-  margin: 0.3rem 0 0;
-  font-size: 1.35rem;
-  font-weight: 400;
-  color: #2a1f2d;
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--rsvp-text);
 }
 
 .rsvp__choices {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.625rem;
   margin-top: 1.25rem;
 }
 
@@ -58,85 +83,84 @@
   flex: 1;
   appearance: none;
   font: inherit;
-  font-size: 0.83rem;
+  font-size: 0.84rem;
   font-weight: 600;
-  padding: 0.95rem 0;
-  border: 1.5px solid #ece2d2;
-  border-radius: 10px;
+  padding: 0.94rem 0;
+  border: 1.5px solid var(--rsvp-line);
+  border-radius: 8px;
   background: transparent;
-  color: #4a4045;
+  color: var(--rsvp-body);
   cursor: pointer;
 }
 
-/* Three deliberately different fills: plum confirms, gold reads as pending, mauve is neither. */
-.rsvp__choice--attending.rsvp__choice--selected {
-  background: #5a2849;
-  border-color: #5a2849;
-  color: #fffcf5;
+/* All three answers share one selected treatment — the choice is the guest's, and colour-coding
+   them differently editorialises about which answer is the good one. */
+.rsvp__choice--selected {
+  background: var(--rsvp-accent);
+  border-color: var(--rsvp-accent);
+  color: #ffffff;
 }
 
-.rsvp__choice--maybe.rsvp__choice--selected {
-  background: #c8a876;
-  border-color: #c8a876;
-  color: #3f1a33;
-}
-
-.rsvp__choice--declined.rsvp__choice--selected {
-  background: #8a7a80;
-  border-color: #8a7a80;
-  color: #fffcf5;
+/* An answer carried over from a previous visit fills dark neutral instead, so "what I said last
+   time" is distinguishable from "what I just picked". */
+.rsvp__choice--existing {
+  background: var(--rsvp-existing);
+  border-color: var(--rsvp-existing);
+  color: #ffffff;
 }
 
 .rsvp__choice:focus-visible,
 .rsvp__step:focus-visible,
 .rsvp__submit:focus-visible,
-.rsvp__textarea:focus-visible {
-  outline: 3px solid #c8a876;
+.rsvp__secondary:focus-visible,
+.rsvp__textarea:focus-visible,
+.rsvp__close:focus-visible {
+  outline: 2px solid var(--rsvp-accent);
   outline-offset: 2px;
 }
 
 .rsvp__deadline-note {
-  margin: 1.1rem 0 0;
-  padding: 0.8rem 0.9rem;
-  background: #fbf3e3;
-  border: 1px solid #ebd9ae;
-  border-radius: 10px;
+  margin: 1.25rem 0 0;
+  padding: 0.8rem 0.94rem;
+  background: var(--rsvp-sunken);
+  border-radius: 8px;
   font-size: 0.78rem;
   line-height: 1.55;
-  color: #6b5f42;
+  color: var(--rsvp-body);
 }
 
 .rsvp__field {
-  margin-top: 1.25rem;
+  margin-top: 1.35rem;
 }
 
 .rsvp__label {
   display: block;
   margin: 0 0 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.81rem;
   font-weight: 600;
-  color: #4a4045;
+  color: var(--rsvp-body);
 }
 
 .rsvp__optional {
   font-weight: 400;
-  color: #b8ac96;
+  color: var(--rsvp-faint);
 }
 
 .rsvp__stepper {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.75rem;
 }
 
 .rsvp__step {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  border: 1.5px solid #ece2d2;
+  border: 1.5px solid var(--rsvp-line);
   background: transparent;
-  color: #5a2849;
+  color: var(--rsvp-accent);
   font-size: 1rem;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -146,7 +170,8 @@
 }
 
 .rsvp__count {
-  font-size: 1.05rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 1.06rem;
   font-weight: 500;
   min-width: 1.2rem;
   text-align: center;
@@ -154,124 +179,124 @@
 
 .rsvp__allowance {
   font-size: 0.72rem;
-  color: #b8ac96;
+  color: var(--rsvp-faint);
 }
 
 .rsvp__textarea {
   width: 100%;
-  padding: 0.8rem 0.9rem;
-  border: 1.5px solid #ece2d2;
-  border-radius: 10px;
+  padding: 0.81rem 0.88rem;
+  border: 1.5px solid var(--rsvp-line);
+  border-radius: 8px;
   font: inherit;
-  font-size: 0.82rem;
-  background: #fff;
-  color: #2a1f2d;
+  font-size: 0.81rem;
+  background: var(--rsvp-surface);
+  color: var(--rsvp-text);
   resize: vertical;
 }
 
 .rsvp__submit {
   width: 100%;
-  margin-top: 1.4rem;
-  padding: 0.95rem 0;
+  margin-top: 1.375rem;
+  padding: 0.94rem 0;
   border: none;
-  border-radius: 10px;
-  background: #5a2849;
-  color: #fffcf5;
+  border-radius: 8px;
+  background: var(--rsvp-accent);
+  color: #ffffff;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: 0.625rem;
 }
 
 .rsvp__submit:disabled {
-  background: #ece2d2;
-  color: #a89f8c;
+  background: var(--rsvp-line);
+  color: var(--rsvp-faint);
   cursor: default;
 }
 
 .rsvp__secondary {
   width: 100%;
-  margin-top: 1.4rem;
-  padding: 0.8rem 0;
-  border: 1.5px solid #ece2d2;
-  border-radius: 10px;
+  margin-top: 1.375rem;
+  padding: 0.81rem 0;
+  border: 1.5px solid var(--rsvp-line);
+  border-radius: 8px;
   background: transparent;
-  color: #5a2849;
+  color: var(--rsvp-accent);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.81rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .rsvp__error-panel {
-  margin-top: 1.1rem;
-  padding: 0.8rem 0.95rem;
-  background: #f4e2dd;
-  border-radius: 10px;
+  margin-top: 1.25rem;
+  padding: 0.81rem 0.94rem;
+  background: var(--rsvp-danger-bg);
+  border-radius: 8px;
 }
 
 .rsvp__error-title {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.81rem;
   font-weight: 600;
-  color: #8a3a25;
+  color: var(--rsvp-danger);
 }
 
 .rsvp__error-body {
   margin: 0.2rem 0 0;
   font-size: 0.75rem;
-  color: #8a3a25;
+  color: var(--rsvp-danger);
   opacity: 0.85;
 }
 
 .rsvp__field-error {
-  margin: 0.5rem 0 0;
+  margin: 0.625rem 0 0;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #c1493a;
+  color: var(--rsvp-danger);
 }
 
 .rsvp__muted {
-  margin: 0.7rem 0 0;
+  margin: 0.625rem 0 0;
   font-size: 0.78rem;
-  line-height: 1.6;
-  color: #7a6b6e;
+  line-height: 1.65;
+  color: var(--rsvp-muted);
 }
 
 .rsvp__muted--tight {
-  margin-top: 0.9rem;
-  color: #b8ac96;
+  margin-top: 0.875rem;
+  color: var(--rsvp-faint);
 }
 
 .rsvp__lock {
   margin: 0;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #7a6b6e;
+  color: var(--rsvp-muted);
 }
 
 .rsvp__summary {
   margin-top: 1rem;
-  padding: 1rem 1.1rem;
-  background: #f5efe6;
-  border-radius: 10px;
+  padding: 1rem 1.125rem;
+  background: var(--rsvp-sunken);
+  border-radius: 8px;
 }
 
 .rsvp__summary-line {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
-  color: #2a1f2d;
+  color: var(--rsvp-text);
 }
 
 .rsvp__summary-note {
   margin: 0.25rem 0 0;
   font-size: 0.75rem;
-  color: #7a6b6e;
+  color: var(--rsvp-muted);
 }
 
 .rsvp__success {
@@ -279,24 +304,24 @@
 }
 
 .rsvp__tick {
-  width: 3.2rem;
-  height: 3.2rem;
-  margin: 0.4rem auto 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0.375rem auto 0;
   border-radius: 50%;
-  background: #5a2849;
-  color: #fffcf5;
-  font-size: 1.4rem;
+  background: var(--rsvp-accent);
+  color: #ffffff;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .rsvp__spinner {
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 0.875rem;
+  height: 0.875rem;
   border-radius: 50%;
-  border: 2px solid rgba(255, 252, 245, 0.35);
-  border-top-color: #fffcf5;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
   animation: rsvp-spin 0.8s linear infinite;
 }
 

@@ -237,4 +237,62 @@ describe('RsvpForm', () => {
 
     expect(closed).toHaveBeenCalledTimes(1);
   });
+
+  describe('design conformance', () => {
+    const selectedClassOf = (label: string) => {
+      const button = Array.from(fixture.nativeElement.querySelectorAll('.rsvp__choice')).find(
+        (b) => (b as HTMLElement).textContent?.trim() === label,
+      ) as HTMLElement;
+      return button.className;
+    };
+
+    it('gives all three answers the same selected treatment', async () => {
+      // Colour-coding the answers differently editorialises about which one is the good answer.
+      await render();
+
+      const classes: string[] = [];
+
+      for (const label of ['Attending', 'Maybe', 'Declined']) {
+        choose(label);
+        classes.push(selectedClassOf(label));
+      }
+
+      expect(new Set(classes).size).toBe(1);
+      expect(classes[0]).toContain('rsvp__choice--selected');
+    });
+
+    it('keeps one width whichever answer is chosen', async () => {
+      await render();
+
+      const widths = new Set<string>();
+
+      for (const label of ['Attending', 'Maybe', 'Declined']) {
+        choose(label);
+        widths.add(getComputedStyle(byClass('rsvp')).width);
+      }
+
+      // Height may differ with what each answer shows; width must not, or the modal jumps
+      // sideways as the guest changes their mind.
+      expect(widths.size).toBe(1);
+    });
+
+    it('shows a carried-over answer as existing rather than newly picked', async () => {
+      await render(invitation({ status: 'Maybe' }));
+
+      expect(selectedClassOf('Maybe')).toContain('rsvp__choice--existing');
+
+      choose('Maybe');
+
+      expect(selectedClassOf('Maybe')).toContain('rsvp__choice--selected');
+    });
+
+    it('words the Maybe note as a deadline reminder', async () => {
+      await render();
+      choose('Maybe');
+
+      const note = byClass('rsvp__deadline-note').textContent.replace(/\s+/g, ' ').trim();
+
+      expect(note).toBe('No problem — just let us know before the deadline on May 1, 2026.');
+    });
+  });
 });

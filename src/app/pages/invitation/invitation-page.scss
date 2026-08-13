@@ -89,11 +89,13 @@
   position: fixed;
   inset: 0;
   z-index: 11;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  /* Centred in both axes for every stage. Grid rather than flex because `align-items: center` on a
+     scroll container clips the top of anything taller than the viewport, whereas `safe center`
+     falls back to start — so a tall form stays reachable instead of losing its heading. */
+  place-items: safe center;
   padding: 1.25rem;
-  /* Scrolls internally when an on-screen keyboard shrinks the viewport. */
+  /* Scrolls internally when a long form or an on-screen keyboard exceeds the viewport. */
   overflow-y: auto;
   pointer-events: none;
 }

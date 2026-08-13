@@ -60,24 +60,27 @@
         <div class="rsvp__choices" role="group" aria-label="Will you be attending?">
           <button
             type="button"
-            class="rsvp__choice rsvp__choice--attending"
-            [class.rsvp__choice--selected]="choice() === 'Accepted'"
+            class="rsvp__choice"
+            [class.rsvp__choice--selected]="choice() === 'Accepted' && !showsAsExisting('Accepted')"
+            [class.rsvp__choice--existing]="showsAsExisting('Accepted')"
             [attr.aria-pressed]="choice() === 'Accepted'"
             [disabled]="submitting()"
             (click)="chooseAttendance('Accepted')"
           >Attending</button>
           <button
             type="button"
-            class="rsvp__choice rsvp__choice--maybe"
-            [class.rsvp__choice--selected]="choice() === 'Maybe'"
+            class="rsvp__choice"
+            [class.rsvp__choice--selected]="choice() === 'Maybe' && !showsAsExisting('Maybe')"
+            [class.rsvp__choice--existing]="showsAsExisting('Maybe')"
             [attr.aria-pressed]="choice() === 'Maybe'"
             [disabled]="submitting()"
             (click)="chooseAttendance('Maybe')"
           >Maybe</button>
           <button
             type="button"
-            class="rsvp__choice rsvp__choice--declined"
-            [class.rsvp__choice--selected]="choice() === 'Declined'"
+            class="rsvp__choice"
+            [class.rsvp__choice--selected]="choice() === 'Declined' && !showsAsExisting('Declined')"
+            [class.rsvp__choice--existing]="showsAsExisting('Declined')"
             [attr.aria-pressed]="choice() === 'Declined'"
             [disabled]="submitting()"
             (click)="chooseAttendance('Declined')"
@@ -92,8 +95,8 @@
 
         @if (choice() === 'Maybe') {
           <p class="rsvp__deadline-note">
-            No problem — let us know by <strong>{{ deadlineLabel() }}</strong> so we can finalise
-            seating and catering.
+            No problem — just let us know before the deadline on
+            <strong>{{ deadlineLabel() }}</strong>.
           </p>
         }
 
