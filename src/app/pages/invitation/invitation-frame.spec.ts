@@ -110,4 +110,34 @@ describe('InvitationFrame', () => {
 
     expect(iframe().style.height).toBe('900px');
   });
+
+  it('hands Angular the same SafeResourceUrl object every time', () => {
+    // The regression that caused 429s in local dev. bypassSecurityTrustResourceUrl returns a NEW
+    // object per call, and Angular's property binding compares by reference — so a fresh object
+    // each cycle re-sets src and reloads the framed document. With the height bridge that closes a
+    // loop: load → report height → change detection → reload → report height → …
+    //
+    // Asserted on object identity rather than iframe.src: re-assigning the same URL string leaves
+    // .src unchanged, so reading it cannot detect the reload.
+    const read = () => (fixture.componentInstance as unknown as { safeSrc: () => unknown }).safeSrc();
+
+    const first = read();
+
+    post({ type: 'sy:height', height: 900 });
+    fixture.detectChanges();
+
+    expect(read()).toBe(first);
+  });
+
+  it('does not react to height reports that would not move the frame', () => {
+    post({ type: 'sy:height', height: 900 });
+    fixture.detectChanges();
+    expect(iframe().style.height).toBe('900px');
+
+    // Sub-pixel jitter must not keep waking change detection.
+    post({ type: 'sy:height', height: 901 });
+    fixture.detectChanges();
+
+    expect(iframe().style.height).toBe('900px');
+  });
 });

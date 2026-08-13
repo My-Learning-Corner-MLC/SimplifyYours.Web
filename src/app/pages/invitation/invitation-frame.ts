@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  computed,
   inject,
   input,
   output,
@@ -84,10 +85,20 @@ export class InvitationFrame {
     inject(DestroyRef).onDestroy(() => window.removeEventListener('message', listener));
   }
 
-  protected safeSrc(): SafeResourceUrl {
-    // The URL is built by this app from a configured origin, never from page content.
-    return this.sanitizer.bypassSecurityTrustResourceUrl(this.src());
-  }
+  /**
+   * Memoised per URL, and that memoisation is load-bearing rather than an optimisation.
+   *
+   * `bypassSecurityTrustResourceUrl` returns a new object on every call, and Angular's property
+   * binding compares by reference — so a method here re-sets `src` on every change detection and
+   * reloads the framed document. That closes a loop with the height bridge: load → report height →
+   * signal change → change detection → new object → reload, which hammers the render endpoint
+   * until rate limiting rejects it.
+   *
+   * The URL is built by this app from a configured origin, never from page content.
+   */
+  protected readonly safeSrc = computed<SafeResourceUrl>(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(this.src()),
+  );
 
   private onMessage(event: MessageEvent): void {
     // Both checks matter. Origin alone would accept a message from any other frame served by the
@@ -121,6 +132,14 @@ export class InvitationFrame {
       return;
     }
 
-    this.height.set(Math.min(Math.max(Math.ceil(height), MIN_HEIGHT_PX), MAX_HEIGHT_PX));
+    const next = Math.min(Math.max(Math.ceil(height), MIN_HEIGHT_PX), MAX_HEIGHT_PX);
+
+    // Ignore sub-pixel jitter. A document whose layout settles a pixel at a time would otherwise
+    // keep waking change detection for no visible gain.
+    if (Math.abs(next - this.height()) < 2) {
+      return;
+    }
+
+    this.height.set(next);
   }
 }
