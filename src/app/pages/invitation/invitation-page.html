@@ -40,12 +40,20 @@
       />
 
       @if (rsvpOpen() && invitation()) {
-        <div class="invitation__backdrop" (click)="onRsvpClosed()"></div>
+        <!-- A real button, not a div: dismissing the dialog has to be reachable by keyboard, and
+             a click handler on a plain element is not. -->
+        <button
+          type="button"
+          class="invitation__backdrop"
+          aria-label="Close without responding"
+          (click)="onRsvpClosed()"
+        ></button>
         <div
           class="invitation__modal"
           role="dialog"
           aria-modal="true"
           aria-label="Respond to this invitation"
+          (keydown.escape)="onRsvpClosed()"
         >
           <app-rsvp-form
             [invitation]="invitation()!"

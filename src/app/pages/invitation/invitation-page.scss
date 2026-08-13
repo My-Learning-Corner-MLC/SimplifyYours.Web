@@ -77,7 +77,11 @@
 .invitation__backdrop {
   position: fixed;
   inset: 0;
+  appearance: none;
+  border: 0;
+  padding: 0;
   background: rgba(42, 31, 45, 0.35);
+  cursor: pointer;
   z-index: 10;
 }
 
