@@ -73,7 +73,7 @@ export class InvitationFrame {
 
   protected readonly height = signal(MIN_HEIGHT_PX);
 
-  private readonly frame = viewChild.required<ElementRef<HTMLIFrameElement>>('frame');
+  private readonly frame = viewChild<ElementRef<HTMLIFrameElement>>('frame');
 
   constructor() {
     const listener = (event: MessageEvent): void => this.onMessage(event);
@@ -96,10 +96,13 @@ export class InvitationFrame {
    * The URL is built by this app from a configured origin, never from page content.
    */
   private readonly applySrc = effect(() => {
-    const element = this.frame().nativeElement;
+    // Undefined until the view is created; as a signal, this re-runs once the query resolves.
+    // Defensive rather than a fix for anything observed — the blank frame was a CSP
+    // frame-ancestors mismatch, not a timing problem.
+    const element = this.frame()?.nativeElement;
     const url = this.src();
 
-    if (!url) {
+    if (!element || !url) {
       return;
     }
 
@@ -118,7 +121,7 @@ export class InvitationFrame {
       return;
     }
 
-    if (event.source !== this.frame().nativeElement.contentWindow) {
+    if (event.source !== this.frame()?.nativeElement.contentWindow) {
       return;
     }
 

@@ -111,6 +111,14 @@ describe('InvitationFrame', () => {
     expect(iframe().style.height).toBe('900px');
   });
 
+  it('actually loads the document', async () => {
+    // The counterpart to the no-reload test below, and the gap that let a blank frame ship: a test
+    // that only counts *extra* assignments also passes when src is never assigned at all.
+    await fixture.whenStable();
+
+    expect(iframe().src).toContain('/api/v1/guests/invitations/tok-abc/render');
+  });
+
   it('assigns the iframe src exactly once, however often change detection runs', async () => {
     // The regression behind the 429s. Assigning an iframe's src reloads its document even when the
     // value is unchanged, so a re-applied binding restarts the load. Paired with the height bridge
