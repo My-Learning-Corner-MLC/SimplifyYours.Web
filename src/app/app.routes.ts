@@ -34,6 +34,9 @@ export const routes: Routes = [
     path: 'invitation/:token',
     loadComponent: () =>
       import('./pages/invitation/invitation-page').then((m) => m.InvitationPage),
+    // Chromeless: a guest has no account, so the app header would offer them nothing but a sign-in
+    // prompt on a page whose whole premise is that they never sign in.
+    data: { chromeless: true },
   },
   {
     path: 'auth/callback',

@@ -71,3 +71,29 @@
     animation: none;
   }
 }
+
+/* The modal sits over the invitation frame, which is a separate document — so it has to be
+   positioned by the host page rather than anything inside the frame. */
+.invitation__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(42, 31, 45, 0.35);
+  z-index: 10;
+}
+
+.invitation__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  /* Scrolls internally when an on-screen keyboard shrinks the viewport. */
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.invitation__modal > * {
+  pointer-events: auto;
+}

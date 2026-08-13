@@ -42,6 +42,14 @@
           <h2 class="rsvp__title">{{ invitation().guestName }}, we'd love to know</h2>
         }
 
+        @if (unattachedErrors().length > 0) {
+          <div class="rsvp__error-panel" role="alert">
+            @for (message of unattachedErrors(); track message) {
+              <p class="rsvp__error-title">{{ message }}</p>
+            }
+          </div>
+        }
+
         @if (submitFailed()) {
           <div class="rsvp__error-panel" role="alert">
             <p class="rsvp__error-title">Couldn't send your response</p>

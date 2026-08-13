@@ -38,6 +38,26 @@
         (loaded)="onFrameLoaded()"
         (rsvpRequested)="onRsvpRequested()"
       />
+
+      @if (rsvpOpen() && invitation()) {
+        <div class="invitation__backdrop" (click)="onRsvpClosed()"></div>
+        <div
+          class="invitation__modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Respond to this invitation"
+        >
+          <app-rsvp-form
+            [invitation]="invitation()!"
+            [submitting]="submitting()"
+            [submitted]="submitted()"
+            [submitFailed]="submitFailed()"
+            [serverErrors]="rsvpFieldErrors()"
+            (save)="onRsvpSubmit($event)"
+            (closed)="onRsvpClosed()"
+          />
+        </div>
+      }
     }
   }
 </main>

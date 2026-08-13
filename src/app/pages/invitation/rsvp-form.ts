@@ -118,6 +118,34 @@ export class RsvpForm {
     return this.serverErrors()[field] ?? [];
   }
 
+  /** Fields that currently have somewhere on screen to show an error. */
+  private visibleFields(): readonly string[] {
+    const fields: string[] = [];
+
+    if (this.showsPlusOnes()) {
+      fields.push('plusOnesConfirmed');
+    }
+
+    if (this.choice() !== null) {
+      fields.push('dietaryNotes');
+    }
+
+    return fields;
+  }
+
+  /**
+   * Server messages for fields that are not on screen — a plus-ones error while the stepper is
+   * hidden, say. Without this they would be silently dropped and the guest would watch submit fail
+   * with no explanation at all.
+   */
+  protected readonly unattachedErrors = computed(() => {
+    const visible = this.visibleFields();
+
+    return Object.entries(this.serverErrors())
+      .filter(([field]) => !visible.includes(field))
+      .flatMap(([, messages]) => messages);
+  });
+
   protected onSubmit(): void {
     const choice = this.choice();
 

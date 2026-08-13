@@ -10,6 +10,9 @@ import {
   viewChild,
 } from '@angular/core';
 
+/** What a sandboxed document without allow-same-origin reports as its origin. */
+const OPAQUE_ORIGIN = 'null';
+
 interface BridgeMessage {
   readonly type?: unknown;
 }
@@ -108,13 +111,18 @@ export class InvitationFrame {
   });
 
   private onMessage(event: MessageEvent): void {
-    // Both checks matter. Origin alone would accept a message from any other frame served by the
-    // same API origin; source alone would accept one from an unrelated origin in our own frame.
-    if (event.origin !== this.expectedOrigin()) {
-      return;
-    }
+    // The frame is sandboxed WITHOUT allow-same-origin, so its documents run in an opaque origin
+    // and every message it sends reports event.origin as the literal string "null" — never the API
+    // origin that served it. Comparing against the API origin rejected every message, which is why
+    // the RSVP button did nothing.
+    //
+    // The authoritative check is the source: it pins the message to this component's own frame,
+    // which no other document can impersonate. Origin is kept as a secondary guard so a future
+    // change that drops the sandbox does not silently start accepting cross-origin senders.
+    const fromOurFrame = event.source === this.frame()?.nativeElement.contentWindow;
+    const originAllowed = event.origin === OPAQUE_ORIGIN || event.origin === this.expectedOrigin();
 
-    if (event.source !== this.frame()?.nativeElement.contentWindow) {
+    if (!fromOurFrame || !originAllowed) {
       return;
     }
 

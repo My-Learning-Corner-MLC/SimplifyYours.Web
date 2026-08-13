@@ -21,7 +21,9 @@ describe('InvitationFrame', () => {
     return fixture.nativeElement.querySelector('iframe') as HTMLIFrameElement;
   }
 
-  function post(data: unknown, origin = API_ORIGIN, source: unknown = undefined): void {
+  // A sandboxed frame without allow-same-origin reports "null" as its origin — this is what the
+  // browser really sends, and comparing against the API origin is what broke the RSVP button.
+  function post(data: unknown, origin = 'null', source: unknown = undefined): void {
     window.dispatchEvent(
       new MessageEvent('message', {
         data,
@@ -39,6 +41,15 @@ describe('InvitationFrame', () => {
 
     expect(sandbox).toBe('allow-scripts');
     expect(sandbox).not.toContain('allow-same-origin');
+  });
+
+  it('accepts the opaque origin a sandboxed frame actually sends', () => {
+    const emitted = vi.fn();
+    fixture.componentInstance.rsvpRequested.subscribe(emitted);
+
+    post({ type: 'sy:rsvp' }, 'null');
+
+    expect(emitted).toHaveBeenCalledTimes(1);
   });
 
   it('emits when the framed document reports an RSVP click', () => {

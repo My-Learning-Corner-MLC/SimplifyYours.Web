@@ -126,4 +126,92 @@ describe('InvitationPage', () => {
 
     expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
   });
+
+  describe('RSVP modal', () => {
+    async function ready() {
+      await render();
+      httpMock.expectOne(jsonUrl).flush(INVITATION);
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    const modal = () => fixture.nativeElement.querySelector('[role="dialog"]');
+
+    it('stays closed until the guest presses RSVP', async () => {
+      await ready();
+
+      expect(modal()).toBeNull();
+    });
+
+    it('opens when the frame reports an RSVP press', async () => {
+      // The stub that shipped: the message arrived and nothing happened, because the page never
+      // wired the modal in.
+      await ready();
+
+      (fixture.componentInstance as unknown as { onRsvpRequested: () => void }).onRsvpRequested();
+      fixture.detectChanges();
+
+      expect(modal()).not.toBeNull();
+    });
+
+    it('submits the answer and shows what the server recorded', async () => {
+      await ready();
+      const page = fixture.componentInstance as unknown as {
+        onRsvpRequested: () => void;
+        onRsvpSubmit: (r: unknown) => void;
+      };
+
+      page.onRsvpRequested();
+      fixture.detectChanges();
+      page.onRsvpSubmit({ rsvpStatus: 'Accepted', plusOnesConfirmed: 1, dietaryNotes: null });
+
+      const req = httpMock.expectOne(`${jsonUrl}/rsvp`);
+      expect(req.request.method).toBe('POST');
+      req.flush({ ...INVITATION, rsvp: { ...INVITATION.rsvp, status: 'Accepted', plusOnesConfirmed: 1 } });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain("that's recorded");
+    });
+
+    it('shows validation messages against the fields rather than failing the whole form', async () => {
+      await ready();
+      const page = fixture.componentInstance as unknown as {
+        onRsvpRequested: () => void;
+        onRsvpSubmit: (r: unknown) => void;
+      };
+
+      page.onRsvpRequested();
+      fixture.detectChanges();
+      page.onRsvpSubmit({ rsvpStatus: 'Accepted', plusOnesConfirmed: 9, dietaryNotes: null });
+
+      httpMock.expectOne(`${jsonUrl}/rsvp`).flush(
+        { errors: { plusOnesConfirmed: ["You're invited with up to 2 guests."] } },
+        { status: 400, statusText: 'Bad Request' },
+      );
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain("up to 2 guests");
+      expect(modal()).not.toBeNull();
+    });
+
+    it('re-reads the invitation when the deadline passes mid-submit', async () => {
+      // Leaving a form open that can no longer be submitted would be worse than showing the
+      // closed state with whatever was recorded.
+      await ready();
+      const page = fixture.componentInstance as unknown as {
+        onRsvpRequested: () => void;
+        onRsvpSubmit: (r: unknown) => void;
+      };
+
+      page.onRsvpRequested();
+      fixture.detectChanges();
+      page.onRsvpSubmit({ rsvpStatus: 'Accepted', plusOnesConfirmed: 0, dietaryNotes: null });
+
+      httpMock.expectOne(`${jsonUrl}/rsvp`).flush({}, { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+
+      expect(modal()).toBeNull();
+      httpMock.expectOne(jsonUrl).flush({ ...INVITATION, rsvp: { ...INVITATION.rsvp, isOpen: false } });
+    });
+  });
 });

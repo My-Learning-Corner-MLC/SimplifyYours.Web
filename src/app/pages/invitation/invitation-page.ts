@@ -3,8 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { InvitationApiClient } from '../../core/invitations/invitation-api-client';
-import { Invitation, InvitationError } from '../../core/invitations/invitation.model';
+import { Invitation, InvitationError, SubmitRsvpRequest } from '../../core/invitations/invitation.model';
 import { InvitationFrame } from './invitation-frame';
+import { RsvpForm } from './rsvp-form';
 
 type PageState = 'loading' | 'ready' | 'not-found' | 'error';
 
@@ -18,7 +19,7 @@ type PageState = 'loading' | 'ready' | 'not-found' | 'error';
 @Component({
   selector: 'app-invitation-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InvitationFrame],
+  imports: [InvitationFrame, RsvpForm],
   templateUrl: './invitation-page.html',
   styleUrl: './invitation-page.scss',
 })
@@ -40,6 +41,12 @@ export class InvitationPage {
   protected readonly apiOrigin = originOf(environment.apiBaseUrl);
 
   protected readonly frameLoaded = signal(false);
+
+  protected readonly rsvpOpen = signal(false);
+  protected readonly submitting = signal(false);
+  protected readonly submitted = signal(false);
+  protected readonly submitFailed = signal(false);
+  protected readonly rsvpFieldErrors = signal<Readonly<Record<string, readonly string[]>>>({});
 
   constructor() {
     this.load();
@@ -72,8 +79,50 @@ export class InvitationPage {
   }
 
   protected onRsvpRequested(): void {
-    // T11 opens the RSVP modal here. The bridge message has already been origin-checked by
-    // InvitationFrame, and carries no data of its own.
+    // The bridge message has already been checked against this page's own frame by InvitationFrame
+    // and carries no data — it means "the guest pressed RSVP" and nothing else.
+    this.submitted.set(false);
+    this.submitFailed.set(false);
+    this.rsvpFieldErrors.set({});
+    this.rsvpOpen.set(true);
+  }
+
+  protected onRsvpClosed(): void {
+    this.rsvpOpen.set(false);
+  }
+
+  protected onRsvpSubmit(request: SubmitRsvpRequest): void {
+    this.submitting.set(true);
+    this.submitFailed.set(false);
+    this.rsvpFieldErrors.set({});
+
+    this.api.submitRsvp(this.token, request).subscribe({
+      next: (invitation) => {
+        // The response carries the recorded answer, so the success panel and any later re-open
+        // both show what the server actually stored rather than what was typed.
+        this.invitation.set(invitation);
+        this.submitting.set(false);
+        this.submitted.set(true);
+      },
+      error: (error: InvitationError) => {
+        this.submitting.set(false);
+
+        if (error.reason === 'validation') {
+          this.rsvpFieldErrors.set(error.fieldErrors);
+          return;
+        }
+
+        if (error.reason === 'closed') {
+          // The deadline passed while the form was open. Re-reading shows the closed state with
+          // the recorded answer instead of leaving a form that can no longer be submitted.
+          this.load();
+          this.rsvpOpen.set(false);
+          return;
+        }
+
+        this.submitFailed.set(true);
+      },
+    });
   }
 }
 
