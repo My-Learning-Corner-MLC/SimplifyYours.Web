@@ -7,19 +7,11 @@ import {
   inject,
   input,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 
-/** Minimum frame height before the document reports its own, so nothing flashes at zero. */
-const MIN_HEIGHT_PX = 480;
-
-/** Anything taller than this is a runaway document, not a long invitation. */
-const MAX_HEIGHT_PX = 20_000;
-
 interface BridgeMessage {
   readonly type?: unknown;
-  readonly height?: unknown;
 }
 
 /**
@@ -43,7 +35,6 @@ interface BridgeMessage {
       title="Invitation"
       sandbox="allow-scripts"
       referrerpolicy="no-referrer"
-      [style.height.px]="height()"
       (load)="loaded.emit()"
     ></iframe>
   `,
@@ -56,6 +47,10 @@ interface BridgeMessage {
       .invitation-frame {
         display: block;
         width: 100%;
+        /* Fills the viewport and scrolls its own content. dvh first so mobile browser chrome
+           appearing does not clip the invitation; vh is the fallback for older engines. */
+        height: 100vh;
+        height: 100dvh;
         border: 0;
       }
     `,
@@ -70,8 +65,6 @@ export class InvitationFrame {
 
   readonly rsvpRequested = output<void>();
   readonly loaded = output<void>();
-
-  protected readonly height = signal(MIN_HEIGHT_PX);
 
   private readonly frame = viewChild<ElementRef<HTMLIFrameElement>>('frame');
 
@@ -133,27 +126,7 @@ export class InvitationFrame {
 
     if (message.type === 'sy:rsvp') {
       this.rsvpRequested.emit();
-      return;
-    }
-
-    if (message.type === 'sy:height' && typeof message.height === 'number') {
-      this.applyHeight(message.height);
     }
   }
 
-  private applyHeight(height: number): void {
-    if (!Number.isFinite(height)) {
-      return;
-    }
-
-    const next = Math.min(Math.max(Math.ceil(height), MIN_HEIGHT_PX), MAX_HEIGHT_PX);
-
-    // Ignore sub-pixel jitter. A document whose layout settles a pixel at a time would otherwise
-    // keep waking change detection for no visible gain.
-    if (Math.abs(next - this.height()) < 2) {
-      return;
-    }
-
-    this.height.set(next);
-  }
 }

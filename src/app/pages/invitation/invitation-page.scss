@@ -1,6 +1,10 @@
 .invitation {
   display: block;
-  min-height: 100vh;
+  /* The frame is viewport-tall and scrolls internally, so the host page must not add a second
+     scrollbar around it. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: #e7e5df;
 }
 

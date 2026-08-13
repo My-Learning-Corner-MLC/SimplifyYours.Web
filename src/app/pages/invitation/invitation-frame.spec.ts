@@ -82,34 +82,8 @@ describe('InvitationFrame', () => {
     expect(emitted).not.toHaveBeenCalled();
   });
 
-  it('resizes the frame from a reported height', () => {
-    post({ type: 'sy:height', height: 1234 });
-    fixture.detectChanges();
 
-    expect(iframe().style.height).toBe('1234px');
-  });
 
-  it('never shrinks below a minimum or grows past a sane ceiling', () => {
-    // A zero-height frame reads as a broken page; a runaway one can lock up the browser.
-    post({ type: 'sy:height', height: 0 });
-    fixture.detectChanges();
-    expect(iframe().style.height).toBe('480px');
-
-    post({ type: 'sy:height', height: 10_000_000 });
-    fixture.detectChanges();
-    expect(iframe().style.height).toBe('20000px');
-  });
-
-  it('ignores a non-numeric or non-finite height', () => {
-    post({ type: 'sy:height', height: 900 });
-    fixture.detectChanges();
-
-    post({ type: 'sy:height', height: 'tall' });
-    post({ type: 'sy:height', height: Number.POSITIVE_INFINITY });
-    fixture.detectChanges();
-
-    expect(iframe().style.height).toBe('900px');
-  });
 
   it('actually loads the document', async () => {
     // The counterpart to the no-reload test below, and the gap that let a blank frame ship: a test
@@ -138,9 +112,9 @@ describe('InvitationFrame', () => {
       },
     });
 
-    post({ type: 'sy:height', height: 900 });
+    post({ type: 'sy:unknown' });
     fixture.detectChanges();
-    post({ type: 'sy:height', height: 1400 });
+    post({ type: 'sy:unknown' });
     fixture.detectChanges();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -158,21 +132,19 @@ describe('InvitationFrame', () => {
     // .src unchanged, so reading it cannot detect the reload.
     const before = iframe().src;
 
-    post({ type: 'sy:height', height: 900 });
+    post({ type: 'sy:unknown' });
     fixture.detectChanges();
 
     expect(iframe().src).toBe(before);
   });
 
-  it('does not react to height reports that would not move the frame', () => {
-    post({ type: 'sy:height', height: 900 });
-    fixture.detectChanges();
-    expect(iframe().style.height).toBe('900px');
 
-    // Sub-pixel jitter must not keep waking change detection.
-    post({ type: 'sy:height', height: 901 });
-    fixture.detectChanges();
+  it('fills the viewport and lets its own content scroll', () => {
+    // A long invitation scrolls inside the frame rather than growing the host page, so the frame
+    // never needs to measure or chase its content — which is what previously fed the reload loop.
+    const styles = getComputedStyle(iframe());
 
-    expect(iframe().style.height).toBe('900px');
+    expect(styles.height).not.toBe('0px');
+    expect(iframe().getAttribute('style') ?? '').not.toContain('height');
   });
 });
