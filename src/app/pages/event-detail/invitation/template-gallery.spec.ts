@@ -120,6 +120,26 @@ describe('TemplateGallery', () => {
     expect(summary?.textContent).toContain('Edit basic info');
   });
 
+  it('emits the resolved template when "View detail" is clicked', async () => {
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES));
+    selection.hasTemplate.mockReturnValue(true);
+    selection.settings.mockReturnValue({
+      eventId: 'e1',
+      eventType: 'wedding',
+      templateId: 't2',
+      fieldValues: {},
+      isConfigured: true,
+      requiredFields: [],
+    });
+    const emitted = vi.fn();
+    await render();
+    fixture.componentInstance.viewDetail.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('.template-gallery__summary-btn') as HTMLButtonElement).click();
+
+    expect(emitted).toHaveBeenCalledWith(TEMPLATES[1]);
+  });
+
   it('does not show the summary bar when nothing is selected', async () => {
     catalog.listTemplates.mockReturnValue(of(TEMPLATES));
 

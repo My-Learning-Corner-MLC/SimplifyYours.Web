@@ -39,7 +39,8 @@ export class TemplateGallery {
   readonly eventType = input.required<string>();
 
   readonly templateChosen = output<TemplateCatalogItem>();
-  readonly viewDetail = output<void>();
+  /** Emits the currently-selected template — the summary bar only shows once one is resolved. */
+  readonly viewDetail = output<TemplateCatalogItem>();
   readonly editBasicInfo = output<void>();
 
   protected readonly catalogState = signal<CatalogState>('loading');
@@ -90,7 +91,12 @@ export class TemplateGallery {
   }
 
   protected onViewDetail(): void {
-    this.viewDetail.emit();
+    const id = this.selectedTemplateId();
+    const template = id ? this.templates().find((t) => t.id === id) : undefined;
+
+    if (template) {
+      this.viewDetail.emit(template);
+    }
   }
 
   protected onEditBasicInfo(): void {

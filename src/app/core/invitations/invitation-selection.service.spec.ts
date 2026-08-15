@@ -103,4 +103,31 @@ describe('InvitationSelectionService', () => {
     expect(service.settings()).toBeNull();
     expect(service.hasTemplate()).toBe(false);
   });
+
+  it('defaults publicLinkEnabled to false', () => {
+    expect(service.publicLinkEnabled()).toBe(false);
+  });
+
+  it('records the outcome of a public-link toggle for the rest of the session', () => {
+    service.setPublicLinkEnabled(true);
+
+    expect(service.publicLinkEnabled()).toBe(true);
+  });
+
+  it('resets publicLinkEnabled on a fresh load for a new event', () => {
+    apiClient.getSettings.mockReturnValue(of(SETTINGS));
+    service.setPublicLinkEnabled(true);
+
+    service.load('event-2');
+
+    expect(service.publicLinkEnabled()).toBe(false);
+  });
+
+  it('resets publicLinkEnabled on reset', () => {
+    service.setPublicLinkEnabled(true);
+
+    service.reset();
+
+    expect(service.publicLinkEnabled()).toBe(false);
+  });
 });

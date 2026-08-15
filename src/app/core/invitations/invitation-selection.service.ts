@@ -22,10 +22,21 @@ export class InvitationSelectionService {
 
   private readonly _state = signal<InvitationSelectionState>('idle');
   private readonly _settings = signal<InvitationSettings | null>(null);
+  /**
+   * Whether the event's public invitation link is enabled. There is no `GET` for this on the
+   * backend (see `InvitationSettingsApiClient.setPublicLink`'s doc comment) — this only ever
+   * reflects the value from the last `setPublicLink`/`revokePublicLink` call made this session, and
+   * resets to `false` on {@link reset} or a fresh {@link load}. A page that opens directly on the
+   * template detail view without ever toggling public sharing this session will see it as off,
+   * which is the safe default: no UI here should assume a public link is live unless this browser
+   * was actually told so.
+   */
+  private readonly _publicLinkEnabled = signal(false);
   private eventId: string | null = null;
 
   readonly state = this._state.asReadonly();
   readonly settings = this._settings.asReadonly();
+  readonly publicLinkEnabled = this._publicLinkEnabled.asReadonly();
 
   /** True once a template has been chosen and the invitation actually saved (not a draft default). */
   readonly hasTemplate = computed(() => {
@@ -40,6 +51,7 @@ export class InvitationSelectionService {
 
     this.eventId = eventId;
     this._state.set('loading');
+    this._publicLinkEnabled.set(false);
 
     this.api.getSettings(eventId).subscribe({
       next: (settings) => {
@@ -67,10 +79,16 @@ export class InvitationSelectionService {
     this._state.set('ready');
   }
 
+  /** Records the outcome of a `setPublicLink`/`revokePublicLink` call made this session. */
+  setPublicLinkEnabled(enabled: boolean): void {
+    this._publicLinkEnabled.set(enabled);
+  }
+
   /** Clears state — call when navigating away from the event entirely. */
   reset(): void {
     this.eventId = null;
     this._settings.set(null);
     this._state.set('idle');
+    this._publicLinkEnabled.set(false);
   }
 }

@@ -1,0 +1,61 @@
+<div class="invitations-tab">
+  @if (selectionError()) {
+    <p class="invitations-tab__error" role="alert">{{ selectionError() }}</p>
+  }
+
+  @switch (view()) {
+    @case ('gallery') {
+      <app-template-gallery
+        [eventType]="eventType()"
+        (templateChosen)="onTemplateChosen($event)"
+        (viewDetail)="onGalleryViewDetail($event)"
+        (editBasicInfo)="onGalleryEditBasicInfo()"
+      />
+    }
+
+    @case ('detail') {
+      @if (detailTemplate(); as template) {
+        <app-template-detail
+          [template]="template"
+          [eventId]="eventId()"
+          [eventType]="eventType()"
+          [isPublicLinkEnabled]="selection.publicLinkEnabled()"
+          (back)="onDetailBack()"
+          (useTemplate)="onUseTemplate()"
+        />
+      }
+    }
+
+    @case ('basic-info') {
+      @if (selection.settings(); as settings) {
+        <app-basic-info-form
+          [settings]="settings"
+          [templateId]="settings.templateId ?? ''"
+          [sentInvitationCount]="guestCount()"
+          [saving]="basicInfoSaving()"
+          [serverErrors]="basicInfoServerErrors()"
+          (save)="onBasicInfoSave($event)"
+          (dismissed)="onBasicInfoDismissed()"
+        />
+      }
+    }
+  }
+
+  @if (pendingDialog() === 'use' && detailTemplate(); as template) {
+    <app-use-template-confirm-dialog
+      [templateName]="template.name"
+      [eventName]="eventName()"
+      (confirmed)="onDialogConfirmed()"
+      (cancelled)="onDialogCancelled()"
+    />
+  }
+
+  @if (pendingDialog() === 'change' && detailTemplate(); as template) {
+    <app-change-template-confirm-dialog
+      [templateName]="template.name"
+      [guestCount]="guestCount()"
+      (confirmed)="onDialogConfirmed()"
+      (cancelled)="onDialogCancelled()"
+    />
+  }
+</div>
