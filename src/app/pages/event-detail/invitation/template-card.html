@@ -1,0 +1,23 @@
+<button
+  type="button"
+  class="template-card"
+  [class.template-card--selected]="selected()"
+  (click)="onActivate()"
+>
+  <span class="template-card__face" [style.background]="faceGradient()" aria-hidden="true">
+    <span class="template-card__watermark">{{ initial() }}</span>
+  </span>
+
+  @if (selected()) {
+    <span class="template-card__badge" aria-hidden="true">✓</span>
+  }
+
+  <span class="template-card__footer">
+    <span class="template-card__name">{{ template().name }}</span>
+    @if (selected()) {
+      <span class="template-card__selected-label">Selected</span>
+    } @else {
+      <span class="template-card__arrow" aria-hidden="true">→</span>
+    }
+  </span>
+</button>

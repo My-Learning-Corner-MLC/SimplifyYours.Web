@@ -4,7 +4,12 @@ import { Observable, catchError, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { InvitationError } from './invitation.model';
-import { InvitationSettings, SaveInvitationSettingsRequest } from './invitation-settings.model';
+import {
+  InvitationSettings,
+  PreviewToken,
+  PublicLinkStatus,
+  SaveInvitationSettingsRequest,
+} from './invitation-settings.model';
 
 /**
  * The organiser's side of the invitation: which template, and the content that fills it.
@@ -23,6 +28,33 @@ export class InvitationSettingsApiClient {
   saveSettings(eventId: string, request: SaveInvitationSettingsRequest): Observable<InvitationSettings> {
     return this.http
       .put<InvitationSettings>(this.url(eventId), request)
+      .pipe(catchError((error: unknown) => throwError(() => toError(error))));
+  }
+
+  /**
+   * Enables or disables the event's public invitation link.
+   *
+   * There is deliberately no `GET` for public-link status — `invitation-gallery-b7` only exposes
+   * this `PUT` and a `POST .../public-link/revoke`. A caller that only wants to know the current
+   * state (not change it) cannot do so without either mutating it or holding onto the value from
+   * the last time it was set in this session — see `InvitationSelectionService`.
+   */
+  setPublicLink(eventId: string, enabled: boolean): Observable<PublicLinkStatus> {
+    return this.http
+      .put<PublicLinkStatus>(`${this.url(eventId)}/public-link`, { enabled })
+      .pipe(catchError((error: unknown) => throwError(() => toError(error))));
+  }
+
+  revokePublicLink(eventId: string): Observable<PublicLinkStatus> {
+    return this.http
+      .post<PublicLinkStatus>(`${this.url(eventId)}/public-link/revoke`, {})
+      .pipe(catchError((error: unknown) => throwError(() => toError(error))));
+  }
+
+  /** Issues a short-lived organiser preview token for the live-preview iframe. */
+  issuePreviewToken(eventId: string): Observable<PreviewToken> {
+    return this.http
+      .post<PreviewToken>(`${this.url(eventId)}/preview-token`, {})
       .pipe(catchError((error: unknown) => throwError(() => toError(error))));
   }
 

@@ -1,42 +1,63 @@
-<section class="gallery" aria-labelledby="gallery-title">
-  <h2 class="gallery__title" id="gallery-title">Choose a design</h2>
+<div class="template-gallery">
+  @switch (catalogState()) {
+    @case ('loading') {
+      <div class="template-gallery__skeletons" aria-busy="true" aria-live="polite" data-testid="gallery-loading">
+        <span class="sr-only">Loading templates…</span>
+        @for (i of [0, 1, 2]; track i) {
+          <div class="template-gallery__skeleton-card">
+            <div class="template-gallery__skeleton-face"></div>
+            <div class="template-gallery__skeleton-line"></div>
+          </div>
+        }
+      </div>
+    }
 
-  @if (templates().length === 0) {
-    <p class="gallery__empty" role="status">
-      Invitation designs aren't available for this event type yet.
-    </p>
-  } @else {
-    <ul class="gallery__list">
-      @for (template of templates(); track template.id) {
-        <li
-          class="gallery__card"
-          [class.gallery__card--active]="activeId() === template.id"
-          [class.gallery__card--chosen]="isChosen(template)"
-        >
-          <button
-            type="button"
-            class="gallery__preview-button"
-            [attr.aria-pressed]="activeId() === template.id"
-            (click)="onFocus(template)"
-          >
-            <span class="gallery__swatches" aria-hidden="true">
-              @for (colour of template.palette; track colour) {
-                <span class="gallery__swatch" [style.background]="colour"></span>
-              }
-            </span>
-            <span class="gallery__name">{{ template.name }}</span>
-            <span class="gallery__tone">{{ template.tone }}</span>
-          </button>
+    @case ('error') {
+      <div class="template-gallery__notice" role="alert" data-testid="gallery-error">
+        <p class="template-gallery__notice-text">We couldn't load the templates</p>
+        <button type="button" class="template-gallery__retry" (click)="retry()">Retry</button>
+      </div>
+    }
 
-          @if (isChosen(template)) {
-            <p class="gallery__badge">Currently in use</p>
+    @case ('ready') {
+      @if (templates().length === 0) {
+        <div class="template-gallery__empty" data-testid="gallery-empty">
+          <p class="template-gallery__empty-text">No templates for {{ eventTypeLabel() }} events — yet</p>
+        </div>
+      } @else {
+        @if (selection.hasTemplate()) {
+          <div class="template-gallery__summary" data-testid="gallery-summary">
+            <p class="template-gallery__summary-text">
+              Currently selected: <strong>{{ selectedTemplateName() }}</strong>
+            </p>
+            <div class="template-gallery__summary-actions">
+              <button type="button" class="template-gallery__summary-btn" (click)="onViewDetail()">
+                View detail
+              </button>
+              <button type="button" class="template-gallery__summary-btn" (click)="onEditBasicInfo()">
+                Edit basic info
+              </button>
+            </div>
+          </div>
+        }
+
+        <header class="template-gallery__heading">
+          <h2 class="template-gallery__title">Choose an invitation template</h2>
+          <p class="template-gallery__subtitle">
+            {{ templates().length }} templates for {{ eventTypeLabel() }} events
+          </p>
+        </header>
+
+        <div class="template-gallery__grid" [style.gridTemplateColumns]="gridColumns()" data-testid="gallery-grid">
+          @for (template of templates(); track trackById($index, template)) {
+            <app-template-card
+              [template]="template"
+              [selected]="template.id === selectedTemplateId()"
+              (chosen)="onChosen($event)"
+            />
           }
-
-          <button type="button" class="gallery__choose" (click)="onChoose(template)">
-            {{ isChosen(template) ? 'Edit details' : 'Choose this design' }}
-          </button>
-        </li>
+        </div>
       }
-    </ul>
+    }
   }
-</section>
+</div>

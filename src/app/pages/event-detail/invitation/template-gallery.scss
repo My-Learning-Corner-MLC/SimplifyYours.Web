@@ -1,104 +1,133 @@
-.gallery__title {
-  margin: 0 0 1rem;
-  font-size: 1.15rem;
+.template-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.template-gallery__skeletons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 300px));
+  gap: 1.5rem;
+}
+
+.template-gallery__skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.template-gallery__skeleton-face {
+  aspect-ratio: 5 / 7;
+  border-radius: 12px;
+  background: linear-gradient(100deg, #ece2d2 30%, #f5efe3 50%, #ece2d2 70%);
+  background-size: 200% 100%;
+  animation: template-gallery-shimmer 1.4s ease-in-out infinite;
+}
+
+.template-gallery__skeleton-line {
+  height: 0.9rem;
+  width: 60%;
+  border-radius: 4px;
+  background: #ece2d2;
+}
+
+@keyframes template-gallery-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.template-gallery__notice,
+.template-gallery__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 2rem 1.5rem;
+  border-radius: 14px;
+  background: #fffcf5;
+  border: 1px solid #ece2d2;
+}
+
+.template-gallery__notice-text,
+.template-gallery__empty-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4a4045;
+}
+
+.template-gallery__retry {
+  appearance: none;
+  border: 1.5px solid #5a2849;
+  background: transparent;
+  color: #5a2849;
+  font: inherit;
   font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.template-gallery__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: #f6ead9;
+  border: 1px solid #ebd9ae;
+}
+
+.template-gallery__summary-text {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4a4045;
+}
+
+.template-gallery__summary-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.template-gallery__summary-btn {
+  appearance: none;
+  border: 1.5px solid #c8a876;
+  background: transparent;
+  color: #5a2849;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.template-gallery__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.template-gallery__title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 400;
   color: #2a1f2d;
 }
 
-.gallery__empty {
+.template-gallery__subtitle {
   margin: 0;
   font-size: 0.85rem;
   color: #7a6b6e;
 }
 
-.gallery__list {
+.template-gallery__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.gallery__card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 1rem;
-  border: 1.5px solid #ece2d2;
-  border-radius: 14px;
-  background: #fffcf5;
-}
-
-.gallery__card--active {
-  border-color: #5a2849;
-}
-
-.gallery__preview-button {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-}
-
-.gallery__preview-button:focus-visible {
-  outline: 3px solid #c8a876;
-  outline-offset: 2px;
-}
-
-.gallery__swatches {
-  display: flex;
-  gap: 0.35rem;
-  margin-bottom: 0.6rem;
-}
-
-.gallery__swatch {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.gallery__name {
-  display: block;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2a1f2d;
-}
-
-.gallery__tone {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: #7a6b6e;
-}
-
-.gallery__badge {
-  margin: 0;
-  align-self: flex-start;
-  padding: 0.2rem 0.6rem;
-  border-radius: 99px;
-  background: #f1e9da;
-  color: #8a723f;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.gallery__choose {
-  appearance: none;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 0.7rem 1rem;
-  border: none;
-  border-radius: 10px;
-  background: #5a2849;
-  color: #fffcf5;
-  cursor: pointer;
+  gap: 1.5rem;
 }

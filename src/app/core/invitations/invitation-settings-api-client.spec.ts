@@ -93,4 +93,38 @@ describe('InvitationSettingsApiClient', () => {
 
     expect((await failure).reason).toBe('network');
   });
+
+  it('enables the public link with PUT', () => {
+    let received: unknown;
+    client.setPublicLink(EVENT_ID, true).subscribe((status) => (received = status));
+
+    const req = httpMock.expectOne(`${url}/public-link`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ enabled: true });
+    req.flush({ enabled: true, publicEventToken: 'pub-token' });
+
+    expect(received).toEqual({ enabled: true, publicEventToken: 'pub-token' });
+  });
+
+  it('revokes the public link with POST', () => {
+    let received: unknown;
+    client.revokePublicLink(EVENT_ID).subscribe((status) => (received = status));
+
+    const req = httpMock.expectOne(`${url}/public-link/revoke`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ enabled: true, publicEventToken: 'new-token' });
+
+    expect(received).toEqual({ enabled: true, publicEventToken: 'new-token' });
+  });
+
+  it('issues a preview token with POST', () => {
+    let received: unknown;
+    client.issuePreviewToken(EVENT_ID).subscribe((token) => (received = token));
+
+    const req = httpMock.expectOne(`${url}/preview-token`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ token: 'preview-abc', expiresAt: '2026-08-15T00:00:00Z' });
+
+    expect(received).toEqual({ token: 'preview-abc', expiresAt: '2026-08-15T00:00:00Z' });
+  });
 });

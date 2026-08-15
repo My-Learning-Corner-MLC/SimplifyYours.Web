@@ -1,47 +1,103 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
-import { InvitationTemplate, templatesFor } from '../../../core/invitations/invitation-template.model';
+import { eventTypeLabel } from '../../../core/events/event-type-display';
+import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
+import { TemplateCatalogApiClient } from '../../../core/invitations/template-catalog-api-client';
+import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
+import { TemplateCard } from './template-card';
+
+type CatalogState = 'loading' | 'error' | 'ready';
 
 /**
- * Lets the organiser pick the invitation's look.
+ * The Invitations tab's landing view: every template available for this event's type, laid out as
+ * a grid of {@link TemplateCard}s.
  *
- * Choosing does not save on its own — it opens the basic-info form, and the template is only
- * committed alongside the content that fills it. A template with no content would render an
- * invitation full of gaps, so the two are one decision.
+ * Reads the "currently selected" state from {@link InvitationSelectionService} rather than fetching
+ * it independently, so the summary bar here and the Guests tab's toolbar note can never disagree —
+ * see the service's doc comment for why that matters.
  */
 @Component({
   selector: 'app-template-gallery',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TemplateCard],
   templateUrl: './template-gallery.html',
   styleUrl: './template-gallery.scss',
 })
 export class TemplateGallery {
+  private readonly api = inject(TemplateCatalogApiClient);
+  protected readonly selection = inject(InvitationSelectionService);
+
   readonly eventType = input.required<string>();
-  /** The template already saved for this event, if any. */
-  readonly selectedTemplateId = input<string | null>(null);
 
-  /** Emitted when the organiser confirms a choice — the host opens the basic-info form. */
-  readonly templateChosen = output<InvitationTemplate>();
+  readonly templateChosen = output<TemplateCatalogItem>();
+  readonly viewDetail = output<void>();
+  readonly editBasicInfo = output<void>();
 
-  protected readonly templates = computed(() => templatesFor(this.eventType()));
+  protected readonly catalogState = signal<CatalogState>('loading');
+  protected readonly templates = signal<readonly TemplateCatalogItem[]>([]);
 
-  /** Highlighted card. Starts on whatever is saved so the current choice is obvious. */
-  protected readonly focused = signal<string | null>(null);
+  protected readonly eventTypeLabel = computed(() => eventTypeLabel(this.eventType()));
 
-  protected activeId(): string | null {
-    return this.focused() ?? this.selectedTemplateId();
+  /** `repeat(2, minmax(0,300px))` for two templates; otherwise one column per template, capped at 3. */
+  protected readonly gridColumns = computed(() => {
+    const count = this.templates().length;
+    return `repeat(${Math.max(1, Math.min(count, 3))}, minmax(0, 300px))`;
+  });
+
+  protected readonly selectedTemplateId = computed(() => this.selection.settings()?.templateId ?? null);
+
+  protected readonly selectedTemplateName = computed(() => {
+    const id = this.selectedTemplateId();
+    if (!id) {
+      return null;
+    }
+    return this.templates().find((t) => t.id === id)?.name ?? null;
+  });
+
+  constructor() {
+    // Keyed on the eventType input rather than run once, so a signal-set input value (available
+    // only after the view is created, not in the constructor body) still triggers the first load.
+    effect(() => this.load(this.eventType()));
   }
 
-  protected onFocus(template: InvitationTemplate): void {
-    this.focused.set(template.id);
+  retry(): void {
+    this.load(this.eventType());
   }
 
-  protected onChoose(template: InvitationTemplate): void {
-    this.focused.set(template.id);
+  private load(eventType: string): void {
+    this.catalogState.set('loading');
+
+    this.api.listTemplates(eventType).subscribe({
+      next: (templates) => {
+        this.templates.set(templates);
+        this.catalogState.set('ready');
+      },
+      error: () => this.catalogState.set('error'),
+    });
+  }
+
+  protected onChosen(template: TemplateCatalogItem): void {
     this.templateChosen.emit(template);
   }
 
-  protected isChosen(template: InvitationTemplate): boolean {
-    return this.selectedTemplateId() === template.id;
+  protected onViewDetail(): void {
+    this.viewDetail.emit();
+  }
+
+  protected onEditBasicInfo(): void {
+    this.editBasicInfo.emit();
+  }
+
+  protected trackById(_index: number, template: TemplateCatalogItem): string {
+    return template.id;
   }
 }

@@ -33,6 +33,18 @@ export interface SaveInvitationSettingsRequest {
   readonly fieldValues: InvitationFieldValues;
 }
 
+/** Response of `PUT/POST .../public-link` and `.../public-link/revoke`. */
+export interface PublicLinkStatus {
+  readonly enabled: boolean;
+  readonly publicEventToken: string | null;
+}
+
+/** Response of `POST .../preview-token`. */
+export interface PreviewToken {
+  readonly token: string;
+  readonly expiresAt: string;
+}
+
 /**
  * Field order as the form presents it. Declared here rather than derived from `requiredFields`
  * so the optional `venueNotes` still has a defined position.
