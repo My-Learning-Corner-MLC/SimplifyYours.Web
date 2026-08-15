@@ -1,0 +1,75 @@
+.preview-frame {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #ece2d2;
+  background: #fffcf5;
+}
+
+.preview-frame__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: #2a1f2d;
+}
+
+.preview-frame__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: #d8c9d0;
+}
+
+.preview-frame__badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #bfe6c8;
+}
+
+.preview-frame__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #5fbf78;
+}
+
+.preview-frame__body {
+  min-height: 24rem;
+  display: flex;
+}
+
+.preview-frame__status {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  color: #7a6b6e;
+  font-size: 0.85rem;
+}
+
+.preview-frame__spinner {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 3px solid #ece2d2;
+  border-top-color: #5a2849;
+  animation: preview-frame-spin 0.8s linear infinite;
+}
+
+@keyframes preview-frame-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+app-invitation-frame {
+  display: block;
+  width: 100%;
+}

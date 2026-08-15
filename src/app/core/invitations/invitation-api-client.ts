@@ -18,6 +18,17 @@ export class InvitationApiClient {
     return `${this.baseUrl(token)}/render`;
   }
 
+  /**
+   * The URL the organiser's template-preview iframe loads for a preview token.
+   *
+   * The render endpoint is anonymous throughout — resolving is by token alone — so this needs no
+   * bearer token either, same as {@link renderUrl}. `type` mirrors `ResolveInvitationRenderQuery`'s
+   * `type=public|private`, which the preview token requires and every other token type rejects.
+   */
+  previewRenderUrl(token: string, type: 'public' | 'private'): string {
+    return `${this.baseUrl(token)}/render?mode=preview&type=${type}`;
+  }
+
   getInvitation(token: string): Observable<Invitation> {
     return this.http
       .get<Invitation>(this.baseUrl(token), { withCredentials: false })

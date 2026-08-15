@@ -1,0 +1,139 @@
+.template-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 42rem;
+}
+
+.template-detail__breadcrumb {
+  display: flex;
+}
+
+.template-detail__back-link {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #7a6b6e;
+  cursor: pointer;
+  padding: 0;
+}
+
+.template-detail__back-link:hover {
+  color: #5a2849;
+}
+
+.template-detail__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.template-detail__title {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: #2a1f2d;
+}
+
+.template-detail__subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #7a6b6e;
+}
+
+.template-detail__switch {
+  display: inline-flex;
+  border: 1.5px solid #ece2d2;
+  border-radius: 10px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.template-detail__switch-btn {
+  appearance: none;
+  border: none;
+  background: #fffcf5;
+  color: #4a4045;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.template-detail__switch-btn--active {
+  background: #5a2849;
+  color: #fffcf5;
+}
+
+.template-detail__switch-btn:disabled {
+  cursor: not-allowed;
+  color: #b8ac96;
+}
+
+.template-detail__switch-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8a6b3f;
+}
+
+.template-detail__switch-help {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: #a89f8c;
+}
+
+.template-detail__caption {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #7a6b6e;
+}
+
+.template-detail__notice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: #fbe9e6;
+  border: 1px solid #e3b6ac;
+}
+
+.template-detail__footer {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.5rem;
+}
+
+.template-detail__primary,
+.template-detail__secondary {
+  appearance: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.template-detail__primary {
+  border: none;
+  background: #5a2849;
+  color: #fffcf5;
+}
+
+.template-detail__secondary {
+  border: 1.5px solid #ece2d2;
+  background: transparent;
+  color: #4a4045;
+}

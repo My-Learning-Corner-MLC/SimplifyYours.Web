@@ -47,6 +47,11 @@ describe('InvitationApiClient', () => {
     );
   });
 
+  it('builds the preview render URL with the mode and type query params', () => {
+    expect(client.previewRenderUrl(TOKEN, 'private')).toBe(`${url}/render?mode=preview&type=private`);
+    expect(client.previewRenderUrl(TOKEN, 'public')).toBe(`${url}/render?mode=preview&type=public`);
+  });
+
   it('never attaches credentials to the anonymous reads', () => {
     client.getInvitation(TOKEN).subscribe();
 
