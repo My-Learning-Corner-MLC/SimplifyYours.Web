@@ -15,7 +15,11 @@ const TEMPLATES: TemplateCatalogItem[] = [
 describe('TemplateGallery', () => {
   let fixture: ComponentFixture<TemplateGallery>;
   let catalog: { listTemplates: ReturnType<typeof vi.fn> };
-  let selection: { hasTemplate: ReturnType<typeof vi.fn>; settings: ReturnType<typeof vi.fn> };
+  let selection: {
+    hasTemplate: ReturnType<typeof vi.fn>;
+    settings: ReturnType<typeof vi.fn>;
+    setTemplateName: ReturnType<typeof vi.fn>;
+  };
 
   async function render(eventType = 'wedding') {
     await TestBed.configureTestingModule({
@@ -35,7 +39,7 @@ describe('TemplateGallery', () => {
 
   beforeEach(() => {
     catalog = { listTemplates: vi.fn() };
-    selection = { hasTemplate: vi.fn(() => false), settings: vi.fn(() => null) };
+    selection = { hasTemplate: vi.fn(() => false), settings: vi.fn(() => null), setTemplateName: vi.fn() };
   });
 
   it('shows skeleton cards while loading', async () => {

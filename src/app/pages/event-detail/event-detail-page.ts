@@ -24,8 +24,10 @@ import { GuestApiClient } from '../../core/guests/guest-api-client';
 import { Guest } from '../../core/guests/guest.model';
 import { ListGuestsError } from '../../core/guests/guest-error.model';
 import { describeGuestMetadata } from '../../core/guests/guest-metadata-row';
+import { InvitationSelectionService } from '../../core/invitations/invitation-selection.service';
 import { AddGuestModalComponent } from './add-guest/add-guest-modal.component';
 import { EventEmptyTabComponent } from './empty-tab/event-empty-tab.component';
+import { InvitationsTab } from './invitation/invitations-tab';
 import {
   BUDGET_SUGGESTIONS_MOCK,
   BUDGET_SUMMARY_MOCK,
@@ -37,7 +39,7 @@ import {
 
 type DetailState = 'loading' | 'error' | 'not-found' | 'ready';
 type GuestsState = 'idle' | 'loading' | 'ready' | 'error';
-export type DetailTab = 'overview' | 'guests' | 'tables' | 'budget';
+export type DetailTab = 'overview' | 'guests' | 'tables' | 'budget' | 'invitations';
 export type SlideDirection = 'forward' | 'backward';
 
 // New guests have no RSVP yet, so every guest shows as "Awaiting" until the RSVP
@@ -104,7 +106,7 @@ const WEEKS_THRESHOLD_DAYS = 21;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, EventEmptyTabComponent, AddGuestModalComponent],
+  imports: [RouterLink, EventEmptyTabComponent, AddGuestModalComponent, InvitationsTab],
   selector: 'app-event-detail-page',
   templateUrl: './event-detail-page.html',
   styleUrl: './event-detail-page.scss',
@@ -115,6 +117,7 @@ export class EventDetailPage implements OnInit, AfterViewInit {
   private readonly guestApi = inject(GuestApiClient);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly invitationSelection = inject(InvitationSelectionService);
 
   @ViewChildren('tabButton') private readonly tabButtons!: QueryList<ElementRef<HTMLButtonElement>>;
 
@@ -143,7 +146,15 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     { key: 'guests', label: 'Guests' },
     { key: 'tables', label: 'Table management' },
     { key: 'budget', label: 'Budget' },
+    { key: 'invitations', label: 'Invitations' },
   ];
+
+  /**
+   * One-shot text for the toolbar's `aria-live="polite"` region, set only when a template is
+   * actually chosen this session (via {@link InvitationsTab}'s `templateSelected` output) — not
+   * derived from shared selection state, which would also fire on an unrelated re-render.
+   */
+  readonly invitationAnnouncement = signal('');
 
   readonly activeTabIndex = computed(() => this.tabIndexOf(this.activeTab()));
 
@@ -248,6 +259,8 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     this.guestList.set([]);
     this.guestLoadError.set(null);
     this.addGuestOpen.set(false);
+    this.invitationAnnouncement.set('');
+    this.invitationSelection.load(this.eventId);
     this.api.getEventDetails(this.eventId).subscribe({
       next: (event) => {
         this.event.set(event);
@@ -312,6 +325,10 @@ export class EventDetailPage implements OnInit, AfterViewInit {
 
   retryGuests(): void {
     this.loadGuests();
+  }
+
+  onInvitationTemplateSelected(templateName: string): void {
+    this.invitationAnnouncement.set(`Invitation template set to ${templateName}`);
   }
 
   openAddGuest(): void {

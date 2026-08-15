@@ -68,6 +68,15 @@ export class TemplateGallery {
     // Keyed on the eventType input rather than run once, so a signal-set input value (available
     // only after the view is created, not in the constructor body) still triggers the first load.
     effect(() => this.load(this.eventType()));
+
+    // Backfills the shared selection state's templateName once the catalog resolves it — see
+    // InvitationSelectionService's doc comment on why nothing else knows this name on a fresh load.
+    effect(() => {
+      const name = this.selectedTemplateName();
+      if (name) {
+        this.selection.setTemplateName(name);
+      }
+    });
   }
 
   retry(): void {

@@ -188,6 +188,29 @@
 
               @case ('guests') {
                 <div class="detail__guests" data-testid="event-detail-guests" role="tabpanel">
+                  <div class="detail__guests-head">
+                    <h2 class="detail__guests-title">Guest list</h2>
+                    <p class="detail__invite-note" data-testid="event-detail-invite-note">
+                      @if (invitationSelection.hasTemplate()) {
+                        @if (invitationSelection.templateName(); as templateName) {
+                          Invitation template: <strong>{{ templateName }}</strong> ·
+                          <button type="button" class="detail__invite-note-link" (click)="setTab('invitations')">
+                            Change
+                          </button>
+                        } @else {
+                          Invitation template selected ·
+                          <button type="button" class="detail__invite-note-link" (click)="setTab('invitations')">
+                            Change
+                          </button>
+                        }
+                      } @else {
+                        No invitation template chosen yet.
+                      }
+                    </p>
+                  </div>
+
+                  <span class="sr-only" role="status" aria-live="polite">{{ invitationAnnouncement() }}</span>
+
                   <div class="detail__guests-toolbar">
                     <div class="detail__chips" role="list" aria-label="Filter guests by status">
                       @for (filter of guestFilters(); track filter.label) {
@@ -201,6 +224,16 @@
                         <span class="detail__search-icon" aria-hidden="true">⌕</span>
                         <input type="search" placeholder="Find a guest…" aria-label="Find a guest" />
                       </span>
+                      @if (!invitationSelection.hasTemplate()) {
+                        <button
+                          type="button"
+                          class="detail__tool-btn"
+                          data-testid="event-detail-setup-invitation"
+                          (click)="setTab('invitations')"
+                        >
+                          Set up invitation
+                        </button>
+                      }
                       <button
                         type="button"
                         class="detail__tool-btn detail__tool-btn--primary"
@@ -314,6 +347,17 @@
                   [guestCount]="rsvp.invited"
                   [suggestions]="budgetSuggestions"
                 />
+              }
+
+              @case ('invitations') {
+                <div data-testid="event-detail-invitations" role="tabpanel">
+                  <app-invitations-tab
+                    [eventId]="eventId"
+                    [eventType]="eventType()"
+                    [eventName]="vm.name"
+                    (templateSelected)="onInvitationTemplateSelected($event)"
+                  />
+                </div>
               }
             }
           </div>

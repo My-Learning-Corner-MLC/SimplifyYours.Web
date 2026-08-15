@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
 
 import { GuestApiClient } from '../../../core/guests/guest-api-client';
 import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
@@ -24,6 +24,11 @@ type PendingDialog = 'use' | 'change' | null;
  * gets a copyable invitation link the moment they are added (see `GuestApiClient.getInvitationLink`
  * and the Guests tab's "Copy link" button), independent of whether anything was ever sent through
  * `notification-service` — there is no separate "link issued" flag on `Guest` to check instead.
+ *
+ * TODO(slice-3): no `SendInvitationsButton`/`SendInvitationsConfirmDialog` here on purpose.
+ * `notification-service` does not exist yet, so there is nothing for a "Send invitations" action to
+ * call — an organiser can copy each guest's link by hand from the Guests tab today. Wire this up
+ * once that service ships rather than shipping a button that looks actionable and silently fails.
  */
 @Component({
   selector: 'app-invitations-tab',
@@ -40,6 +45,13 @@ export class InvitationsTab {
   readonly eventId = input.required<string>();
   readonly eventType = input.required<string>();
   readonly eventName = input.required<string>();
+
+  /**
+   * Fires once, right after a template selection is actually saved — not on every render — so the
+   * Guests tab toolbar can announce it via a single `aria-live="polite"` region instead of one that
+   * re-announces on every unrelated change to shared selection state.
+   */
+  readonly templateSelected = output<string>();
 
   protected readonly view = signal<View>('gallery');
   protected readonly detailTemplate = signal<TemplateCatalogItem | null>(null);
@@ -110,6 +122,11 @@ export class InvitationsTab {
     this.settingsApi.saveSettings(this.eventId(), { templateId: template.id, fieldValues: existingValues }).subscribe({
       next: (settings) => {
         this.selection.applySaved(settings);
+        // The save response never carries the template's name (see InvitationSelectionService's
+        // doc comment) — this is the one place that already knows it, since the organiser just
+        // picked it off the object in hand.
+        this.selection.setTemplateName(template.name);
+        this.templateSelected.emit(template.name);
         this.savingSelection.set(false);
         this.pendingDialog.set(null);
         this.view.set('basic-info');

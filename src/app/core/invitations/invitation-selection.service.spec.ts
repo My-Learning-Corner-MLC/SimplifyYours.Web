@@ -130,4 +130,29 @@ describe('InvitationSelectionService', () => {
 
     expect(service.publicLinkEnabled()).toBe(false);
   });
+
+  it('defaults templateName to null and lets a surface resolve it later', () => {
+    expect(service.templateName()).toBeNull();
+
+    service.setTemplateName('Verona');
+
+    expect(service.templateName()).toBe('Verona');
+  });
+
+  it('resets templateName on a fresh load for a new event', () => {
+    apiClient.getSettings.mockReturnValue(of(SETTINGS));
+    service.setTemplateName('Verona');
+
+    service.load('event-2');
+
+    expect(service.templateName()).toBeNull();
+  });
+
+  it('resets templateName on reset', () => {
+    service.setTemplateName('Verona');
+
+    service.reset();
+
+    expect(service.templateName()).toBeNull();
+  });
 });
