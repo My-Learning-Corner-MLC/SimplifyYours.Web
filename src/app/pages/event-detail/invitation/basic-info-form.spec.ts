@@ -186,4 +186,24 @@ describe('BasicInfoForm', () => {
     expect(input.getAttribute('aria-invalid')).toBe('true');
     expect(input.getAttribute('aria-describedby')).toBe('error-brideName');
   });
+
+  it('shows a snapshot failure (keyed on templateId, not a form field) as a form-level banner', async () => {
+    await render(settings(), {
+      serverErrors: { templateId: ['That template failed to parse and cannot be used.'] },
+    });
+
+    const banner = fixture.nativeElement.querySelector('.basic-info__form-error');
+    expect(banner?.textContent).toContain('That template failed to parse');
+  });
+
+  it('moves focus to the first invalid field on a failed submit', async () => {
+    await render(settings({ fieldValues: { brideName: 'Amara' } }));
+
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // groomName is the first empty required field after brideName.
+    expect(document.activeElement).toBe(inputFor('groomName'));
+  });
 });

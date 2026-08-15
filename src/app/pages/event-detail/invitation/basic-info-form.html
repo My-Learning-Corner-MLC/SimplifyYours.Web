@@ -8,6 +8,10 @@
     </p>
   </header>
 
+  @if (formLevelErrors().length > 0) {
+    <p class="basic-info__form-error" role="alert">{{ formLevelErrors()[0] }}</p>
+  }
+
   @if (sentInvitationCount() > 0) {
     <p class="basic-info__warning" role="status">
       {{ sentInvitationCount() }} guest(s) already have their link. Saving updates what they see
@@ -27,6 +31,7 @@
 
         @if (isMultiline(field)) {
           <textarea
+            #fieldInput
             class="basic-info__input"
             [id]="'field-' + field"
             rows="2"
@@ -40,6 +45,7 @@
           ></textarea>
         } @else {
           <input
+            #fieldInput
             class="basic-info__input"
             type="text"
             [id]="'field-' + field"

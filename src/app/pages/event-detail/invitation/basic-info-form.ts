@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  QueryList,
+  ViewChildren,
+  computed,
+  effect,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -46,9 +57,26 @@ export class BasicInfoForm {
   readonly save = output<InvitationFieldValues>();
   readonly dismissed = output<void>();
 
+  @ViewChildren('fieldInput') private readonly fieldInputs!: QueryList<ElementRef<HTMLElement>>;
+
   protected readonly values = signal<InvitationFieldValues>({});
   protected readonly touched = signal<ReadonlySet<InvitationField>>(new Set());
   protected readonly submitAttempted = signal(false);
+
+  /**
+   * Errors keyed against something other than one of this event type's fields — chiefly
+   * `templateId`, the key `SaveInvitationSettingsCommandHandler` uses for every snapshot failure
+   * (unreachable catalog, unknown template, a template that fails to parse). There is no field on
+   * screen for that key, so it renders as a form-level banner instead of being silently dropped.
+   */
+  protected readonly formLevelErrors = computed(() => {
+    const known = new Set<string>(this.fields());
+    const errors = this.serverErrors();
+
+    return Object.entries(errors)
+      .filter(([key]) => !known.has(key))
+      .flatMap(([, messages]) => messages);
+  });
 
   protected readonly fields = computed(() => fieldsFor(this.settings().eventType));
 
@@ -130,10 +158,22 @@ export class BasicInfoForm {
     this.submitAttempted.set(true);
 
     if (!this.isValid() || this.saving()) {
+      this.focusFirstInvalidField();
       return;
     }
 
     this.save.emit({ ...this.values() });
+  }
+
+  /** Moves focus to the first field that fails validation, in field order. */
+  private focusFirstInvalidField(): void {
+    const invalidIndex = this.fields().findIndex((field) => this.localError(field) !== null);
+
+    if (invalidIndex === -1) {
+      return;
+    }
+
+    queueMicrotask(() => this.fieldInputs?.get(invalidIndex)?.nativeElement.focus());
   }
 
   protected onDismiss(): void {
