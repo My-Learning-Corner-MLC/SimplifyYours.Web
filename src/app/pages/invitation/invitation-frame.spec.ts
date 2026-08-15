@@ -12,7 +12,7 @@ describe('InvitationFrame', () => {
 
     fixture = TestBed.createComponent(InvitationFrame);
     // The app is zoneless, so inputs must be set through componentRef to trigger change detection.
-    fixture.componentRef.setInput('src', `${API_ORIGIN}/api/v1/guests/invitations/tok-abc/render`);
+    fixture.componentRef.setInput('src', `${API_ORIGIN}/api/v1/invitations/tok-abc/render`);
     fixture.componentRef.setInput('expectedOrigin', API_ORIGIN);
     fixture.detectChanges();
   });
@@ -101,7 +101,7 @@ describe('InvitationFrame', () => {
     // that only counts *extra* assignments also passes when src is never assigned at all.
     await fixture.whenStable();
 
-    expect(iframe().src).toContain('/api/v1/guests/invitations/tok-abc/render');
+    expect(iframe().src).toContain('/api/v1/invitations/tok-abc/render');
   });
 
   it('assigns the iframe src exactly once, however often change detection runs', async () => {

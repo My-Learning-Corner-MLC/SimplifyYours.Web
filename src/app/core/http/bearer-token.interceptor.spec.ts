@@ -69,13 +69,13 @@ describe('bearerTokenInterceptor', () => {
   });
 
   it('leaves the public invitation endpoints untouched even with a token in storage', () => {
-    // These live under /api/v1/guests but are deliberately anonymous. An organiser previewing a
-    // guest's link should not ship their access token to an endpoint that has no use for it.
+    // These live under /api/v1/invitations but are deliberately anonymous. An organiser previewing
+    // a guest's link should not ship their access token to an endpoint that has no use for it.
     tokenStorage.write(bundle);
 
-    http.get(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`).subscribe();
+    http.get(`${environment.apiBaseUrl}/api/v1/invitations/tok-abc123`).subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/invitations/tok-abc123`);
     expect(req.request.headers.get('Authorization')).toBeNull();
     req.flush({});
   });
@@ -83,14 +83,14 @@ describe('bearerTokenInterceptor', () => {
   it('leaves the invitation render and rsvp endpoints untouched', () => {
     tokenStorage.write(bundle);
 
-    http.get(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/render`).subscribe();
+    http.get(`${environment.apiBaseUrl}/api/v1/invitations/tok-abc123/render`).subscribe();
     httpMock
-      .expectOne(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/render`)
+      .expectOne(`${environment.apiBaseUrl}/api/v1/invitations/tok-abc123/render`)
       .flush('<html></html>');
 
-    http.post(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/rsvp`, {}).subscribe();
+    http.post(`${environment.apiBaseUrl}/api/v1/invitations/tok-abc123/rsvp`, {}).subscribe();
     const rsvp = httpMock.expectOne(
-      `${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123/rsvp`,
+      `${environment.apiBaseUrl}/api/v1/invitations/tok-abc123/rsvp`,
     );
     expect(rsvp.request.headers.get('Authorization')).toBeNull();
     rsvp.flush({});
@@ -101,16 +101,39 @@ describe('bearerTokenInterceptor', () => {
     // and bounce them to a login page -- on the one page whose premise is that they never log in.
     const error = new Promise<unknown>((resolve) => {
       http
-        .get(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`)
+        .get(`${environment.apiBaseUrl}/api/v1/invitations/tok-abc123`)
         .subscribe({ error: resolve });
     });
 
     httpMock
-      .expectOne(`${environment.apiBaseUrl}/api/v1/guests/invitations/tok-abc123`)
+      .expectOne(`${environment.apiBaseUrl}/api/v1/invitations/tok-abc123`)
       .flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(await error).toBeInstanceOf(HttpErrorResponse);
     expect(tokenRefresh.ensureFreshToken).not.toHaveBeenCalled();
+  });
+
+  it('attaches the bearer token to invitation-settings requests, a reserved segment under /invitations', () => {
+    // "events" and "guests" are reserved first-path-segment literals under /api/v1/invitations —
+    // they can never collide with a real (opaque, high-entropy) invitation token, and the
+    // organiser-authenticated settings/link routes rely on that to still get their bearer token.
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.apiBaseUrl}/api/v1/invitations/events/event-1`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/invitations/events/event-1`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
+    req.flush({});
+  });
+
+  it('attaches the bearer token to the guest-invitation-link lookup, the other reserved segment', () => {
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.apiBaseUrl}/api/v1/invitations/guests/guest-1/link`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/invitations/guests/guest-1/link`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
+    req.flush({});
   });
 
   it('leaves identity-service requests untouched', () => {

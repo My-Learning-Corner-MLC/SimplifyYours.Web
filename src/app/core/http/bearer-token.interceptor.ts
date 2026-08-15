@@ -13,18 +13,34 @@ import { TokenStorageService } from '../auth/token-storage.service';
  * already clears the session and redirects to sign-in globally, so consumers
  * of event-service calls never need their own unauthorized handling.
  */
-// Event/guest calls need a bearer token; identity calls (sign-up, sign-in,
-// token exchange) are anonymous. Now that everything shares one origin (the
-// gateway), origin alone can't distinguish them -- use path prefix instead.
-const PROTECTED_PATH_PREFIXES = ['/api/v1/events', '/api/v1/guests'];
+// Event/guest/invitation calls need a bearer token; identity calls (sign-up, sign-in, token
+// exchange) are anonymous. Now that everything shares one origin (the gateway), origin alone can't
+// distinguish them -- use path prefix instead.
+const PROTECTED_PATH_PREFIXES = ['/api/v1/events', '/api/v1/guests', '/api/v1/invitations'];
 
-// The public invitation endpoints live under /api/v1/guests but are deliberately anonymous -- the
-// invitation token is the only credential. They must be excluded for two reasons:
+// Under /api/v1/invitations, "events" and "guests" are reserved first-path-segment literals for the
+// organiser-authenticated settings/link routes (/invitations/events/{eventId}/...,
+// /invitations/guests/{guestId}/link) -- mirroring guest-management-service's own
+// InvitationRateLimits.ReservedFirstSegments. Everything else under that prefix is a bare
+// /invitations/{token}[...] route and is deliberately anonymous: the token is the only credential.
+// Excluding those (but not the reserved ones) matters for two reasons:
 //   1. An authenticated organiser opening an invitation link would otherwise send their bearer
 //      token to an endpoint that has no use for it.
 //   2. A guest has no session at all, so the 401 path here would silently swallow the response and
 //      redirect them to sign-in -- on a page whose entire premise is that they never sign in.
-const ANONYMOUS_PATH_PREFIXES = ['/api/v1/guests/invitations'];
+const INVITATIONS_PREFIX = '/api/v1/invitations';
+const RESERVED_INVITATION_SEGMENTS = new Set(['events', 'guests']);
+
+function isAnonymousInvitationRoute(path: string): boolean {
+  if (path !== INVITATIONS_PREFIX && !path.startsWith(`${INVITATIONS_PREFIX}/`)) {
+    return false;
+  }
+
+  const remainder = path.slice(INVITATIONS_PREFIX.length).replace(/^\//, '');
+  const [firstSegment] = remainder.split(/[/?]/);
+
+  return firstSegment !== undefined && firstSegment !== '' && !RESERVED_INVITATION_SEGMENTS.has(firstSegment);
+}
 
 // Matches the prefix exactly, or the prefix followed by "/" or "?" -- a bare
 // startsWith would also match an unrelated future route like
@@ -34,12 +50,13 @@ function isProtectedRequest(url: string): boolean {
   if (path === null) {
     return false;
   }
-  const matches = (prefix: string): boolean =>
-    path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`);
 
-  if (ANONYMOUS_PATH_PREFIXES.some(matches)) {
+  if (isAnonymousInvitationRoute(path)) {
     return false;
   }
+
+  const matches = (prefix: string): boolean =>
+    path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`);
 
   return PROTECTED_PATH_PREFIXES.some(matches);
 }

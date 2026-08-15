@@ -12,7 +12,7 @@ describe('InvitationSettingsApiClient', () => {
   let client: InvitationSettingsApiClient;
   let httpMock: HttpTestingController;
 
-  const url = `${environment.apiBaseUrl}/api/v1/events/${EVENT_ID}/invitation-settings`;
+  const url = `${environment.apiBaseUrl}/api/v1/invitations/events/${EVENT_ID}`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({

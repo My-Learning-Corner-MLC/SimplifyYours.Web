@@ -59,7 +59,7 @@ export class InvitationSettingsApiClient {
   }
 
   private url(eventId: string): string {
-    return `${environment.apiBaseUrl}/api/v1/events/${encodeURIComponent(eventId)}/invitation-settings`;
+    return `${environment.apiBaseUrl}/api/v1/invitations/events/${encodeURIComponent(eventId)}`;
   }
 }
 

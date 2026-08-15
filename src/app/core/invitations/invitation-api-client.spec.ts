@@ -20,7 +20,7 @@ describe('InvitationApiClient', () => {
   let client: InvitationApiClient;
   let httpMock: HttpTestingController;
 
-  const url = `${environment.apiBaseUrl}/api/v1/guests/invitations/${TOKEN}`;
+  const url = `${environment.apiBaseUrl}/api/v1/invitations/${TOKEN}`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -43,7 +43,7 @@ describe('InvitationApiClient', () => {
   it('encodes a malformed token rather than emitting a broken URL', () => {
     // A token with a slash would otherwise change the path shape and hit a different route.
     expect(client.renderUrl('a/b?c')).toBe(
-      `${environment.apiBaseUrl}/api/v1/guests/invitations/a%2Fb%3Fc/render`,
+      `${environment.apiBaseUrl}/api/v1/invitations/a%2Fb%3Fc/render`,
     );
   });
 

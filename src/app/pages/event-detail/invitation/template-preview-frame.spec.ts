@@ -22,7 +22,7 @@ describe('TemplatePreviewFrame', () => {
   });
 
   it('renders the sandboxed frame once a src is available', async () => {
-    await render('https://api.example.test/api/v1/guests/invitations/tok/render?mode=preview&type=private');
+    await render('https://api.example.test/api/v1/invitations/tok/render?mode=preview&type=private');
 
     expect(fixture.nativeElement.querySelector('app-invitation-frame')).not.toBeNull();
   });
