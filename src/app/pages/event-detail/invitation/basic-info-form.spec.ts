@@ -19,6 +19,8 @@ function settings(overrides: Partial<InvitationSettings> = {}): InvitationSettin
     },
     isConfigured: true,
     requiredFields: ['brideName', 'groomName', 'eventDate', 'eventTime', 'venueName', 'venueAddress'],
+    publicLinkEnabled: false,
+    publicEventToken: null,
     ...overrides,
   };
 }

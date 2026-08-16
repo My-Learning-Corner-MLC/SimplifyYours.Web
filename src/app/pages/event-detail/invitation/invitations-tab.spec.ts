@@ -27,6 +27,8 @@ const UNCONFIGURED_SETTINGS: InvitationSettings = {
   fieldValues: {},
   isConfigured: false,
   requiredFields: ['brideName', 'groomName', 'eventDate', 'eventTime', 'venueName', 'venueAddress'],
+  publicLinkEnabled: false,
+  publicEventToken: null,
 };
 
 function guest(id: string): Guest {

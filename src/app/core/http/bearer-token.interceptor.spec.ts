@@ -113,25 +113,27 @@ describe('bearerTokenInterceptor', () => {
     expect(tokenRefresh.ensureFreshToken).not.toHaveBeenCalled();
   });
 
-  it('attaches the bearer token to invitation-settings requests, a reserved segment under /invitations', () => {
-    // "events" and "guests" are reserved first-path-segment literals under /api/v1/invitations —
-    // they can never collide with a real (opaque, high-entropy) invitation token, and the
-    // organiser-authenticated settings/link routes rely on that to still get their bearer token.
+  it('attaches the bearer token to invitation-settings requests, the reserved segment under /invitations', () => {
+    // "settings" is the one reserved first-path-segment literal under /api/v1/invitations — it can
+    // never collide with a real (opaque, high-entropy) invitation token, and the
+    // organiser-authenticated settings routes rely on that to still get their bearer token.
     tokenStorage.write(bundle);
 
-    http.get(`${environment.apiBaseUrl}/api/v1/invitations/events/event-1`).subscribe();
+    http.get(`${environment.apiBaseUrl}/api/v1/invitations/settings/events/event-1`).subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/invitations/events/event-1`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/invitations/settings/events/event-1`);
     expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
     req.flush({});
   });
 
-  it('attaches the bearer token to the guest-invitation-link lookup, the other reserved segment', () => {
+  it('attaches the bearer token to the guest-invitation-link lookup under /api/v1/guests', () => {
+    // This route lives entirely outside /api/v1/invitations, so it needs no reserved-segment
+    // handling — it is covered by the plain /api/v1/guests protected prefix.
     tokenStorage.write(bundle);
 
-    http.get(`${environment.apiBaseUrl}/api/v1/invitations/guests/guest-1/link`).subscribe();
+    http.get(`${environment.apiBaseUrl}/api/v1/guests/guest-1/invitation-link`).subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/invitations/guests/guest-1/link`);
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/guests/guest-1/invitation-link`);
     expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
     req.flush({});
   });

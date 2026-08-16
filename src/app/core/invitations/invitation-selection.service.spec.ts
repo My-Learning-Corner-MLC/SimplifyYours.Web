@@ -13,6 +13,8 @@ const SETTINGS: InvitationSettings = {
   fieldValues: { brideName: 'Amara' },
   isConfigured: true,
   requiredFields: ['brideName'],
+  publicLinkEnabled: false,
+  publicEventToken: null,
 };
 
 describe('InvitationSelectionService', () => {
@@ -104,31 +106,36 @@ describe('InvitationSelectionService', () => {
     expect(service.hasTemplate()).toBe(false);
   });
 
-  it('defaults publicLinkEnabled to false', () => {
+  it('defaults publicLinkEnabled to false before anything has loaded', () => {
     expect(service.publicLinkEnabled()).toBe(false);
+    expect(service.publicEventToken()).toBeNull();
   });
 
-  it('records the outcome of a public-link toggle for the rest of the session', () => {
-    service.setPublicLinkEnabled(true);
+  it('derives publicLinkEnabled and publicEventToken from the loaded settings, not session state', () => {
+    apiClient.getSettings.mockReturnValue(
+      of({ ...SETTINGS, publicLinkEnabled: true, publicEventToken: 'pub-token' }),
+    );
+
+    service.load('event-1');
 
     expect(service.publicLinkEnabled()).toBe(true);
+    expect(service.publicEventToken()).toBe('pub-token');
   });
 
-  it('resets publicLinkEnabled on a fresh load for a new event', () => {
-    apiClient.getSettings.mockReturnValue(of(SETTINGS));
-    service.setPublicLinkEnabled(true);
-
-    service.load('event-2');
+  it('reflects a disabled link with a null token from applySaved', () => {
+    service.applySaved({ ...SETTINGS, publicLinkEnabled: false, publicEventToken: null });
 
     expect(service.publicLinkEnabled()).toBe(false);
+    expect(service.publicEventToken()).toBeNull();
   });
 
-  it('resets publicLinkEnabled on reset', () => {
-    service.setPublicLinkEnabled(true);
+  it('resets publicLinkEnabled and publicEventToken on reset', () => {
+    service.applySaved({ ...SETTINGS, publicLinkEnabled: true, publicEventToken: 'pub-token' });
 
     service.reset();
 
     expect(service.publicLinkEnabled()).toBe(false);
+    expect(service.publicEventToken()).toBeNull();
   });
 
   it('defaults templateName to null and lets a surface resolve it later', () => {

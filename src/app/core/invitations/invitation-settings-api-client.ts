@@ -7,7 +7,7 @@ import { InvitationError } from './invitation.model';
 import {
   InvitationSettings,
   PreviewToken,
-  PublicLinkStatus,
+  PublicTokenStatus,
   SaveInvitationSettingsRequest,
 } from './invitation-settings.model';
 
@@ -25,6 +25,11 @@ export class InvitationSettingsApiClient {
       .pipe(catchError((error: unknown) => throwError(() => toError(error))));
   }
 
+  /**
+   * Also carries the public-link enable/disable action via the request's `publicLinkEnabled`
+   * field — there is deliberately no separate enable/disable endpoint. Composing content and
+   * turning on the link it's shared through are one organiser action, not two.
+   */
   saveSettings(eventId: string, request: SaveInvitationSettingsRequest): Observable<InvitationSettings> {
     return this.http
       .put<InvitationSettings>(this.url(eventId), request)
@@ -32,22 +37,13 @@ export class InvitationSettingsApiClient {
   }
 
   /**
-   * Enables or disables the event's public invitation link.
-   *
-   * There is deliberately no `GET` for public-link status — `invitation-gallery-b7` only exposes
-   * this `PUT` and a `POST .../public-link/revoke`. A caller that only wants to know the current
-   * state (not change it) cannot do so without either mutating it or holding onto the value from
-   * the last time it was set in this session — see `InvitationSelectionService`.
+   * Replaces the public token so the previously shared URL immediately stops resolving, while the
+   * link stays enabled at a new URL. Narrower than enable/disable: "give me a fresh link," not
+   * "turn it on/off" — the backend rejects this if the link isn't already enabled.
    */
-  setPublicLink(eventId: string, enabled: boolean): Observable<PublicLinkStatus> {
+  rotatePublicToken(eventId: string): Observable<PublicTokenStatus> {
     return this.http
-      .put<PublicLinkStatus>(`${this.url(eventId)}/public-link`, { enabled })
-      .pipe(catchError((error: unknown) => throwError(() => toError(error))));
-  }
-
-  revokePublicLink(eventId: string): Observable<PublicLinkStatus> {
-    return this.http
-      .post<PublicLinkStatus>(`${this.url(eventId)}/public-link/revoke`, {})
+      .post<PublicTokenStatus>(`${this.url(eventId)}/public-token`, { action: 'rotate' })
       .pipe(catchError((error: unknown) => throwError(() => toError(error))));
   }
 
@@ -59,7 +55,7 @@ export class InvitationSettingsApiClient {
   }
 
   private url(eventId: string): string {
-    return `${environment.apiBaseUrl}/api/v1/invitations/events/${encodeURIComponent(eventId)}`;
+    return `${environment.apiBaseUrl}/api/v1/invitations/settings/events/${encodeURIComponent(eventId)}`;
   }
 }
 

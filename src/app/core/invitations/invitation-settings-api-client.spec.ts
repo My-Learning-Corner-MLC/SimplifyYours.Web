@@ -12,7 +12,7 @@ describe('InvitationSettingsApiClient', () => {
   let client: InvitationSettingsApiClient;
   let httpMock: HttpTestingController;
 
-  const url = `${environment.apiBaseUrl}/api/v1/invitations/events/${EVENT_ID}`;
+  const url = `${environment.apiBaseUrl}/api/v1/invitations/settings/events/${EVENT_ID}`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -39,6 +39,8 @@ describe('InvitationSettingsApiClient', () => {
       fieldValues: { brideName: 'Amara' },
       isConfigured: true,
       requiredFields: ['brideName'],
+      publicLinkEnabled: false,
+      publicEventToken: null,
     });
 
     expect(received).toMatchObject({ templateId: 'marigold', isConfigured: true });
@@ -94,24 +96,32 @@ describe('InvitationSettingsApiClient', () => {
     expect((await failure).reason).toBe('network');
   });
 
-  it('enables the public link with PUT', () => {
-    let received: unknown;
-    client.setPublicLink(EVENT_ID, true).subscribe((status) => (received = status));
+  it('saves the public-link enable/disable action inline with the rest of the content', () => {
+    client
+      .saveSettings(EVENT_ID, {
+        templateId: 'marigold',
+        fieldValues: { brideName: 'Amara' },
+        publicLinkEnabled: true,
+      })
+      .subscribe();
 
-    const req = httpMock.expectOne(`${url}/public-link`);
+    const req = httpMock.expectOne(url);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ enabled: true });
-    req.flush({ enabled: true, publicEventToken: 'pub-token' });
-
-    expect(received).toEqual({ enabled: true, publicEventToken: 'pub-token' });
+    expect(req.request.body).toEqual({
+      templateId: 'marigold',
+      fieldValues: { brideName: 'Amara' },
+      publicLinkEnabled: true,
+    });
+    req.flush({});
   });
 
-  it('revokes the public link with POST', () => {
+  it('rotates the public token with POST', () => {
     let received: unknown;
-    client.revokePublicLink(EVENT_ID).subscribe((status) => (received = status));
+    client.rotatePublicToken(EVENT_ID).subscribe((status) => (received = status));
 
-    const req = httpMock.expectOne(`${url}/public-link/revoke`);
+    const req = httpMock.expectOne(`${url}/public-token`);
     expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ action: 'rotate' });
     req.flush({ enabled: true, publicEventToken: 'new-token' });
 
     expect(received).toEqual({ enabled: true, publicEventToken: 'new-token' });

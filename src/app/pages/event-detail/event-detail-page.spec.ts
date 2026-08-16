@@ -55,13 +55,14 @@ const UNCONFIGURED_INVITATION_SETTINGS: InvitationSettings = {
   fieldValues: {},
   isConfigured: false,
   requiredFields: [],
+  publicLinkEnabled: false,
+  publicEventToken: null,
 };
 
 class InvitationSettingsApiStub {
   getSettings = vi.fn(() => of(UNCONFIGURED_INVITATION_SETTINGS));
   saveSettings = vi.fn();
-  setPublicLink = vi.fn();
-  revokePublicLink = vi.fn();
+  rotatePublicToken = vi.fn();
   issuePreviewToken = vi.fn(() => of({ token: 'preview-tok', expiresAt: '2026-01-01T00:00:00Z' }));
 }
 

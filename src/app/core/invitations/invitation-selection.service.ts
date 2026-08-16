@@ -23,16 +23,6 @@ export class InvitationSelectionService {
   private readonly _state = signal<InvitationSelectionState>('idle');
   private readonly _settings = signal<InvitationSettings | null>(null);
   /**
-   * Whether the event's public invitation link is enabled. There is no `GET` for this on the
-   * backend (see `InvitationSettingsApiClient.setPublicLink`'s doc comment) — this only ever
-   * reflects the value from the last `setPublicLink`/`revokePublicLink` call made this session, and
-   * resets to `false` on {@link reset} or a fresh {@link load}. A page that opens directly on the
-   * template detail view without ever toggling public sharing this session will see it as off,
-   * which is the safe default: no UI here should assume a public link is live unless this browser
-   * was actually told so.
-   */
-  private readonly _publicLinkEnabled = signal(false);
-  /**
    * The chosen template's display name. `InvitationSettingsResponse` carries only `templateId` (a
    * GUID) — the name lives in `template-management-service`'s catalog, which nothing here fetches
    * on its own. Populated opportunistically by whichever surface resolves it first: `TemplateGallery`
@@ -45,7 +35,6 @@ export class InvitationSelectionService {
 
   readonly state = this._state.asReadonly();
   readonly settings = this._settings.asReadonly();
-  readonly publicLinkEnabled = this._publicLinkEnabled.asReadonly();
   readonly templateName = this._templateName.asReadonly();
 
   /** True once a template has been chosen and the invitation actually saved (not a draft default). */
@@ -54,6 +43,17 @@ export class InvitationSelectionService {
     return !!settings?.templateId && settings.isConfigured;
   });
 
+  /**
+   * Whether the event's public invitation link is enabled. `GET`/`PUT .../settings/events/{id}`
+   * both return this directly now, so it is derived straight from the last-loaded settings rather
+   * than tracked separately — no session-only guessing, and a page that opens directly on the
+   * template detail view sees the real current state, not an assumed-off default.
+   */
+  readonly publicLinkEnabled = computed(() => this._settings()?.publicLinkEnabled ?? false);
+
+  /** Null unless {@link publicLinkEnabled} is true. */
+  readonly publicEventToken = computed(() => this._settings()?.publicEventToken ?? null);
+
   load(eventId: string): void {
     if (this.eventId === eventId && this._state() !== 'idle' && this._state() !== 'error') {
       return;
@@ -61,7 +61,6 @@ export class InvitationSelectionService {
 
     this.eventId = eventId;
     this._state.set('loading');
-    this._publicLinkEnabled.set(false);
     this._templateName.set(null);
 
     this.api.getSettings(eventId).subscribe({
@@ -90,11 +89,6 @@ export class InvitationSelectionService {
     this._state.set('ready');
   }
 
-  /** Records the outcome of a `setPublicLink`/`revokePublicLink` call made this session. */
-  setPublicLinkEnabled(enabled: boolean): void {
-    this._publicLinkEnabled.set(enabled);
-  }
-
   /** Records the chosen template's display name once some surface has resolved it. */
   setTemplateName(name: string): void {
     this._templateName.set(name);
@@ -105,7 +99,6 @@ export class InvitationSelectionService {
     this.eventId = null;
     this._settings.set(null);
     this._state.set('idle');
-    this._publicLinkEnabled.set(false);
     this._templateName.set(null);
   }
 }

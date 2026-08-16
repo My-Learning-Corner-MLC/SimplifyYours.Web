@@ -55,7 +55,7 @@ export class GuestApiClient {
    * paginated response that gets cached client-side and logged when something goes wrong.
    */
   getInvitationLink(guestId: string): Observable<GuestInvitationLink> {
-    const url = `${environment.apiBaseUrl}/api/v1/invitations/guests/${encodeURIComponent(guestId)}/link`;
+    const url = `${environment.apiBaseUrl}/api/v1/guests/${encodeURIComponent(guestId)}/invitation-link`;
 
     return this.http.get<GuestInvitationLink>(url, { withCredentials: false });
   }
