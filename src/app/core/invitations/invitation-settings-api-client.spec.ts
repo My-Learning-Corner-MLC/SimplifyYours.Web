@@ -36,6 +36,7 @@ describe('InvitationSettingsApiClient', () => {
       eventId: EVENT_ID,
       eventType: 'wedding',
       templateId: 'marigold',
+      templateName: 'Marigold',
       fieldValues: { brideName: 'Amara' },
       isConfigured: true,
       requiredFields: ['brideName'],
@@ -43,7 +44,7 @@ describe('InvitationSettingsApiClient', () => {
       publicEventToken: null,
     });
 
-    expect(received).toMatchObject({ templateId: 'marigold', isConfigured: true });
+    expect(received).toMatchObject({ templateId: 'marigold', templateName: 'Marigold', isConfigured: true });
   });
 
   it('saves with PUT', () => {

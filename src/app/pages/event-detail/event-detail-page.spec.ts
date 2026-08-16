@@ -52,6 +52,7 @@ const UNCONFIGURED_INVITATION_SETTINGS: InvitationSettings = {
   eventId: 'e1',
   eventType: 'wedding',
   templateId: null,
+  templateName: null,
   fieldValues: {},
   isConfigured: false,
   requiredFields: [],

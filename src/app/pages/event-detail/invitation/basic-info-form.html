@@ -1,77 +1,127 @@
-<form class="basic-info" (ngSubmit)="onSubmit()" novalidate>
-  <header class="basic-info__header">
-    <p class="basic-info__eyebrow">Invitation details</p>
-    <h2 class="basic-info__title" id="basic-info-title">What should the invitation say?</h2>
-    <p class="basic-info__hint">
-      These fill in your chosen template. They apply to
-      <strong>this invitation only</strong> &mdash; editing them here does not change the event.
-    </p>
-  </header>
+<div class="basic-info-page">
+  <nav class="basic-info-page__breadcrumb" aria-label="Breadcrumb">
+    <span>Events</span>
+    <span aria-hidden="true">›</span>
+    <span>{{ eventName() }}</span>
+    <span aria-hidden="true">›</span>
+    <span>Invitations</span>
+    <span aria-hidden="true">›</span>
+    <span class="basic-info-page__breadcrumb-current">Basic info</span>
+  </nav>
 
-  @if (formLevelErrors().length > 0) {
-    <p class="basic-info__form-error" role="alert">{{ formLevelErrors()[0] }}</p>
-  }
+  <button type="button" class="basic-info-page__back-link" (click)="onBackToPreview()">← Back to preview</button>
 
-  @if (sentInvitationCount() > 0) {
-    <p class="basic-info__warning" role="status">
-      {{ sentInvitationCount() }} guest(s) already have their link. Saving updates what they see
-      straight away.
-    </p>
-  }
+  <form class="basic-info" (ngSubmit)="onSubmit()" novalidate>
+    <header class="basic-info__header">
+      <h2 class="basic-info__title" id="basic-info-title">Basic info</h2>
+      <p class="basic-info__subtitle">
+        {{ templateName() }} · A few details for your invitation. Fields vary by template.
+      </p>
+      <p class="basic-info__hint">
+        These fill in your chosen template. They apply to
+        <strong>this invitation only</strong> &mdash; editing them here does not change the event.
+      </p>
+    </header>
 
-  <div class="basic-info__fields">
-    @for (field of fields(); track field) {
-      <div class="basic-info__field" [class.basic-info__field--invalid]="errorsFor(field).length > 0">
-        <label class="basic-info__label" [attr.for]="'field-' + field">
-          {{ labels[field] }}
-          @if (isOptional(field)) {
-            <span class="basic-info__optional">(optional)</span>
-          }
-        </label>
-
-        @if (isMultiline(field)) {
-          <textarea
-            #fieldInput
-            class="basic-info__input"
-            [id]="'field-' + field"
-            rows="2"
-            [maxlength]="maxLengths[field]"
-            [disabled]="saving()"
-            [attr.aria-invalid]="errorsFor(field).length > 0"
-            [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
-            [ngModel]="valueOf(field)"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="onInput(field, $event)"
-          ></textarea>
-        } @else {
-          <input
-            #fieldInput
-            class="basic-info__input"
-            type="text"
-            [id]="'field-' + field"
-            [maxlength]="maxLengths[field]"
-            [disabled]="saving()"
-            [attr.aria-invalid]="errorsFor(field).length > 0"
-            [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
-            [ngModel]="valueOf(field)"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="onInput(field, $event)"
-          />
-        }
-
-        @if (errorsFor(field).length > 0) {
-          <p class="basic-info__error" [id]="'error-' + field">{{ errorsFor(field)[0] }}</p>
-        }
-      </div>
+    @if (formLevelErrors().length > 0) {
+      <p class="basic-info__form-error" role="alert">{{ formLevelErrors()[0] }}</p>
     }
-  </div>
 
-  <footer class="basic-info__actions">
-    <button type="button" class="basic-info__secondary" [disabled]="saving()" (click)="onDismiss()">
-      Cancel
-    </button>
-    <button type="submit" class="basic-info__primary" [disabled]="saving()">
-      {{ saving() ? 'Saving…' : 'Save invitation' }}
-    </button>
-  </footer>
-</form>
+    @if (sentInvitationCount() > 0) {
+      <p class="basic-info__warning" role="status">
+        {{ sentInvitationCount() }} guest(s) already have their link. Saving updates what they see
+        straight away.
+      </p>
+    }
+
+    <div class="basic-info__toggle-card">
+      <div>
+        <p class="basic-info__toggle-title">Public invitation link</p>
+        <p class="basic-info__toggle-description">
+          Share one link with everyone instead of individual guest links.
+        </p>
+      </div>
+      <button
+        type="button"
+        class="basic-info__toggle-switch"
+        role="switch"
+        [attr.aria-checked]="publicLinkEnabled()"
+        aria-label="Public invitation link"
+        [class.basic-info__toggle-switch--on]="publicLinkEnabled()"
+        [disabled]="saving()"
+        (click)="onTogglePublicLink()"
+      >
+        <span class="basic-info__toggle-knob"></span>
+      </button>
+    </div>
+
+    <div class="basic-info__fields">
+      @for (field of fields(); track field) {
+        <div class="basic-info__field" [class.basic-info__field--invalid]="errorsFor(field).length > 0">
+          <label class="basic-info__label" [attr.for]="'field-' + field">
+            {{ labels[field] }}
+            @if (isOptional(field)) {
+              <span class="basic-info__optional">(optional)</span>
+            }
+          </label>
+
+          @if (isMultiline(field)) {
+            <textarea
+              #fieldInput
+              class="basic-info__input"
+              [id]="'field-' + field"
+              rows="2"
+              [maxlength]="maxLengths[field]"
+              [disabled]="saving()"
+              [attr.aria-invalid]="errorsFor(field).length > 0"
+              [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+              [ngModel]="valueOf(field)"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onInput(field, $event)"
+            ></textarea>
+          } @else {
+            <input
+              #fieldInput
+              class="basic-info__input"
+              type="text"
+              [id]="'field-' + field"
+              [maxlength]="maxLengths[field]"
+              [disabled]="saving()"
+              [attr.aria-invalid]="errorsFor(field).length > 0"
+              [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+              [ngModel]="valueOf(field)"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onInput(field, $event)"
+            />
+          }
+
+          @if (errorsFor(field).length > 0) {
+            <p class="basic-info__error" [id]="'error-' + field">{{ errorsFor(field)[0] }}</p>
+          }
+        </div>
+      }
+    </div>
+
+    <footer class="basic-info__actions">
+      <button type="button" class="basic-info__secondary" [disabled]="saving()" (click)="onCancel()">
+        Cancel
+      </button>
+      <button type="submit" class="basic-info__primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
+    </footer>
+  </form>
+
+  @if (showDiscardDialog()) {
+    <app-confirm-dialog
+      heading="Discard changes?"
+      ariaLabel="Discard changes"
+      primaryLabel="Discard"
+      cancelLabel="Keep editing"
+      (confirmed)="onDiscard()"
+      (cancelled)="onKeepEditing()"
+    >
+      <p>You have unsaved basic info for {{ templateName() }}. If you leave now, those changes will be lost.</p>
+    </app-confirm-dialog>
+  }
+</div>

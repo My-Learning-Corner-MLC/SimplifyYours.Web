@@ -24,6 +24,7 @@ const UNCONFIGURED_SETTINGS: InvitationSettings = {
   eventId: 'event-1',
   eventType: 'wedding',
   templateId: null,
+  templateName: null,
   fieldValues: {},
   isConfigured: false,
   requiredFields: ['brideName', 'groomName', 'eventDate', 'eventTime', 'venueName', 'venueAddress'],
@@ -81,6 +82,34 @@ describe('InvitationsTab', () => {
     fixture.detectChanges();
   }
 
+  async function goToDetailAndProceed() {
+    (fixture.nativeElement.querySelector('app-template-card button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  const REQUIRED_FIELDS = ['brideName', 'groomName', 'eventDate', 'eventTime', 'venueName', 'venueAddress'];
+
+  function fillRequiredFields() {
+    for (const field of REQUIRED_FIELDS) {
+      const input = fixture.nativeElement.querySelector(`#field-${field}`) as HTMLInputElement;
+      input.value = `${field}-value`;
+      input.dispatchEvent(new Event('input'));
+    }
+    fixture.detectChanges();
+  }
+
+  function submitBasicInfo() {
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+  }
+
   beforeEach(() => {
     guestApi = { listGuests: vi.fn(() => of([])) };
     settingsApi = {
@@ -108,74 +137,91 @@ describe('InvitationsTab', () => {
     expect(fixture.nativeElement.querySelector('app-template-detail')).not.toBeNull();
   });
 
-  it('shows the simple "use template" dialog when no guest has a link yet', async () => {
+  it('"Use this template" on the detail view goes straight to basic info, without saving anything yet', async () => {
     await render([]);
-    (fixture.nativeElement.querySelector('app-template-card button') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
-    fixture.detectChanges();
+    await goToDetailAndProceed();
+
+    expect(fixture.nativeElement.querySelector('app-basic-info-form')).not.toBeNull();
+    expect(settingsApi.saveSettings).not.toHaveBeenCalled();
+  });
+
+  it('shows the simple "use template" dialog on Save when no guest has a link yet', async () => {
+    await render([]);
+    await goToDetailAndProceed();
+
+    fillRequiredFields();
+    submitBasicInfo();
 
     expect(fixture.nativeElement.querySelector('app-use-template-confirm-dialog')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-change-template-confirm-dialog')).toBeNull();
   });
 
-  it('shows the change-template warning dialog once a guest already has a link', async () => {
+  it('shows the change-template warning dialog on Save once a guest already has a link', async () => {
     await render([guest('g1')]);
-    (fixture.nativeElement.querySelector('app-template-card button') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await goToDetailAndProceed();
 
-    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
-    fixture.detectChanges();
+    fillRequiredFields();
+    submitBasicInfo();
 
     expect(fixture.nativeElement.querySelector('app-change-template-confirm-dialog')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-use-template-confirm-dialog')).toBeNull();
   });
 
-  it('saves the template and opens the basic-info form on confirm', async () => {
+  it('saves the template and field values together on dialog confirm, then returns to the gallery', async () => {
     settingsApi.saveSettings.mockReturnValue(
-      of({ ...UNCONFIGURED_SETTINGS, templateId: 'tmpl-1', isConfigured: true }),
+      of({ ...UNCONFIGURED_SETTINGS, templateId: 'tmpl-1', templateName: 'Verona', isConfigured: true }),
     );
     await render([]);
-    (fixture.nativeElement.querySelector('app-template-card button') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
-    fixture.detectChanges();
+    await goToDetailAndProceed();
+
+    fillRequiredFields();
+    submitBasicInfo();
 
     (fixture.nativeElement.querySelector('.confirm-dialog__primary') as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(settingsApi.saveSettings).toHaveBeenCalledWith('event-1', { templateId: 'tmpl-1', fieldValues: {} });
-    expect(fixture.nativeElement.querySelector('app-basic-info-form')).not.toBeNull();
+    expect(settingsApi.saveSettings).toHaveBeenCalledWith('event-1', {
+      templateId: 'tmpl-1',
+      fieldValues: expect.objectContaining({ brideName: 'brideName-value' }),
+      publicLinkEnabled: false,
+    });
+    expect(fixture.nativeElement.querySelector('app-template-gallery')).not.toBeNull();
   });
 
-  it('shows an inline error and keeps the gallery flow usable when saving the template fails', async () => {
+  it('shows an inline error and returns to basic info when saving fails', async () => {
     settingsApi.saveSettings.mockReturnValue(throwError(() => ({ reason: 'network', fieldErrors: {} })));
     await render([]);
-    (fixture.nativeElement.querySelector('app-template-card button') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
-    fixture.detectChanges();
+    await goToDetailAndProceed();
+
+    fillRequiredFields();
+    submitBasicInfo();
 
     (fixture.nativeElement.querySelector('.confirm-dialog__primary') as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.invitations-tab__error')?.textContent).toContain(
-      "couldn't set that template",
+    expect(fixture.nativeElement.querySelector('app-basic-info-form')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.basic-info__form-error')?.textContent).toContain(
+      "couldn't save your changes",
     );
-    expect(fixture.nativeElement.querySelector('app-template-detail')).not.toBeNull();
+  });
+
+  it('cancelling the confirm dialog returns to the basic-info form without saving', async () => {
+    await render([]);
+    await goToDetailAndProceed();
+
+    fillRequiredFields();
+    submitBasicInfo();
+
+    (fixture.nativeElement.querySelector('.confirm-dialog__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(settingsApi.saveSettings).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('app-basic-info-form')).not.toBeNull();
   });
 
   it('returns to the gallery from the detail view without saving anything', async () => {
@@ -192,19 +238,38 @@ describe('InvitationsTab', () => {
     expect(settingsApi.saveSettings).not.toHaveBeenCalled();
   });
 
-  it('opens the basic-info form directly from the gallery summary\'s "Edit basic info"', async () => {
+  it('Cancel on the basic-info form returns to the detail view it was reached from, not the gallery', async () => {
+    await render([]);
+    await goToDetailAndProceed();
+
+    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-template-detail')).not.toBeNull();
+  });
+
+  it('opens the basic-info form directly from an already-selected template\'s "Edit basic info"', async () => {
     const configured: InvitationSettings = {
       ...UNCONFIGURED_SETTINGS,
       templateId: 'tmpl-1',
+      templateName: 'Verona',
       isConfigured: true,
       fieldValues: { brideName: 'Amara' },
     };
     await render([], configured);
+
+    (fixture.nativeElement.querySelector('[data-testid="gallery-summary"] button') as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('.template-gallery__summary-btn:last-child') as HTMLButtonElement).click();
+    expect(fixture.nativeElement.querySelector('.template-detail__primary')?.textContent?.trim()).toBe(
+      'Edit basic info',
+    );
+
+    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-basic-info-form')).not.toBeNull();

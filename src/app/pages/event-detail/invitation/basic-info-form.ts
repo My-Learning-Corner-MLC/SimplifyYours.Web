@@ -20,6 +20,7 @@ import {
   InvitationSettings,
   fieldsFor,
 } from '../../../core/invitations/invitation-settings.model';
+import { ConfirmDialog } from './confirm-dialog';
 
 /** Fields the organiser may leave blank. Everything else blocks the save. */
 const OPTIONAL_FIELDS: readonly InvitationField[] = ['venueNotes'];
@@ -27,41 +28,58 @@ const OPTIONAL_FIELDS: readonly InvitationField[] = ['venueNotes'];
 /** Rendered as a textarea rather than a single line. */
 const MULTILINE_FIELDS: readonly InvitationField[] = ['venueAddress', 'venueNotes'];
 
+export interface BasicInfoSaveEvent {
+  readonly fieldValues: InvitationFieldValues;
+  readonly publicLinkEnabled: boolean;
+}
+
 /**
- * Collects the content that fills the chosen invitation template.
+ * The full "Basic info" page: content that fills the chosen invitation template, plus the public
+ * invitation link toggle. Reached via "Use this template" (new selection) or "Edit basic info"
+ * (already selected) on {@link TemplateDetail} — there is no separate modal step anymore.
  *
- * Opens when the organiser confirms a template in the preview. Event-derived fields arrive
- * pre-filled and stay editable; couple names have no event-record source and start empty, which is
- * the reason this form exists at all.
+ * Event-derived fields arrive pre-filled and stay editable; couple names have no event-record
+ * source and start empty, which is the reason this form exists at all.
  *
  * Edits here change the invitation only — never the event. An organiser may legitimately want a
  * friendly venue line on the invitation and a precise postal address on the event, so the form says
  * so rather than letting the divergence come as a surprise.
+ *
+ * Saving does not call the API directly — {@link save} hands the validated values up to
+ * `InvitationsTab`, which runs the actual save from behind the "Use this template?"/"Change
+ * template?" confirm dialog, same as choosing a template does.
  */
 @Component({
   selector: 'app-basic-info-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, ConfirmDialog],
   templateUrl: './basic-info-form.html',
   styleUrl: './basic-info-form.scss',
 })
 export class BasicInfoForm {
   readonly settings = input.required<InvitationSettings>();
-  readonly templateId = input.required<string>();
+  readonly eventName = input.required<string>();
+  readonly templateName = input.required<string>();
   /** Set when invitations have already gone out — changes are live on every issued link. */
   readonly sentInvitationCount = input<number>(0);
   readonly saving = input<boolean>(false);
   /** Server-side messages keyed by field, merged over local validation. */
   readonly serverErrors = input<Readonly<Record<string, readonly string[]>>>({});
 
-  readonly save = output<InvitationFieldValues>();
+  readonly save = output<BasicInfoSaveEvent>();
+  /** Fired once leaving is confirmed — either nothing was dirty, or Discard was chosen. */
   readonly dismissed = output<void>();
 
   @ViewChildren('fieldInput') private readonly fieldInputs!: QueryList<ElementRef<HTMLElement>>;
 
   protected readonly values = signal<InvitationFieldValues>({});
+  protected readonly publicLinkEnabled = signal(false);
   protected readonly touched = signal<ReadonlySet<InvitationField>>(new Set());
   protected readonly submitAttempted = signal(false);
+  protected readonly showDiscardDialog = signal(false);
+
+  private readonly initialValues = signal<InvitationFieldValues>({});
+  private readonly initialPublicLinkEnabled = signal(false);
 
   /**
    * Errors keyed against something other than one of this event type's fields — chiefly
@@ -83,14 +101,27 @@ export class BasicInfoForm {
   protected readonly labels = INVITATION_FIELD_LABELS;
   protected readonly maxLengths = INVITATION_FIELD_MAX_LENGTHS;
 
+  /** Gates the Discard-changes dialog on Cancel / "Back to preview" — untouched forms exit immediately. */
+  protected readonly isDirty = computed(() => {
+    const current = this.values();
+    const initial = this.initialValues();
+    const fieldsChanged = this.fields().some((field) => (current[field] ?? '') !== (initial[field] ?? ''));
+
+    return fieldsChanged || this.publicLinkEnabled() !== this.initialPublicLinkEnabled();
+  });
+
   constructor() {
     // Seeding from an effect rather than the template keeps re-opening honest: whatever the API
     // returned — saved values, or pre-fill defaults — is what the organiser sees.
     effect(() => {
-      const incoming = this.settings().fieldValues;
-      this.values.set({ ...incoming });
+      const settings = this.settings();
+      this.values.set({ ...settings.fieldValues });
+      this.initialValues.set({ ...settings.fieldValues });
+      this.publicLinkEnabled.set(settings.publicLinkEnabled);
+      this.initialPublicLinkEnabled.set(settings.publicLinkEnabled);
       this.touched.set(new Set());
       this.submitAttempted.set(false);
+      this.showDiscardDialog.set(false);
     });
   }
 
@@ -109,6 +140,10 @@ export class BasicInfoForm {
   protected onInput(field: InvitationField, value: string): void {
     this.values.update((current) => ({ ...current, [field]: value }));
     this.touched.update((current) => new Set(current).add(field));
+  }
+
+  protected onTogglePublicLink(): void {
+    this.publicLinkEnabled.update((enabled) => !enabled);
   }
 
   /** Local errors only; server messages are merged in by {@link errorsFor}. */
@@ -162,7 +197,7 @@ export class BasicInfoForm {
       return;
     }
 
-    this.save.emit({ ...this.values() });
+    this.save.emit({ fieldValues: { ...this.values() }, publicLinkEnabled: this.publicLinkEnabled() });
   }
 
   /** Moves focus to the first field that fails validation, in field order. */
@@ -176,7 +211,30 @@ export class BasicInfoForm {
     queueMicrotask(() => this.fieldInputs?.get(invalidIndex)?.nativeElement.focus());
   }
 
-  protected onDismiss(): void {
+  protected onCancel(): void {
+    this.requestDismiss();
+  }
+
+  protected onBackToPreview(): void {
+    this.requestDismiss();
+  }
+
+  /** Untouched forms leave immediately; dirty ones are gated behind the Discard-changes dialog. */
+  private requestDismiss(): void {
+    if (this.isDirty()) {
+      this.showDiscardDialog.set(true);
+      return;
+    }
+
+    this.dismissed.emit();
+  }
+
+  protected onKeepEditing(): void {
+    this.showDiscardDialog.set(false);
+  }
+
+  protected onDiscard(): void {
+    this.showDiscardDialog.set(false);
     this.dismissed.emit();
   }
 }

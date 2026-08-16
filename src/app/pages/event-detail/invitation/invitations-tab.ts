@@ -3,10 +3,9 @@ import { ChangeDetectionStrategy, Component, effect, inject, input, output, sign
 import { GuestApiClient } from '../../../core/guests/guest-api-client';
 import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
 import { InvitationSettingsApiClient } from '../../../core/invitations/invitation-settings-api-client';
-import { InvitationFieldValues } from '../../../core/invitations/invitation-settings.model';
 import { InvitationError } from '../../../core/invitations/invitation.model';
 import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
-import { BasicInfoForm } from './basic-info-form';
+import { BasicInfoForm, BasicInfoSaveEvent } from './basic-info-form';
 import { ChangeTemplateConfirmDialog } from './change-template-confirm-dialog';
 import { TemplateDetail } from './template-detail';
 import { TemplateGallery } from './template-gallery';
@@ -17,8 +16,13 @@ type PendingDialog = 'use' | 'change' | null;
 
 /**
  * The Invitations tab's top-level container: owns navigation between the gallery, a template's
- * detail/preview, and the basic-info content form, and wires the confirm dialogs to the actual
- * save call.
+ * detail/preview, and the basic-info page, and wires the confirm dialogs to the actual save call.
+ *
+ * "Use this template" (a new selection) and "Edit basic info" (an already-applied one) both go
+ * straight from the detail view to the basic-info page — nothing is saved yet. Save on that page
+ * validates the form, then opens the same "Use this template?"/"Change template?" dialog as
+ * before; confirming it is what actually persists the template choice and the field values
+ * together, in one call.
  *
  * "≥1 guest already has an invitation link" is approximated here as "≥1 guest exists": every guest
  * gets a copyable invitation link the moment they are added (see `GuestApiClient.getInvitationLink`
@@ -58,8 +62,10 @@ export class InvitationsTab {
   protected readonly pendingDialog = signal<PendingDialog>(null);
   protected readonly savingSelection = signal(false);
   protected readonly selectionError = signal<string | null>(null);
-  protected readonly basicInfoSaving = signal(false);
   protected readonly basicInfoServerErrors = signal<Readonly<Record<string, readonly string[]>>>({});
+
+  /** Captured from the basic-info page's Save, held until the confirm dialog is actually confirmed. */
+  private pendingSave: BasicInfoSaveEvent | null = null;
 
   /**
    * Best-effort guest count for the confirm-dialog decision and the basic-info form's "already
@@ -90,18 +96,26 @@ export class InvitationsTab {
     this.view.set('detail');
   }
 
-  protected onGalleryEditBasicInfo(): void {
-    this.view.set('basic-info');
-  }
-
   protected onDetailBack(): void {
     this.detailTemplate.set(null);
     this.view.set('gallery');
   }
 
-  protected onUseTemplate(): void {
+  /** "Use this template" (new selection) or "Edit basic info" (already selected) — same next step. */
+  protected onDetailProceed(): void {
+    this.view.set('basic-info');
+  }
+
+  protected onBasicInfoSave(event: BasicInfoSaveEvent): void {
+    this.pendingSave = event;
     this.selectionError.set(null);
     this.pendingDialog.set(this.guestCount() > 0 ? 'change' : 'use');
+  }
+
+  protected onBasicInfoDismissed(): void {
+    // Cancel / "Back to preview" return to the detail view they were reached from — not the
+    // gallery — so the organiser lands back on the preview, not further away from it.
+    this.view.set('detail');
   }
 
   protected onDialogCancelled(): void {
@@ -110,62 +124,40 @@ export class InvitationsTab {
 
   protected onDialogConfirmed(): void {
     const template = this.detailTemplate();
-    if (!template) {
+    const pending = this.pendingSave;
+
+    if (!template || !pending) {
       return;
     }
 
     this.savingSelection.set(true);
     this.selectionError.set(null);
 
-    const existingValues = this.selection.settings()?.fieldValues ?? {};
-
-    this.settingsApi.saveSettings(this.eventId(), { templateId: template.id, fieldValues: existingValues }).subscribe({
-      next: (settings) => {
-        this.selection.applySaved(settings);
-        // The save response never carries the template's name (see InvitationSelectionService's
-        // doc comment) — this is the one place that already knows it, since the organiser just
-        // picked it off the object in hand.
-        this.selection.setTemplateName(template.name);
-        this.templateSelected.emit(template.name);
-        this.savingSelection.set(false);
-        this.pendingDialog.set(null);
-        this.view.set('basic-info');
-      },
-      error: () => {
-        this.savingSelection.set(false);
-        this.pendingDialog.set(null);
-        this.selectionError.set("We couldn't set that template. Please try again.");
-      },
-    });
-  }
-
-  protected onBasicInfoSave(values: InvitationFieldValues): void {
-    const templateId = this.selection.settings()?.templateId;
-    if (!templateId) {
-      return;
-    }
-
-    this.basicInfoSaving.set(true);
-    this.basicInfoServerErrors.set({});
-
-    this.settingsApi.saveSettings(this.eventId(), { templateId, fieldValues: values }).subscribe({
-      next: (settings) => {
-        this.selection.applySaved(settings);
-        this.basicInfoSaving.set(false);
-        this.view.set('gallery');
-      },
-      error: (error: InvitationError) => {
-        this.basicInfoSaving.set(false);
-        this.basicInfoServerErrors.set(
-          error.reason === 'validation'
-            ? error.fieldErrors
-            : { templateId: ["We couldn't save your changes. Please try again."] },
-        );
-      },
-    });
-  }
-
-  protected onBasicInfoDismissed(): void {
-    this.view.set('gallery');
+    this.settingsApi
+      .saveSettings(this.eventId(), {
+        templateId: template.id,
+        fieldValues: pending.fieldValues,
+        publicLinkEnabled: pending.publicLinkEnabled,
+      })
+      .subscribe({
+        next: (settings) => {
+          this.selection.applySaved(settings);
+          this.templateSelected.emit(settings.templateName ?? template.name);
+          this.pendingSave = null;
+          this.savingSelection.set(false);
+          this.pendingDialog.set(null);
+          this.detailTemplate.set(null);
+          this.view.set('gallery');
+        },
+        error: (error: InvitationError) => {
+          this.savingSelection.set(false);
+          this.pendingDialog.set(null);
+          this.basicInfoServerErrors.set(
+            error.reason === 'validation'
+              ? error.fieldErrors
+              : { templateId: ["We couldn't save your changes. Please try again."] },
+          );
+        },
+      });
   }
 }

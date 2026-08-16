@@ -10,6 +10,7 @@ const SETTINGS: InvitationSettings = {
   eventId: 'event-1',
   eventType: 'wedding',
   templateId: 'template-1',
+  templateName: 'Verona',
   fieldValues: { brideName: 'Amara' },
   isConfigured: true,
   requiredFields: ['brideName'],
@@ -138,25 +139,26 @@ describe('InvitationSelectionService', () => {
     expect(service.publicEventToken()).toBeNull();
   });
 
-  it('defaults templateName to null and lets a surface resolve it later', () => {
+  it('defaults templateName to null before anything has loaded', () => {
     expect(service.templateName()).toBeNull();
+  });
 
-    service.setTemplateName('Verona');
+  it('derives templateName straight from the loaded settings', () => {
+    apiClient.getSettings.mockReturnValue(of(SETTINGS));
+
+    service.load('event-1');
 
     expect(service.templateName()).toBe('Verona');
   });
 
-  it('resets templateName on a fresh load for a new event', () => {
-    apiClient.getSettings.mockReturnValue(of(SETTINGS));
-    service.setTemplateName('Verona');
-
-    service.load('event-2');
+  it('reflects a null templateName from applySaved when nothing is configured', () => {
+    service.applySaved({ ...SETTINGS, templateId: null, templateName: null, isConfigured: false });
 
     expect(service.templateName()).toBeNull();
   });
 
   it('resets templateName on reset', () => {
-    service.setTemplateName('Verona');
+    service.applySaved(SETTINGS);
 
     service.reset();
 

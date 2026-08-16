@@ -19,6 +19,8 @@ export interface InvitationSettings {
   readonly eventType: string;
   /** Null until the organiser has chosen one. */
   readonly templateId: string | null;
+  /** The chosen template's display name. Null exactly when `templateId` is null. */
+  readonly templateName: string | null;
   readonly fieldValues: InvitationFieldValues;
   /**
    * False when nothing has been saved and `fieldValues` are pre-fill defaults derived from the

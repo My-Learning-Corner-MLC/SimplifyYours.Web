@@ -8,6 +8,7 @@ function settings(overrides: Partial<InvitationSettings> = {}): InvitationSettin
     eventId: '6f9b3c2a-6d1e-4f5b-9c3a-2e7d8b1f4a55',
     eventType: 'wedding',
     templateId: 'marigold',
+    templateName: 'Marigold',
     fieldValues: {
       brideName: 'Amara',
       groomName: 'Julian',
@@ -34,7 +35,8 @@ describe('BasicInfoForm', () => {
     fixture = TestBed.createComponent(BasicInfoForm);
     // Zoneless app: inputs must go through componentRef to trigger change detection.
     fixture.componentRef.setInput('settings', value);
-    fixture.componentRef.setInput('templateId', 'marigold');
+    fixture.componentRef.setInput('eventName', "Amara & Julian's Wedding");
+    fixture.componentRef.setInput('templateName', 'Marigold');
 
     for (const [key, val] of Object.entries(extra)) {
       fixture.componentRef.setInput(key, val);
@@ -138,7 +140,10 @@ describe('BasicInfoForm', () => {
     (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
 
     expect(emitted).toHaveBeenCalledTimes(1);
-    expect(emitted.mock.calls[0][0]).toMatchObject({ brideName: 'Amara', venueName: 'Villa Astoria' });
+    expect(emitted.mock.calls[0][0]).toMatchObject({
+      fieldValues: { brideName: 'Amara', venueName: 'Villa Astoria' },
+      publicLinkEnabled: false,
+    });
   });
 
   it('submits with venueNotes left blank', async () => {
@@ -207,5 +212,122 @@ describe('BasicInfoForm', () => {
 
     // groomName is the first empty required field after brideName.
     expect(document.activeElement).toBe(inputFor('groomName'));
+  });
+
+  it('shows the breadcrumb and template subtitle', async () => {
+    await render();
+
+    const breadcrumb = fixture.nativeElement.querySelector('.basic-info-page__breadcrumb');
+    expect(breadcrumb?.textContent).toContain("Amara & Julian's Wedding");
+    expect(breadcrumb?.textContent).toContain('Basic info');
+    expect(fixture.nativeElement.querySelector('.basic-info__subtitle')?.textContent).toContain('Marigold');
+  });
+
+  it('defaults the public link toggle off when the event has none enabled', async () => {
+    await render();
+
+    const toggle = fixture.nativeElement.querySelector('.basic-info__toggle-switch');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('seeds the public link toggle from settings when already enabled', async () => {
+    await render(settings({ publicLinkEnabled: true }));
+
+    const toggle = fixture.nativeElement.querySelector('.basic-info__toggle-switch');
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('flips the public link toggle and includes it in the save payload', async () => {
+    const emitted = vi.fn();
+    await render();
+    fixture.componentInstance.save.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('.basic-info__toggle-switch') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+
+    expect(emitted.mock.calls[0][0]).toMatchObject({ publicLinkEnabled: true });
+  });
+
+  it('exits immediately on Cancel when nothing has changed', async () => {
+    const dismissed = vi.fn();
+    await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
+
+    expect(dismissed).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).toBeNull();
+  });
+
+  it('shows the discard-changes dialog on Cancel once a field has been edited, rather than exiting', async () => {
+    const dismissed = vi.fn();
+    await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    const input = inputFor('brideName');
+    input.value = 'Edited';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(dismissed).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).not.toBeNull();
+  });
+
+  it('"Keep editing" dismisses the discard dialog without leaving', async () => {
+    const dismissed = vi.fn();
+    await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    const input = inputFor('brideName');
+    input.value = 'Edited';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.confirm-dialog__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(dismissed).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).toBeNull();
+  });
+
+  it('"Discard" on the dialog emits dismissed', async () => {
+    const dismissed = vi.fn();
+    await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    const input = inputFor('brideName');
+    input.value = 'Edited';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.confirm-dialog__primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(dismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('the "Back to preview" link is gated by the same discard-changes check', async () => {
+    const dismissed = vi.fn();
+    await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    const input = inputFor('brideName');
+    input.value = 'Edited';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.basic-info-page__back-link') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(dismissed).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).not.toBeNull();
   });
 });

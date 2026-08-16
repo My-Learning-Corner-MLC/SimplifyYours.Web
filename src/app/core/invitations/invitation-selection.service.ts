@@ -22,20 +22,12 @@ export class InvitationSelectionService {
 
   private readonly _state = signal<InvitationSelectionState>('idle');
   private readonly _settings = signal<InvitationSettings | null>(null);
-  /**
-   * The chosen template's display name. `InvitationSettingsResponse` carries only `templateId` (a
-   * GUID) — the name lives in `template-management-service`'s catalog, which nothing here fetches
-   * on its own. Populated opportunistically by whichever surface resolves it first: `TemplateGallery`
-   * once its catalog fetch matches the id, or `InvitationsTab` directly off the template the
-   * organiser just chose. `null` until then is a real, honest state — the Guests tab toolbar falls
-   * back to an un-named note rather than guessing.
-   */
-  private readonly _templateName = signal<string | null>(null);
   private eventId: string | null = null;
 
   readonly state = this._state.asReadonly();
   readonly settings = this._settings.asReadonly();
-  readonly templateName = this._templateName.asReadonly();
+  /** The chosen template's display name, straight off the settings response. Null until one is chosen. */
+  readonly templateName = computed(() => this._settings()?.templateName ?? null);
 
   /** True once a template has been chosen and the invitation actually saved (not a draft default). */
   readonly hasTemplate = computed(() => {
@@ -61,7 +53,6 @@ export class InvitationSelectionService {
 
     this.eventId = eventId;
     this._state.set('loading');
-    this._templateName.set(null);
 
     this.api.getSettings(eventId).subscribe({
       next: (settings) => {
@@ -89,16 +80,10 @@ export class InvitationSelectionService {
     this._state.set('ready');
   }
 
-  /** Records the chosen template's display name once some surface has resolved it. */
-  setTemplateName(name: string): void {
-    this._templateName.set(name);
-  }
-
   /** Clears state — call when navigating away from the event entirely. */
   reset(): void {
     this.eventId = null;
     this._settings.set(null);
     this._state.set('idle');
-    this._templateName.set(null);
   }
 }

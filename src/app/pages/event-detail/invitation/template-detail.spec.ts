@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { InvitationApiClient } from '../../../core/invitations/invitation-api-client';
+import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
 import { InvitationSettingsApiClient } from '../../../core/invitations/invitation-settings-api-client';
 import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { TemplateDetail } from './template-detail';
@@ -19,6 +20,7 @@ describe('TemplateDetail', () => {
   let fixture: ComponentFixture<TemplateDetail>;
   let settingsApi: { issuePreviewToken: ReturnType<typeof vi.fn> };
   let invitationApi: { previewRenderUrl: ReturnType<typeof vi.fn> };
+  let selection: { settings: ReturnType<typeof vi.fn> };
 
   async function render(isPublicLinkEnabled = false) {
     await TestBed.configureTestingModule({
@@ -26,6 +28,7 @@ describe('TemplateDetail', () => {
       providers: [
         { provide: InvitationSettingsApiClient, useValue: settingsApi },
         { provide: InvitationApiClient, useValue: invitationApi },
+        { provide: InvitationSelectionService, useValue: selection },
       ],
     }).compileComponents();
 
@@ -46,6 +49,7 @@ describe('TemplateDetail', () => {
     invitationApi = {
       previewRenderUrl: vi.fn((token: string, type: string) => `https://api.example.test/${token}?type=${type}`),
     };
+    selection = { settings: vi.fn(() => null) };
   });
 
   it('shows the template name and event type/tone subtext', async () => {
@@ -121,6 +125,39 @@ describe('TemplateDetail', () => {
   });
 
   it('emits useTemplate when the primary footer button is clicked', async () => {
+    const emitted = vi.fn();
+    await render();
+    fixture.componentInstance.useTemplate.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
+
+    expect(emitted).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows "Use this template" and no badge when this template is not the event\'s selection', async () => {
+    selection.settings.mockReturnValue({ templateId: 'some-other-template' });
+
+    await render();
+
+    expect(fixture.nativeElement.querySelector('.template-detail__badge')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.template-detail__primary').textContent.trim()).toBe(
+      'Use this template',
+    );
+  });
+
+  it('shows the SELECTED badge and "Edit basic info" when this template is already the event\'s selection', async () => {
+    selection.settings.mockReturnValue({ templateId: TEMPLATE.id });
+
+    await render();
+
+    expect(fixture.nativeElement.querySelector('.template-detail__badge')?.textContent).toContain('SELECTED');
+    expect(fixture.nativeElement.querySelector('.template-detail__primary').textContent.trim()).toBe(
+      'Edit basic info',
+    );
+  });
+
+  it('still emits useTemplate when "Edit basic info" is clicked on an already-selected template', async () => {
+    selection.settings.mockReturnValue({ templateId: TEMPLATE.id });
     const emitted = vi.fn();
     await render();
     fixture.componentInstance.useTemplate.subscribe(emitted);

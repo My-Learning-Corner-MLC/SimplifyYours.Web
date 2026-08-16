@@ -9,7 +9,6 @@
         [eventType]="eventType()"
         (templateChosen)="onTemplateChosen($event)"
         (viewDetail)="onGalleryViewDetail($event)"
-        (editBasicInfo)="onGalleryEditBasicInfo()"
       />
     }
 
@@ -21,22 +20,25 @@
           [eventType]="eventType()"
           [isPublicLinkEnabled]="selection.publicLinkEnabled()"
           (back)="onDetailBack()"
-          (useTemplate)="onUseTemplate()"
+          (useTemplate)="onDetailProceed()"
         />
       }
     }
 
     @case ('basic-info') {
       @if (selection.settings(); as settings) {
-        <app-basic-info-form
-          [settings]="settings"
-          [templateId]="settings.templateId ?? ''"
-          [sentInvitationCount]="guestCount()"
-          [saving]="basicInfoSaving()"
-          [serverErrors]="basicInfoServerErrors()"
-          (save)="onBasicInfoSave($event)"
-          (dismissed)="onBasicInfoDismissed()"
-        />
+        @if (detailTemplate(); as template) {
+          <app-basic-info-form
+            [settings]="settings"
+            [eventName]="eventName()"
+            [templateName]="template.name"
+            [sentInvitationCount]="guestCount()"
+            [saving]="savingSelection()"
+            [serverErrors]="basicInfoServerErrors()"
+            (save)="onBasicInfoSave($event)"
+            (dismissed)="onBasicInfoDismissed()"
+          />
+        }
       }
     }
   }

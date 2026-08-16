@@ -41,7 +41,6 @@ export class TemplateGallery {
   readonly templateChosen = output<TemplateCatalogItem>();
   /** Emits the currently-selected template — the summary bar only shows once one is resolved. */
   readonly viewDetail = output<TemplateCatalogItem>();
-  readonly editBasicInfo = output<void>();
 
   protected readonly catalogState = signal<CatalogState>('loading');
   protected readonly templates = signal<readonly TemplateCatalogItem[]>([]);
@@ -55,28 +54,12 @@ export class TemplateGallery {
   });
 
   protected readonly selectedTemplateId = computed(() => this.selection.settings()?.templateId ?? null);
-
-  protected readonly selectedTemplateName = computed(() => {
-    const id = this.selectedTemplateId();
-    if (!id) {
-      return null;
-    }
-    return this.templates().find((t) => t.id === id)?.name ?? null;
-  });
+  protected readonly selectedTemplateName = computed(() => this.selection.settings()?.templateName ?? null);
 
   constructor() {
     // Keyed on the eventType input rather than run once, so a signal-set input value (available
     // only after the view is created, not in the constructor body) still triggers the first load.
     effect(() => this.load(this.eventType()));
-
-    // Backfills the shared selection state's templateName once the catalog resolves it — see
-    // InvitationSelectionService's doc comment on why nothing else knows this name on a fresh load.
-    effect(() => {
-      const name = this.selectedTemplateName();
-      if (name) {
-        this.selection.setTemplateName(name);
-      }
-    });
   }
 
   retry(): void {
@@ -106,10 +89,6 @@ export class TemplateGallery {
     if (template) {
       this.viewDetail.emit(template);
     }
-  }
-
-  protected onEditBasicInfo(): void {
-    this.editBasicInfo.emit();
   }
 
   protected trackById(_index: number, template: TemplateCatalogItem): string {

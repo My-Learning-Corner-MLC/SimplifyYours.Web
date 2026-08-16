@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, ou
 import { environment } from '../../../../environments/environment';
 import { apiOrigin } from '../../../core/invitations/api-origin';
 import { InvitationApiClient } from '../../../core/invitations/invitation-api-client';
+import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
 import { InvitationSettingsApiClient } from '../../../core/invitations/invitation-settings-api-client';
 import { PreviewToken } from '../../../core/invitations/invitation-settings.model';
 import { eventTypeLabel } from '../../../core/events/event-type-display';
@@ -29,6 +30,7 @@ type TokenState = 'loading' | 'ready' | 'error';
 export class TemplateDetail {
   private readonly settingsApi = inject(InvitationSettingsApiClient);
   private readonly invitationApi = inject(InvitationApiClient);
+  private readonly selection = inject(InvitationSelectionService);
 
   readonly template = input.required<TemplateCatalogItem>();
   readonly eventId = input.required<string>();
@@ -36,7 +38,11 @@ export class TemplateDetail {
   readonly isPublicLinkEnabled = input<boolean>(false);
 
   readonly back = output<void>();
+  /** Fires for both "Use this template" (not yet selected) and "Edit basic info" (already selected). */
   readonly useTemplate = output<void>();
+
+  /** Drives the SELECTED badge and swaps the footer's primary action to "Edit basic info". */
+  protected readonly isSelected = computed(() => this.template().id === this.selection.settings()?.templateId);
 
   protected readonly linkType = signal<PreviewLinkType>('private');
   protected readonly tokenState = signal<TokenState>('loading');

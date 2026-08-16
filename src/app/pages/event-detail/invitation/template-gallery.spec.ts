@@ -18,7 +18,6 @@ describe('TemplateGallery', () => {
   let selection: {
     hasTemplate: ReturnType<typeof vi.fn>;
     settings: ReturnType<typeof vi.fn>;
-    setTemplateName: ReturnType<typeof vi.fn>;
   };
 
   async function render(eventType = 'wedding') {
@@ -39,7 +38,7 @@ describe('TemplateGallery', () => {
 
   beforeEach(() => {
     catalog = { listTemplates: vi.fn() };
-    selection = { hasTemplate: vi.fn(() => false), settings: vi.fn(() => null), setTemplateName: vi.fn() };
+    selection = { hasTemplate: vi.fn(() => false), settings: vi.fn(() => null) };
   });
 
   it('shows skeleton cards while loading', async () => {
@@ -104,13 +103,14 @@ describe('TemplateGallery', () => {
     expect(grid.style.gridTemplateColumns).toBe('repeat(2, minmax(0, 300px))');
   });
 
-  it('shows the currently-selected summary bar once a template is chosen', async () => {
+  it('shows the currently-selected summary bar with only "View detail", not "Edit basic info"', async () => {
     catalog.listTemplates.mockReturnValue(of(TEMPLATES));
     selection.hasTemplate.mockReturnValue(true);
     selection.settings.mockReturnValue({
       eventId: 'e1',
       eventType: 'wedding',
       templateId: 't2',
+      templateName: 'Marigold',
       fieldValues: {},
       isConfigured: true,
       requiredFields: [],
@@ -121,7 +121,8 @@ describe('TemplateGallery', () => {
     const summary = fixture.nativeElement.querySelector('[data-testid="gallery-summary"]');
     expect(summary?.textContent).toContain('Marigold');
     expect(summary?.textContent).toContain('View detail');
-    expect(summary?.textContent).toContain('Edit basic info');
+    expect(summary?.textContent).not.toContain('Edit basic info');
+    expect(summary?.querySelectorAll('button')).toHaveLength(1);
   });
 
   it('emits the resolved template when "View detail" is clicked', async () => {
@@ -131,6 +132,7 @@ describe('TemplateGallery', () => {
       eventId: 'e1',
       eventType: 'wedding',
       templateId: 't2',
+      templateName: 'Marigold',
       fieldValues: {},
       isConfigured: true,
       requiredFields: [],

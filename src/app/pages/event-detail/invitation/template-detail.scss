@@ -31,6 +31,12 @@
   gap: 0.2rem;
 }
 
+.template-detail__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .template-detail__title {
   margin: 0;
   font-family: Georgia, 'Times New Roman', serif;
@@ -38,6 +44,16 @@
   font-size: 1.6rem;
   font-weight: 400;
   color: #2a1f2d;
+}
+
+.template-detail__badge {
+  padding: 0.2rem 0.6rem;
+  background: #f5e6cd;
+  color: #8a6a2f;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .template-detail__subtitle {
