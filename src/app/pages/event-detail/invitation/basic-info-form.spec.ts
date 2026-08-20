@@ -79,6 +79,20 @@ describe('BasicInfoForm', () => {
     expect(text).not.toContain("Bride's name");
   });
 
+  it('pairs Bride\'s/Groom\'s name and Date/Time on the same row, like create-event does', async () => {
+    await render();
+
+    const rows = Array.from(fixture.nativeElement.querySelectorAll('.basic-info__row')) as HTMLElement[];
+    const rowLabels = rows.map((row) =>
+      Array.from(row.querySelectorAll('.basic-info__label')).map((l) => (l as HTMLElement).textContent?.trim()),
+    );
+
+    expect(rowLabels[0]).toEqual(["Bride's name", "Groom's name"]);
+    expect(rowLabels[1]).toEqual(['Date', 'Time']);
+    // Venue/Address/Venue notes each stay on their own row.
+    expect(rows[2].querySelectorAll('.basic-info__label')).toHaveLength(1);
+  });
+
   it('never asks for the guest name', async () => {
     // It is not typed — it belongs to whichever guest's link is being opened.
     await render();

@@ -42,7 +42,10 @@
 }
 
 .preview-frame__body {
-  min-height: 24rem;
+  // Tall enough to fit a real rendered invitation (name block, message, when/where, RSVP-by,
+  // guest box, RSVP button) without clipping — the seed templates run 600-880px of natural
+  // content height, not the ~384px this used to be.
+  min-height: 50rem;
   display: flex;
 }
 

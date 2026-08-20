@@ -93,47 +93,51 @@
       </div>
 
       <div class="basic-info__fields">
-        @for (field of fields(); track field) {
-          <div class="basic-info__field" [class.basic-info__field--invalid]="errorsFor(field).length > 0">
-            <label class="basic-info__label" [attr.for]="'field-' + field">
-              {{ labels[field] }}
-              @if (isOptional(field)) {
-                <span class="basic-info__optional">(optional)</span>
-              }
-            </label>
+        @for (row of fieldRows(); track row[0]) {
+          <div class="basic-info__row" [class.basic-info__row--single]="row.length === 1">
+            @for (field of row; track field) {
+              <div class="basic-info__field" [class.basic-info__field--invalid]="errorsFor(field).length > 0">
+                <label class="basic-info__label" [attr.for]="'field-' + field">
+                  {{ labels[field] }}
+                  @if (isOptional(field)) {
+                    <span class="basic-info__optional">(optional)</span>
+                  }
+                </label>
 
-            @if (isMultiline(field)) {
-              <textarea
-                #fieldInput
-                class="basic-info__input"
-                [id]="'field-' + field"
-                rows="2"
-                [maxlength]="maxLengths[field]"
-                [disabled]="saving()"
-                [attr.aria-invalid]="errorsFor(field).length > 0"
-                [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
-                [ngModel]="valueOf(field)"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="onInput(field, $event)"
-              ></textarea>
-            } @else {
-              <input
-                #fieldInput
-                class="basic-info__input"
-                type="text"
-                [id]="'field-' + field"
-                [maxlength]="maxLengths[field]"
-                [disabled]="saving()"
-                [attr.aria-invalid]="errorsFor(field).length > 0"
-                [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
-                [ngModel]="valueOf(field)"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="onInput(field, $event)"
-              />
-            }
+                @if (isMultiline(field)) {
+                  <textarea
+                    #fieldInput
+                    class="basic-info__input"
+                    [id]="'field-' + field"
+                    rows="2"
+                    [maxlength]="maxLengths[field]"
+                    [disabled]="saving()"
+                    [attr.aria-invalid]="errorsFor(field).length > 0"
+                    [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                    [ngModel]="valueOf(field)"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onInput(field, $event)"
+                  ></textarea>
+                } @else {
+                  <input
+                    #fieldInput
+                    class="basic-info__input"
+                    type="text"
+                    [id]="'field-' + field"
+                    [maxlength]="maxLengths[field]"
+                    [disabled]="saving()"
+                    [attr.aria-invalid]="errorsFor(field).length > 0"
+                    [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                    [ngModel]="valueOf(field)"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onInput(field, $event)"
+                  />
+                }
 
-            @if (errorsFor(field).length > 0) {
-              <p class="basic-info__error" [id]="'error-' + field">{{ errorsFor(field)[0] }}</p>
+                @if (errorsFor(field).length > 0) {
+                  <p class="basic-info__error" [id]="'error-' + field">{{ errorsFor(field)[0] }}</p>
+                }
+              </div>
             }
           </div>
         }

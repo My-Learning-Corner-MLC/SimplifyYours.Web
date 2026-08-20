@@ -172,45 +172,66 @@
   gap: 1rem;
 }
 
+// Bride's/Groom's name and Date/Time share a row, the way create-event's own field rows do.
+.basic-info__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.basic-info__row--single {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 34rem) {
+  .basic-info__row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .basic-info__label {
   display: block;
   font-size: 0.82rem;
-  font-weight: 600;
-  color: #4a4045;
-  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: #2a1f2d;
 }
 
 .basic-info__optional {
+  color: #7a6b6e;
   font-weight: 400;
-  color: #b8ac96;
+  font-size: 0.72rem;
+  margin-left: 0.25rem;
 }
 
 .basic-info__input {
   width: 100%;
-  padding: 0.8rem 0.9rem;
-  border: 1.5px solid #ece2d2;
+  box-sizing: border-box;
+  margin-top: 0.6rem;
+  padding: 0.8rem 1.1rem;
   border-radius: 10px;
-  font: inherit;
-  font-size: 0.85rem;
+  border: 1px solid #ece2d2;
+  background: #fffcf5;
   color: #2a1f2d;
-  background: #fff;
+  font: inherit;
+  font-size: 0.9rem;
   resize: vertical;
 }
 
 .basic-info__input:focus-visible {
-  outline: 3px solid #c8a876;
-  outline-offset: 1px;
+  outline: none;
+  border-color: #5a2849;
+  box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
 }
 
 .basic-info__field--invalid .basic-info__input {
-  border-color: #c1493a;
+  border-color: #7a3a24;
 }
 
 .basic-info__error {
-  margin: 0.4rem 0 0;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #c1493a;
+  min-height: 1.05rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #7a3a24;
 }
 
 .basic-info__actions {

@@ -35,6 +35,37 @@ const OPTIONAL_FIELDS: readonly InvitationField[] = ['venueNotes'];
 /** Rendered as a textarea rather than a single line. */
 const MULTILINE_FIELDS: readonly InvitationField[] = ['venueAddress', 'venueNotes'];
 
+/** Fields short enough to share a row, paired the way create-event's own Date/Starts/Ends row does. */
+const FIELD_PAIRS: readonly (readonly [InvitationField, InvitationField])[] = [
+  ['brideName', 'groomName'],
+  ['eventDate', 'eventTime'],
+];
+
+/** Groups `fields` into rows of one or two, pairing adjacent fields listed in {@link FIELD_PAIRS}. */
+function groupFieldsIntoRows(fields: readonly InvitationField[]): readonly (readonly InvitationField[])[] {
+  const remaining = new Set(fields);
+  const rows: InvitationField[][] = [];
+
+  for (const field of fields) {
+    if (!remaining.has(field)) {
+      continue;
+    }
+    remaining.delete(field);
+
+    const pair = FIELD_PAIRS.find(([first]) => first === field);
+    const partner = pair?.[1];
+
+    if (partner && remaining.has(partner)) {
+      remaining.delete(partner);
+      rows.push([field, partner]);
+    } else {
+      rows.push([field]);
+    }
+  }
+
+  return rows;
+}
+
 export interface BasicInfoSaveEvent {
   readonly fieldValues: InvitationFieldValues;
   readonly publicLinkEnabled: boolean;
@@ -107,6 +138,7 @@ export class BasicInfoForm {
   });
 
   protected readonly fields = computed(() => fieldsFor(this.settings().eventType));
+  protected readonly fieldRows = computed(() => groupFieldsIntoRows(this.fields()));
 
   protected readonly labels = INVITATION_FIELD_LABELS;
   protected readonly maxLengths = INVITATION_FIELD_MAX_LENGTHS;

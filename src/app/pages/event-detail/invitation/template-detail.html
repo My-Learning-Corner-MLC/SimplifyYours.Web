@@ -67,6 +67,19 @@
           · {{ template().tone }}
         }
       </p>
+
+      <dl class="template-detail__facts">
+        <div class="template-detail__fact">
+          <dt>Event type</dt>
+          <dd>{{ eventTypeLabel() }}</dd>
+        </div>
+        <div class="template-detail__fact">
+          <dt>Status</dt>
+          <dd class="template-detail__fact-status" [class.template-detail__fact--selected]="isSelected()">
+            {{ isSelected() ? 'Selected' : 'Not selected' }}
+          </dd>
+        </div>
+      </dl>
     </div>
 
     <div class="template-detail__preview">

@@ -85,6 +85,36 @@
   color: #7a6b6e;
 }
 
+.template-detail__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 1.25rem 0 0;
+  padding-top: 1.125rem;
+  border-top: 1px solid #ece2d2;
+}
+
+.template-detail__fact {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.template-detail__fact dt {
+  color: #7a766e;
+}
+
+.template-detail__fact dd {
+  margin: 0;
+  color: #2a1f2d;
+  font-weight: 500;
+}
+
+.template-detail__fact--selected {
+  color: #5a2849;
+  font-weight: 600;
+}
+
 .template-detail__preview {
   display: flex;
   flex-direction: column;

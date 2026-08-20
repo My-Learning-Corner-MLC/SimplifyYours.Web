@@ -59,6 +59,31 @@ describe('TemplateDetail', () => {
     expect(fixture.nativeElement.querySelector('.template-detail__thumb-motif svg')).not.toBeNull();
   });
 
+  it('lists event type and "Not selected" in the facts panel, without a redundant style row', async () => {
+    // Style already appears in the subtitle right above — repeating it here would be noise.
+    await render();
+
+    const facts = fixture.nativeElement.querySelector('.template-detail__facts').textContent;
+    expect(facts).toContain('Event type');
+    expect(facts).toContain('Wedding');
+    expect(facts).not.toContain('Style');
+    expect(fixture.nativeElement.querySelectorAll('.template-detail__fact')).toHaveLength(2);
+
+    const status = fixture.nativeElement.querySelector('.template-detail__fact-status');
+    expect(status?.textContent?.trim()).toBe('Not selected');
+    expect(status?.classList.contains('template-detail__fact--selected')).toBe(false);
+  });
+
+  it('shows "Selected" in the facts panel once this template is the event\'s selection', async () => {
+    selection.settings.mockReturnValue({ templateId: TEMPLATE.id });
+
+    await render();
+
+    const status = fixture.nativeElement.querySelector('.template-detail__fact-status');
+    expect(status?.textContent?.trim()).toBe('Selected');
+    expect(status?.classList.contains('template-detail__fact--selected')).toBe(true);
+  });
+
   it('issues a preview token for this template on mount and builds the private preview URL by default', async () => {
     await render();
 
