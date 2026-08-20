@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { InvitationApiClient } from '../../../core/invitations/invitation-api-client';
 import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
-import { InvitationSettingsApiClient } from '../../../core/invitations/invitation-settings-api-client';
+import { TemplateCatalogApiClient } from '../../../core/invitations/template-catalog-api-client';
 import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { TemplateDetail } from './template-detail';
 
@@ -18,23 +17,20 @@ const TEMPLATE: TemplateCatalogItem = {
 
 describe('TemplateDetail', () => {
   let fixture: ComponentFixture<TemplateDetail>;
-  let settingsApi: { issuePreviewToken: ReturnType<typeof vi.fn> };
-  let invitationApi: { previewRenderUrl: ReturnType<typeof vi.fn> };
+  let catalogApi: { issuePreviewToken: ReturnType<typeof vi.fn>; previewRenderUrl: ReturnType<typeof vi.fn> };
   let selection: { settings: ReturnType<typeof vi.fn> };
 
   async function render(isPublicLinkEnabled = false) {
     await TestBed.configureTestingModule({
       imports: [TemplateDetail],
       providers: [
-        { provide: InvitationSettingsApiClient, useValue: settingsApi },
-        { provide: InvitationApiClient, useValue: invitationApi },
+        { provide: TemplateCatalogApiClient, useValue: catalogApi },
         { provide: InvitationSelectionService, useValue: selection },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TemplateDetail);
     fixture.componentRef.setInput('template', TEMPLATE);
-    fixture.componentRef.setInput('eventId', 'event-1');
     fixture.componentRef.setInput('eventType', 'wedding');
     fixture.componentRef.setInput('isPublicLinkEnabled', isPublicLinkEnabled);
     fixture.detectChanges();
@@ -43,10 +39,8 @@ describe('TemplateDetail', () => {
   }
 
   beforeEach(() => {
-    settingsApi = {
+    catalogApi = {
       issuePreviewToken: vi.fn(() => of({ token: 'preview-tok', expiresAt: '2026-01-01T00:00:00Z' })),
-    };
-    invitationApi = {
       previewRenderUrl: vi.fn((token: string, type: string) => `https://api.example.test/${token}?type=${type}`),
     };
     selection = { settings: vi.fn(() => null) };
@@ -60,11 +54,22 @@ describe('TemplateDetail', () => {
     expect(fixture.nativeElement.querySelector('.template-detail__subtitle').textContent).toContain('Classic');
   });
 
-  it('issues a preview token on mount and builds the private preview URL by default', async () => {
+  it('issues a preview token for this template on mount and builds the private preview URL by default', async () => {
     await render();
 
-    expect(settingsApi.issuePreviewToken).toHaveBeenCalledWith('event-1');
-    expect(invitationApi.previewRenderUrl).toHaveBeenCalledWith('preview-tok', 'private');
+    expect(catalogApi.issuePreviewToken).toHaveBeenCalledWith('t1');
+    expect(catalogApi.previewRenderUrl).toHaveBeenCalledWith('preview-tok', 'private');
+  });
+
+  it('re-issues the preview token when the template input changes to a different one', async () => {
+    await render();
+    catalogApi.issuePreviewToken.mockClear();
+
+    fixture.componentRef.setInput('template', { ...TEMPLATE, id: 't2', name: 'Noir' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(catalogApi.issuePreviewToken).toHaveBeenCalledWith('t2');
   });
 
   it('disables the public switch and shows the lock note when public sharing is off', async () => {
@@ -84,7 +89,7 @@ describe('TemplateDetail', () => {
     (buttons[1] as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect(invitationApi.previewRenderUrl).toHaveBeenLastCalledWith('preview-tok', 'public');
+    expect(catalogApi.previewRenderUrl).toHaveBeenLastCalledWith('preview-tok', 'public');
   });
 
   it('does not switch to public when disabled', async () => {
@@ -94,7 +99,7 @@ describe('TemplateDetail', () => {
     (buttons[1] as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect(invitationApi.previewRenderUrl).not.toHaveBeenCalledWith('preview-tok', 'public');
+    expect(catalogApi.previewRenderUrl).not.toHaveBeenCalledWith('preview-tok', 'public');
   });
 
   it('describes the RSVP button as present but inert, not hidden', async () => {
@@ -107,7 +112,7 @@ describe('TemplateDetail', () => {
   });
 
   it('shows a retry option when the preview token fails to issue', async () => {
-    settingsApi.issuePreviewToken.mockReturnValue(throwError(() => ({ reason: 'network' })));
+    catalogApi.issuePreviewToken.mockReturnValue(throwError(() => ({ reason: 'network' })));
 
     await render();
 

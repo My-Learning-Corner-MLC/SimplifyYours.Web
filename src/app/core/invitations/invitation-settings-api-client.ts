@@ -6,7 +6,6 @@ import { environment } from '../../../environments/environment';
 import { InvitationError } from './invitation.model';
 import {
   InvitationSettings,
-  PreviewToken,
   PublicTokenStatus,
   SaveInvitationSettingsRequest,
 } from './invitation-settings.model';
@@ -44,13 +43,6 @@ export class InvitationSettingsApiClient {
   rotatePublicToken(eventId: string): Observable<PublicTokenStatus> {
     return this.http
       .post<PublicTokenStatus>(`${this.url(eventId)}/public-token`, { action: 'rotate' })
-      .pipe(catchError((error: unknown) => throwError(() => toError(error))));
-  }
-
-  /** Issues a short-lived organiser preview token for the live-preview iframe. */
-  issuePreviewToken(eventId: string): Observable<PreviewToken> {
-    return this.http
-      .post<PreviewToken>(`${this.url(eventId)}/preview-token`, {})
       .pipe(catchError((error: unknown) => throwError(() => toError(error))));
   }
 

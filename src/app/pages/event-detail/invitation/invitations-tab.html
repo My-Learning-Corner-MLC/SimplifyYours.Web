@@ -16,7 +16,6 @@
       @if (detailTemplate(); as template) {
         <app-template-detail
           [template]="template"
-          [eventId]="eventId()"
           [eventType]="eventType()"
           [isPublicLinkEnabled]="selection.publicLinkEnabled()"
           (back)="onDetailBack()"

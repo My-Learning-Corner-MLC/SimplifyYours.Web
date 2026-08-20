@@ -9,9 +9,9 @@ export type PreviewLinkType = 'private' | 'public';
  * guest-facing invitation page uses ({@link InvitationFrame}) — `sandbox="allow-scripts"` without
  * `allow-same-origin`, so the framed document can never reach up into this app.
  *
- * `src` stays `null` until the caller has a preview token in hand: the render endpoint's
- * `?mode=preview&type=...` combination requires a resolvable token, and setting a src before one
- * exists would just render a 404 inside the frame.
+ * `src` stays `null` until the caller has a preview token in hand: template-management-service's
+ * preview render endpoint requires a resolvable token, and setting a src before one exists would
+ * just render a 404 inside the frame.
  */
 @Component({
   selector: 'app-template-preview-frame',

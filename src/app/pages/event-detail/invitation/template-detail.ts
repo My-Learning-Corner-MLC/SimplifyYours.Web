@@ -2,12 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, ou
 
 import { environment } from '../../../../environments/environment';
 import { apiOrigin } from '../../../core/invitations/api-origin';
-import { InvitationApiClient } from '../../../core/invitations/invitation-api-client';
 import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
-import { InvitationSettingsApiClient } from '../../../core/invitations/invitation-settings-api-client';
-import { PreviewToken } from '../../../core/invitations/invitation-settings.model';
+import { TemplateCatalogApiClient } from '../../../core/invitations/template-catalog-api-client';
+import { PreviewToken, TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { eventTypeLabel } from '../../../core/events/event-type-display';
-import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { PreviewLinkType, TemplatePreviewFrame } from './template-preview-frame';
 
 type TokenState = 'loading' | 'ready' | 'error';
@@ -16,9 +14,10 @@ type TokenState = 'loading' | 'ready' | 'error';
  * One template's detail/preview view: breadcrumb back to the gallery, a live sandboxed preview of
  * the template rendered with sample data, and the guest-link/public-link switch.
  *
- * A preview token is issued once, on mount — not per switch flip — and both link types are built
- * from the same token by varying the render endpoint's `type` query param, per
- * `ResolveInvitationRenderQueryHandler`'s preview-token branch.
+ * A preview token is issued once per template — not per switch flip — and both link types are
+ * built from the same token by varying the render endpoint's `type` query param.
+ * template-management-service owns preview entirely: it is never scoped to this (or any) event,
+ * so previewing works identically whether or not the organiser has chosen this template yet.
  */
 @Component({
   selector: 'app-template-detail',
@@ -28,12 +27,10 @@ type TokenState = 'loading' | 'ready' | 'error';
   styleUrl: './template-detail.scss',
 })
 export class TemplateDetail {
-  private readonly settingsApi = inject(InvitationSettingsApiClient);
-  private readonly invitationApi = inject(InvitationApiClient);
+  private readonly catalogApi = inject(TemplateCatalogApiClient);
   private readonly selection = inject(InvitationSelectionService);
 
   readonly template = input.required<TemplateCatalogItem>();
-  readonly eventId = input.required<string>();
   readonly eventType = input.required<string>();
   readonly isPublicLinkEnabled = input<boolean>(false);
 
@@ -53,7 +50,7 @@ export class TemplateDetail {
 
   protected readonly previewSrc = computed(() => {
     const token = this.previewToken();
-    return token ? this.invitationApi.previewRenderUrl(token.token, this.linkType()) : null;
+    return token ? this.catalogApi.previewRenderUrl(token.token, this.linkType()) : null;
   });
 
   protected readonly caption = computed(() =>
@@ -66,16 +63,17 @@ export class TemplateDetail {
   );
 
   constructor() {
-    // Keyed on eventId so it re-issues if the detail view is reused for a different event; issued
-    // once per mount, not on every link-type flip — both link types read from the same token.
-    effect(() => this.issueToken(this.eventId()));
+    // Keyed on the template's own id, so switching which template this view shows (while the
+    // component stays mounted) re-issues for the right one; issued once per template, not on
+    // every link-type flip — both link types read from the same token.
+    effect(() => this.issueToken(this.template().id));
   }
 
-  private issueToken(eventId: string): void {
+  private issueToken(templateId: string): void {
     this.tokenState.set('loading');
     this.previewToken.set(null);
 
-    this.settingsApi.issuePreviewToken(eventId).subscribe({
+    this.catalogApi.issuePreviewToken(templateId).subscribe({
       next: (token) => {
         this.previewToken.set(token);
         this.tokenState.set('ready');
@@ -85,7 +83,7 @@ export class TemplateDetail {
   }
 
   protected retryToken(): void {
-    this.issueToken(this.eventId());
+    this.issueToken(this.template().id);
   }
 
   protected setLinkType(type: PreviewLinkType): void {

@@ -128,14 +128,4 @@ describe('InvitationSettingsApiClient', () => {
     expect(received).toEqual({ enabled: true, publicEventToken: 'new-token' });
   });
 
-  it('issues a preview token with POST', () => {
-    let received: unknown;
-    client.issuePreviewToken(EVENT_ID).subscribe((token) => (received = token));
-
-    const req = httpMock.expectOne(`${url}/preview-token`);
-    expect(req.request.method).toBe('POST');
-    req.flush({ token: 'preview-abc', expiresAt: '2026-08-15T00:00:00Z' });
-
-    expect(received).toEqual({ token: 'preview-abc', expiresAt: '2026-08-15T00:00:00Z' });
-  });
 });

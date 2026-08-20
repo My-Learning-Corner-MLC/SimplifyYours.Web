@@ -54,9 +54,12 @@ describe('InvitationsTab', () => {
   let settingsApi: {
     saveSettings: ReturnType<typeof vi.fn>;
     getSettings: ReturnType<typeof vi.fn>;
-    issuePreviewToken: ReturnType<typeof vi.fn>;
   };
-  let catalog: { listTemplates: ReturnType<typeof vi.fn> };
+  let catalog: {
+    listTemplates: ReturnType<typeof vi.fn>;
+    issuePreviewToken: ReturnType<typeof vi.fn>;
+    previewRenderUrl: ReturnType<typeof vi.fn>;
+  };
 
   async function render(guests: Guest[] = [], settings: InvitationSettings = UNCONFIGURED_SETTINGS) {
     guestApi.listGuests.mockReturnValue(of(guests));
@@ -115,9 +118,12 @@ describe('InvitationsTab', () => {
     settingsApi = {
       saveSettings: vi.fn(),
       getSettings: vi.fn(() => of(UNCONFIGURED_SETTINGS)),
-      issuePreviewToken: vi.fn(() => of({ token: 'preview-tok', expiresAt: '2026-01-01T00:00:00Z' })),
     };
-    catalog = { listTemplates: vi.fn(() => of([TEMPLATE])) };
+    catalog = {
+      listTemplates: vi.fn(() => of([TEMPLATE])),
+      issuePreviewToken: vi.fn(() => of({ token: 'preview-tok', expiresAt: '2026-01-01T00:00:00Z' })),
+      previewRenderUrl: vi.fn((token: string, type: string) => `https://api.example.test/${token}?type=${type}`),
+    };
   });
 
   it('starts on the gallery', async () => {

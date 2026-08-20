@@ -50,12 +50,6 @@ export interface PublicTokenStatus {
   readonly publicEventToken: string | null;
 }
 
-/** Response of `POST .../preview-token`. */
-export interface PreviewToken {
-  readonly token: string;
-  readonly expiresAt: string;
-}
-
 /**
  * Field order as the form presents it. Declared here rather than derived from `requiredFields`
  * so the optional `venueNotes` still has a defined position.

@@ -19,3 +19,9 @@ export type ListTemplatesErrorReason = 'network' | 'validation';
 export interface ListTemplatesError {
   readonly reason: ListTemplatesErrorReason;
 }
+
+/** Response of `POST /templates/{id}/preview-token`. */
+export interface PreviewToken {
+  readonly token: string;
+  readonly expiresAt: string;
+}
