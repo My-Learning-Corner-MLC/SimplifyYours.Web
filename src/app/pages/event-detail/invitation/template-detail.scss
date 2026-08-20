@@ -29,22 +29,66 @@
   color: #2a1f2d;
 }
 
-.template-detail__header {
+.template-detail__body {
+  display: grid;
+  grid-template-columns: 17.5rem 1fr;
+  gap: 2.75rem;
+}
+
+@media (max-width: 640px) {
+  .template-detail__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.template-detail__identity {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+}
+
+.template-detail__thumb {
+  width: 8.75rem;
+  aspect-ratio: 5 / 7;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e6dcc8;
+  position: relative;
+  overflow: hidden;
+}
+
+.template-detail__thumb-frame {
+  position: absolute;
+  inset: 0.75rem;
+  border: 1px solid var(--face-accent, #c8a876);
+  pointer-events: none;
+}
+
+.template-detail__thumb-motif {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.template-detail__thumb-rule {
+  width: 20px;
+  height: 1px;
+  background: var(--face-accent, #c8a876);
+  margin: 0 auto 1.125rem;
 }
 
 .template-detail__title-row {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  margin-top: 1.125rem;
 }
 
 .template-detail__title {
   margin: 0;
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 2rem;
+  font-size: 1.875rem;
   font-weight: 400;
   color: #2a1f2d;
 }
@@ -60,9 +104,46 @@
 }
 
 .template-detail__subtitle {
-  margin: 0;
-  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
   color: #7a6b6e;
+}
+
+.template-detail__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 1.25rem 0 0;
+  padding-top: 1.125rem;
+  border-top: 1px solid #ece2d2;
+}
+
+.template-detail__fact {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.template-detail__fact dt {
+  color: #7a766e;
+}
+
+.template-detail__fact dd {
+  margin: 0;
+  color: #2a1f2d;
+  font-weight: 500;
+}
+
+.template-detail__fact--selected {
+  color: #5a2849;
+  font-weight: 600;
+}
+
+.template-detail__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .template-detail__switch {

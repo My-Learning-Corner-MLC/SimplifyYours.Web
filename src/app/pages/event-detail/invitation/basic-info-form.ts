@@ -60,8 +60,6 @@ export class BasicInfoForm {
   readonly settings = input.required<InvitationSettings>();
   readonly eventName = input.required<string>();
   readonly templateName = input.required<string>();
-  /** Set when invitations have already gone out — changes are live on every issued link. */
-  readonly sentInvitationCount = input<number>(0);
   readonly saving = input<boolean>(false);
   /** Server-side messages keyed by field, merged over local validation. */
   readonly serverErrors = input<Readonly<Record<string, readonly string[]>>>({});

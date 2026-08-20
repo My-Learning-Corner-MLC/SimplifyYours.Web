@@ -100,20 +100,6 @@ describe('BasicInfoForm', () => {
     expect(fixture.nativeElement.textContent).toContain('this invitation only');
   });
 
-  it('warns when invitations have already been sent', async () => {
-    await render(settings(), { sentInvitationCount: 12 });
-
-    const warning = fixture.nativeElement.querySelector('.basic-info__warning');
-    expect(warning?.textContent).toContain('12');
-    expect(warning?.textContent).toContain('straight away');
-  });
-
-  it('does not warn when nothing has been sent', async () => {
-    await render();
-
-    expect(fixture.nativeElement.querySelector('.basic-info__warning')).toBeNull();
-  });
-
   it('does not shout "required" at fields the organiser has not touched', async () => {
     await render(settings({ fieldValues: {} }));
 

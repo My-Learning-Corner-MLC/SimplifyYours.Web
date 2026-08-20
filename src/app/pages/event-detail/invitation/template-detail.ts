@@ -7,6 +7,11 @@ import { TemplateCatalogApiClient } from '../../../core/invitations/template-cat
 import { PreviewToken, TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { eventTypeLabel } from '../../../core/events/event-type-display';
 import { PreviewLinkType, TemplatePreviewFrame } from './template-preview-frame';
+import {
+  templateThumbnailAccent,
+  templateThumbnailBackground,
+  templateThumbnailMotif,
+} from './template-thumbnail-tokens';
 
 type TokenState = 'loading' | 'ready' | 'error';
 
@@ -49,6 +54,10 @@ export class TemplateDetail {
 
   protected readonly eventTypeLabel = computed(() => eventTypeLabel(this.eventType()));
   protected readonly apiOrigin = apiOrigin(environment.apiBaseUrl);
+
+  protected readonly accent = computed(() => templateThumbnailAccent(this.template()));
+  protected readonly faceBackground = computed(() => templateThumbnailBackground(this.template()));
+  protected readonly motif = computed(() => templateThumbnailMotif(this.template()));
 
   protected readonly previewSrc = computed(() => {
     const token = this.previewToken();

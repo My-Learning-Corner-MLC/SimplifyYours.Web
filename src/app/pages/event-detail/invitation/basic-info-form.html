@@ -31,13 +31,6 @@
       <p class="basic-info__form-error" role="alert">{{ formLevelErrors()[0] }}</p>
     }
 
-    @if (sentInvitationCount() > 0) {
-      <p class="basic-info__warning" role="status">
-        {{ sentInvitationCount() }} guest(s) already have their link. Saving updates what they see
-        straight away.
-      </p>
-    }
-
     <div class="basic-info__toggle-card">
       <div>
         <p class="basic-info__toggle-title">Public invitation link</p>

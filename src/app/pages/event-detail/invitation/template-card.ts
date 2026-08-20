@@ -2,19 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 
 import { eventTypeLabel as formatEventTypeLabel } from '../../../core/events/event-type-display';
 import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
-
-const FALLBACK_PALETTE: readonly string[] = ['#C98D6B', '#FBF3E8'];
-const DEFAULT_FACE_BACKGROUND = '#F7F0E6';
-
-export type TemplateCardMotif = 'rings' | 'balloon' | 'toast' | 'rocket' | 'plate' | 'spark';
-
-const MOTIF_BY_EVENT_TYPE: Readonly<Record<string, TemplateCardMotif>> = {
-  wedding: 'rings',
-  birthday: 'balloon',
-  anniversary: 'toast',
-  launch: 'rocket',
-  dinner: 'plate',
-};
+import {
+  templateThumbnailAccent,
+  templateThumbnailBackground,
+  templateThumbnailMotif,
+} from './template-thumbnail-tokens';
 
 /**
  * One card in the gallery grid.
@@ -38,23 +30,10 @@ export class TemplateCard {
 
   readonly chosen = output<TemplateCatalogItem>();
 
-  protected readonly palette = computed(() => {
-    const colours = this.template().palette;
-    return colours && colours.length > 0 ? colours : FALLBACK_PALETTE;
-  });
-
-  protected readonly accent = computed(() => this.palette()[0]);
-
-  protected readonly faceBackground = computed(() => {
-    const colours = this.palette();
-    return colours.length > 1 ? colours[1] : DEFAULT_FACE_BACKGROUND;
-  });
-
+  protected readonly accent = computed(() => templateThumbnailAccent(this.template()));
+  protected readonly faceBackground = computed(() => templateThumbnailBackground(this.template()));
+  protected readonly motif = computed(() => templateThumbnailMotif(this.template()));
   protected readonly eventTypeLabel = computed(() => formatEventTypeLabel(this.template().eventType).toUpperCase());
-
-  protected readonly motif = computed<TemplateCardMotif>(
-    () => MOTIF_BY_EVENT_TYPE[this.template().eventType?.trim().toLowerCase()] ?? 'spark',
-  );
 
   protected onActivate(): void {
     this.chosen.emit(this.template());
