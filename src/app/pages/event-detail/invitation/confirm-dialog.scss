@@ -8,7 +8,7 @@
 .confirm-dialog__scrim {
   position: fixed;
   inset: 0;
-  background: rgba(30, 20, 25, 0.45);
+  background: rgba(42, 31, 45, 0.35);
 }
 
 .confirm-dialog {
@@ -16,20 +16,21 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(90vw, 26rem);
+  width: min(90vw, 24rem);
   background: #fffcf5;
-  border-radius: 16px;
-  padding: 1.75rem;
-  box-shadow: 0 24px 60px rgba(30, 20, 25, 0.28);
+  border-radius: 12px;
+  padding: 1.75rem 1.875rem;
+  box-shadow: 0 20px 50px rgba(42, 31, 45, 0.35);
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.75rem;
 }
 
 .confirm-dialog__heading {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 500;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.375rem;
+  font-weight: 400;
   color: #2a1f2d;
   display: flex;
   align-items: center;
@@ -41,7 +42,14 @@
 }
 
 .confirm-dialog__icon {
-  font-size: 1.1rem;
+  flex: none;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 50%;
+  background: #f5e6cd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .confirm-dialog__body {
@@ -53,8 +61,9 @@
 
 .confirm-dialog__actions {
   display: flex;
-  gap: 0.7rem;
+  gap: 0.6rem;
   justify-content: flex-end;
+  margin-top: 0.6rem;
 }
 
 .confirm-dialog__primary,
@@ -81,7 +90,7 @@
 }
 
 .confirm-dialog__secondary {
-  border: 1.5px solid #ece2d2;
+  border: none;
   background: transparent;
-  color: #4a4045;
+  color: #5a2849;
 }

@@ -1,7 +1,15 @@
 <div class="template-detail">
   <nav class="template-detail__breadcrumb" aria-label="Breadcrumb">
-    <button type="button" class="template-detail__back-link" (click)="onBack()">← All templates</button>
+    <span>Events</span>
+    <span aria-hidden="true">›</span>
+    <span>{{ eventName() }}</span>
+    <span aria-hidden="true">›</span>
+    <span>Invitations</span>
+    <span aria-hidden="true">›</span>
+    <span class="template-detail__breadcrumb-current">{{ template().name }}</span>
   </nav>
+
+  <button type="button" class="template-detail__back-link" (click)="onBack()">← All templates</button>
 
   <header class="template-detail__header">
     <div class="template-detail__title-row">
@@ -33,25 +41,16 @@
       class="template-detail__switch-btn"
       [class.template-detail__switch-btn--active]="linkType() === 'public'"
       [attr.aria-pressed]="linkType() === 'public'"
-      [disabled]="!isPublicLinkEnabled()"
       (click)="setLinkType('public')"
     >
-      @if (!isPublicLinkEnabled()) {
-        <span aria-hidden="true">🔒</span>
-      }
       Public event link
     </button>
   </div>
 
-  @if (!isPublicLinkEnabled()) {
-    <p class="template-detail__switch-note">
-      Public link off — organizer hasn't enabled it for this event.
-    </p>
-  }
-
   <p class="template-detail__switch-help">
-    This switch lets you preview both the link a guest opens and the public event link once
-    public sharing is turned on for this event.
+    This switch lets you preview both the link a guest opens and the public event link — both are
+    always available to preview here, regardless of whether public sharing is turned on for this
+    event yet.
   </p>
 
   @switch (tokenState()) {

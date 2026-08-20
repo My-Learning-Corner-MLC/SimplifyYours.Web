@@ -20,7 +20,7 @@ describe('TemplateDetail', () => {
   let catalogApi: { issuePreviewToken: ReturnType<typeof vi.fn>; previewRenderUrl: ReturnType<typeof vi.fn> };
   let selection: { settings: ReturnType<typeof vi.fn> };
 
-  async function render(isPublicLinkEnabled = false) {
+  async function render() {
     await TestBed.configureTestingModule({
       imports: [TemplateDetail],
       providers: [
@@ -31,8 +31,8 @@ describe('TemplateDetail', () => {
 
     fixture = TestBed.createComponent(TemplateDetail);
     fixture.componentRef.setInput('template', TEMPLATE);
+    fixture.componentRef.setInput('eventName', "Amara & Julian's Wedding");
     fixture.componentRef.setInput('eventType', 'wedding');
-    fixture.componentRef.setInput('isPublicLinkEnabled', isPublicLinkEnabled);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -44,6 +44,14 @@ describe('TemplateDetail', () => {
       previewRenderUrl: vi.fn((token: string, type: string) => `https://api.example.test/${token}?type=${type}`),
     };
     selection = { settings: vi.fn(() => null) };
+  });
+
+  it('shows the breadcrumb, event name, and template name', async () => {
+    await render();
+
+    const breadcrumb = fixture.nativeElement.querySelector('.template-detail__breadcrumb');
+    expect(breadcrumb?.textContent).toContain("Amara & Julian's Wedding");
+    expect(breadcrumb?.textContent).toContain('Verona');
   });
 
   it('shows the template name and event type/tone subtext', async () => {
@@ -72,34 +80,23 @@ describe('TemplateDetail', () => {
     expect(catalogApi.issuePreviewToken).toHaveBeenCalledWith('t2');
   });
 
-  it('disables the public switch and shows the lock note when public sharing is off', async () => {
-    await render(false);
+  it('the public event link switch is always available, regardless of the real event\'s public-link status', async () => {
+    // Preview is entirely template-management-service's concern now, decoupled from any event —
+    // gating this on the real event's publicLinkEnabled would be a leftover from when it wasn't.
+    await render();
 
     const publicBtn = fixture.nativeElement.querySelectorAll('.template-detail__switch-btn')[1] as HTMLButtonElement;
-    expect(publicBtn.disabled).toBe(true);
-    expect(fixture.nativeElement.textContent).toContain(
-      "Public link off — organizer hasn't enabled it for this event.",
-    );
+    expect(publicBtn.disabled).toBe(false);
   });
 
-  it('switches to the public preview URL when public sharing is enabled', async () => {
-    await render(true);
+  it('switches to the public preview URL when the switch is clicked', async () => {
+    await render();
 
     const buttons = fixture.nativeElement.querySelectorAll('.template-detail__switch-btn');
     (buttons[1] as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(catalogApi.previewRenderUrl).toHaveBeenLastCalledWith('preview-tok', 'public');
-  });
-
-  it('does not switch to public when disabled', async () => {
-    await render(false);
-
-    const buttons = fixture.nativeElement.querySelectorAll('.template-detail__switch-btn');
-    (buttons[1] as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    expect(catalogApi.previewRenderUrl).not.toHaveBeenCalledWith('preview-tok', 'public');
   });
 
   it('describes the RSVP button as present but inert, not hidden', async () => {

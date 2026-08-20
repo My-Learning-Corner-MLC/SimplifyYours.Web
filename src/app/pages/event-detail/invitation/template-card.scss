@@ -19,7 +19,7 @@
 .template-card:hover,
 .template-card:focus-visible {
   transform: translateY(-6px);
-  box-shadow: 0 18px 40px rgba(90, 40, 73, 0.18);
+  box-shadow: 0 16px 30px rgba(42, 31, 45, 0.2);
 }
 
 .template-card:focus-visible {
@@ -29,11 +29,11 @@
 
 .template-card__face {
   aspect-ratio: 5 / 7;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid #e6dcc8;
   position: relative;
   overflow: hidden;
 }
@@ -72,9 +72,8 @@
 }
 
 .template-card__name {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-style: italic;
-  font-size: 1.05rem;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.19rem;
   color: #2a1f2d;
   transition:
     color 180ms ease,
@@ -84,7 +83,7 @@
 .template-card:hover .template-card__name,
 .template-card:focus-visible .template-card__name {
   color: #5a2849;
-  font-size: 1.12rem;
+  font-size: 1.31rem;
 }
 
 .template-card__arrow {

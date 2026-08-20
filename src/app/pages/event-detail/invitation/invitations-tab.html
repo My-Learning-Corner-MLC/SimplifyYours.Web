@@ -16,8 +16,8 @@
       @if (detailTemplate(); as template) {
         <app-template-detail
           [template]="template"
+          [eventName]="eventName()"
           [eventType]="eventType()"
-          [isPublicLinkEnabled]="selection.publicLinkEnabled()"
           (back)="onDetailBack()"
           (useTemplate)="onDetailProceed()"
         />

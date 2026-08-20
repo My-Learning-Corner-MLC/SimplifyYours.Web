@@ -17,7 +17,9 @@ type TokenState = 'loading' | 'ready' | 'error';
  * A preview token is issued once per template — not per switch flip — and both link types are
  * built from the same token by varying the render endpoint's `type` query param.
  * template-management-service owns preview entirely: it is never scoped to this (or any) event,
- * so previewing works identically whether or not the organiser has chosen this template yet.
+ * so previewing works identically whether or not the organiser has chosen this template yet — and
+ * the public-link switch here is always available, regardless of whether the real event has its
+ * public link turned on. Preview never resolves the real event's public-link state at all.
  */
 @Component({
   selector: 'app-template-detail',
@@ -31,8 +33,8 @@ export class TemplateDetail {
   private readonly selection = inject(InvitationSelectionService);
 
   readonly template = input.required<TemplateCatalogItem>();
+  readonly eventName = input.required<string>();
   readonly eventType = input.required<string>();
-  readonly isPublicLinkEnabled = input<boolean>(false);
 
   readonly back = output<void>();
   /** Fires for both "Use this template" (not yet selected) and "Edit basic info" (already selected). */
@@ -87,9 +89,6 @@ export class TemplateDetail {
   }
 
   protected setLinkType(type: PreviewLinkType): void {
-    if (type === 'public' && !this.isPublicLinkEnabled()) {
-      return;
-    }
     this.linkType.set(type);
   }
 

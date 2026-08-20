@@ -10,7 +10,13 @@
 >
   <h2 #headingEl class="confirm-dialog__heading" tabindex="-1">
     @if (warning()) {
-      <span class="confirm-dialog__icon" aria-hidden="true">⚠️</span>
+      <span class="confirm-dialog__icon" aria-hidden="true">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C28840" stroke-width="2.6" stroke-linecap="round">
+          <line x1="12" y1="8" x2="12" y2="13"></line>
+          <circle cx="12" cy="16.5" r="0.9" fill="#C28840" stroke="none"></circle>
+          <circle cx="12" cy="12" r="9"></circle>
+        </svg>
+      </span>
     }
     {{ heading() }}
   </h2>
