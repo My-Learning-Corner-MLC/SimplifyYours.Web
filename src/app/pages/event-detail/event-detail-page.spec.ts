@@ -394,6 +394,40 @@ describe('EventDetailPage', () => {
       expect(root.querySelector('app-invitations-tab')).not.toBeNull();
     });
 
+    it('extends the top breadcrumb with "Invitations" instead of drawing a second breadcrumb bar', async () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+
+      testId(root, 'event-detail-tab-invitations')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const breadcrumb = root.querySelector('.detail__eyebrow');
+      expect(breadcrumb?.textContent).toContain('The Whitmore – Hayes Wedding');
+      expect(breadcrumb?.textContent).toContain('Invitations');
+      // The tab itself no longer renders its own breadcrumb bar.
+      expect(root.querySelector('app-invitations-tab .template-detail__breadcrumb')).toBeNull();
+    });
+
+    it('drops the extra breadcrumb segments once the organiser leaves the Invitations tab', async () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+
+      testId(root, 'event-detail-tab-invitations')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(root.querySelector('.detail__eyebrow')?.textContent).toContain('Invitations');
+
+      testId(root, 'event-detail-tab-overview')!.click();
+      fixture.detectChanges();
+
+      const breadcrumb = root.querySelector('.detail__eyebrow');
+      expect(breadcrumb?.textContent).not.toContain('Invitations');
+      expect(breadcrumb?.textContent).toContain('The Whitmore – Hayes Wedding');
+    });
+
     it('shows a compact "no template" note and a "Set up invitation" toolbar button', () => {
       const fixture = setup(new ApiStub());
       const root = html(fixture);

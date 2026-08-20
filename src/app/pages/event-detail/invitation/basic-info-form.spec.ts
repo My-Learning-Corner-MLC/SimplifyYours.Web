@@ -1,7 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { InvitationSettings } from '../../../core/invitations/invitation-settings.model';
 import { BasicInfoForm } from './basic-info-form';
+
+const TEMPLATE: TemplateCatalogItem = {
+  id: 'marigold',
+  name: 'Marigold',
+  tone: 'Classic',
+  palette: ['#111', '#222'],
+  eventType: 'wedding',
+  currentVersion: 1,
+};
 
 function settings(overrides: Partial<InvitationSettings> = {}): InvitationSettings {
   return {
@@ -35,8 +45,7 @@ describe('BasicInfoForm', () => {
     fixture = TestBed.createComponent(BasicInfoForm);
     // Zoneless app: inputs must go through componentRef to trigger change detection.
     fixture.componentRef.setInput('settings', value);
-    fixture.componentRef.setInput('eventName', "Amara & Julian's Wedding");
-    fixture.componentRef.setInput('templateName', 'Marigold');
+    fixture.componentRef.setInput('template', TEMPLATE);
 
     for (const [key, val] of Object.entries(extra)) {
       fixture.componentRef.setInput(key, val);
@@ -200,14 +209,14 @@ describe('BasicInfoForm', () => {
     expect(document.activeElement).toBe(inputFor('groomName'));
   });
 
-  it('shows the breadcrumb and template subtitle', async () => {
+  it('shows the same identity panel as the template detail view, with the page title and template subtitle', async () => {
     await render();
 
-    const breadcrumb = fixture.nativeElement.querySelector('.basic-info-page__breadcrumb');
-    expect(breadcrumb?.textContent).toContain("Amara & Julian's Wedding");
-    expect(breadcrumb?.textContent).toContain('Marigold');
-    expect(breadcrumb?.textContent).toContain('Basic info');
-    expect(fixture.nativeElement.querySelector('.basic-info__subtitle')?.textContent).toContain('Marigold');
+    expect(fixture.nativeElement.querySelector('.template-detail__title')?.textContent).toContain('Basic info');
+    const subtitle = fixture.nativeElement.querySelector('.template-detail__subtitle')?.textContent;
+    expect(subtitle).toContain('Marigold');
+    expect(subtitle).toContain('Wedding');
+    expect(fixture.nativeElement.querySelector('.template-detail__thumb-motif svg')).not.toBeNull();
   });
 
   it('defaults the public link toggle off when the event has none enabled', async () => {
@@ -299,22 +308,5 @@ describe('BasicInfoForm', () => {
     fixture.detectChanges();
 
     expect(dismissed).toHaveBeenCalledTimes(1);
-  });
-
-  it('the "Back to preview" link is gated by the same discard-changes check', async () => {
-    const dismissed = vi.fn();
-    await render();
-    fixture.componentInstance.dismissed.subscribe(dismissed);
-
-    const input = inputFor('brideName');
-    input.value = 'Edited';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    (fixture.nativeElement.querySelector('.basic-info-page__back-link') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    expect(dismissed).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).not.toBeNull();
   });
 });

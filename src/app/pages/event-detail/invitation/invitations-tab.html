@@ -16,7 +16,6 @@
       @if (detailTemplate(); as template) {
         <app-template-detail
           [template]="template"
-          [eventName]="eventName()"
           [eventType]="eventType()"
           (back)="onDetailBack()"
           (useTemplate)="onDetailProceed()"
@@ -29,8 +28,7 @@
         @if (detailTemplate(); as template) {
           <app-basic-info-form
             [settings]="settings"
-            [eventName]="eventName()"
-            [templateName]="template.name"
+            [template]="template"
             [saving]="savingSelection()"
             [serverErrors]="basicInfoServerErrors()"
             (save)="onBasicInfoSave($event)"

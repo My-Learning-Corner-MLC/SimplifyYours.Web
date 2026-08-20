@@ -39,7 +39,15 @@
             <nav class="detail__eyebrow" aria-label="Breadcrumb">
               <a routerLink="/dashboard">Events</a>
               <span aria-hidden="true">›</span>
-              <span class="detail__eyebrow-current">{{ vm.name }}</span>
+              @if (invitationBreadcrumb().length > 0) {
+                <span>{{ vm.name }}</span>
+                @for (segment of invitationBreadcrumb(); track segment; let isLast = $last) {
+                  <span aria-hidden="true">›</span>
+                  <span [class.detail__eyebrow-current]="isLast">{{ segment }}</span>
+                }
+              } @else {
+                <span class="detail__eyebrow-current">{{ vm.name }}</span>
+              }
             </nav>
             <div class="detail__actions">
               <button type="button" class="detail__action detail__action--ghost" data-testid="event-detail-share">
@@ -356,6 +364,7 @@
                     [eventType]="eventType()"
                     [eventName]="vm.name"
                     (templateSelected)="onInvitationTemplateSelected($event)"
+                    (breadcrumbChange)="onInvitationBreadcrumbChange($event)"
                   />
                 </div>
               }

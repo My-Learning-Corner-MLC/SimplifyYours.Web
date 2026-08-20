@@ -5,30 +5,6 @@
   width: 100%;
 }
 
-.template-detail__actionbar {
-  display: flex;
-  align-items: center;
-  padding: 0.875rem 1.25rem;
-  border-radius: 12px;
-  background: #fffcf5;
-  border: 1px solid #ece2d2;
-}
-
-.template-detail__breadcrumb {
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #7a6b6e;
-}
-
-.template-detail__breadcrumb-current {
-  color: #2a1f2d;
-}
-
 .template-detail__body {
   display: grid;
   grid-template-columns: 17.5rem 1fr;
@@ -109,36 +85,6 @@
   color: #7a6b6e;
 }
 
-.template-detail__facts {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  margin: 1.25rem 0 0;
-  padding-top: 1.125rem;
-  border-top: 1px solid #ece2d2;
-}
-
-.template-detail__fact {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-}
-
-.template-detail__fact dt {
-  color: #7a766e;
-}
-
-.template-detail__fact dd {
-  margin: 0;
-  color: #2a1f2d;
-  font-weight: 500;
-}
-
-.template-detail__fact--selected {
-  color: #5a2849;
-  font-weight: 600;
-}
-
 .template-detail__preview {
   display: flex;
   flex-direction: column;
@@ -201,7 +147,7 @@
 
 .template-detail__footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.7rem;
 }
 

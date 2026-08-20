@@ -5,75 +5,84 @@
   width: 100%;
 }
 
-.basic-info-page__actionbar {
-  display: flex;
-  align-items: center;
-  padding: 0.875rem 1.25rem;
-  border-radius: 12px;
-  background: #fffcf5;
-  border: 1px solid #ece2d2;
+// Reuses TemplateDetail's identity-panel layout (thumbnail, title, subtitle) — same look as the
+// template it's configuring, since Angular's per-component style scoping means the class names
+// alone can't be shared across the two components' templates.
+.template-detail__body {
+  display: grid;
+  grid-template-columns: 17.5rem 1fr;
+  gap: 2.75rem;
 }
 
-.basic-info-page__breadcrumb {
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #7a6b6e;
+@media (max-width: 640px) {
+  .template-detail__body {
+    grid-template-columns: 1fr;
+  }
 }
 
-.basic-info-page__breadcrumb-current {
+.template-detail__identity {
+  display: flex;
+  flex-direction: column;
+}
+
+.template-detail__thumb {
+  width: 8.75rem;
+  aspect-ratio: 5 / 7;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e6dcc8;
+  position: relative;
+  overflow: hidden;
+}
+
+.template-detail__thumb-frame {
+  position: absolute;
+  inset: 0.75rem;
+  border: 1px solid var(--face-accent, #c8a876);
+  pointer-events: none;
+}
+
+.template-detail__thumb-motif {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.template-detail__thumb-rule {
+  width: 20px;
+  height: 1px;
+  background: var(--face-accent, #c8a876);
+  margin: 0 auto 1.125rem;
+}
+
+.template-detail__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.125rem;
+}
+
+.template-detail__title {
+  margin: 0;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.875rem;
+  font-weight: 400;
   color: #2a1f2d;
 }
 
-.basic-info-page__back-link {
-  appearance: none;
-  align-self: flex-start;
-  font: inherit;
+.template-detail__subtitle {
+  margin: 0.25rem 0 0;
   font-size: 0.78rem;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #5a2849;
-  background: transparent;
-  color: #5a2849;
-  cursor: pointer;
-  transition:
-    background 160ms ease-out,
-    color 160ms ease-out;
-}
-
-.basic-info-page__back-link:hover {
-  background: #5a2849;
-  color: #fffcf5;
-}
-
-.basic-info-page__back-link:focus-visible {
-  outline: 2px solid #5a2849;
-  outline-offset: 2px;
+  color: #7a6b6e;
 }
 
 .basic-info {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-.basic-info__title {
-  margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 2rem;
-  font-weight: 400;
-  color: #2a1f2d;
-}
-
-.basic-info__subtitle {
-  margin: 0.25rem 0 0;
-  font-size: 0.82rem;
-  color: #7a6b6e;
+  min-width: 0;
 }
 
 .basic-info__hint {

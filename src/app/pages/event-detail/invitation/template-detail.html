@@ -1,16 +1,4 @@
 <div class="template-detail">
-  <div class="template-detail__actionbar">
-    <nav class="template-detail__breadcrumb" aria-label="Breadcrumb">
-      <span>Events</span>
-      <span aria-hidden="true">›</span>
-      <span>{{ eventName() }}</span>
-      <span aria-hidden="true">›</span>
-      <span>Invitations</span>
-      <span aria-hidden="true">›</span>
-      <span class="template-detail__breadcrumb-current">{{ template().name }}</span>
-    </nav>
-  </div>
-
   <div class="template-detail__body">
     <div class="template-detail__identity">
       <span
@@ -79,25 +67,6 @@
           · {{ template().tone }}
         }
       </p>
-
-      <dl class="template-detail__facts">
-        <div class="template-detail__fact">
-          <dt>Event type</dt>
-          <dd>{{ eventTypeLabel() }}</dd>
-        </div>
-        @if (template().tone) {
-          <div class="template-detail__fact">
-            <dt>Style</dt>
-            <dd>{{ template().tone }}</dd>
-          </div>
-        }
-        <div class="template-detail__fact">
-          <dt>Status</dt>
-          <dd class="template-detail__fact-status" [class.template-detail__fact--selected]="isSelected()">
-            {{ isSelected() ? 'Selected' : 'Not selected' }}
-          </dd>
-        </div>
-      </dl>
     </div>
 
     <div class="template-detail__preview">

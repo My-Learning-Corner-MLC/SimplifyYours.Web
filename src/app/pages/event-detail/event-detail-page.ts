@@ -156,6 +156,17 @@ export class EventDetailPage implements OnInit, AfterViewInit {
    */
   readonly invitationAnnouncement = signal('');
 
+  /**
+   * Extra breadcrumb segments (e.g. "Invitations › Verona") contributed by {@link InvitationsTab}
+   * once it's deep in its own gallery/detail/basic-info navigation — appended to this page's own
+   * "Events › {name}" trail so there is exactly one breadcrumb bar, not a second one per sub-view.
+   * Gated on the Invitations tab actually being active so a stale trail can't leak into another tab.
+   */
+  private readonly invitationBreadcrumbSegments = signal<readonly string[]>([]);
+  readonly invitationBreadcrumb = computed(() =>
+    this.activeTab() === 'invitations' ? this.invitationBreadcrumbSegments() : [],
+  );
+
   readonly activeTabIndex = computed(() => this.tabIndexOf(this.activeTab()));
 
   // Pixel position of the sliding underline, measured against the actual tab
@@ -260,6 +271,7 @@ export class EventDetailPage implements OnInit, AfterViewInit {
     this.guestLoadError.set(null);
     this.addGuestOpen.set(false);
     this.invitationAnnouncement.set('');
+    this.invitationBreadcrumbSegments.set([]);
     this.invitationSelection.load(this.eventId);
     this.api.getEventDetails(this.eventId).subscribe({
       next: (event) => {
@@ -329,6 +341,10 @@ export class EventDetailPage implements OnInit, AfterViewInit {
 
   onInvitationTemplateSelected(templateName: string): void {
     this.invitationAnnouncement.set(`Invitation template set to ${templateName}`);
+  }
+
+  onInvitationBreadcrumbChange(segments: readonly string[]): void {
+    this.invitationBreadcrumbSegments.set(segments);
   }
 
   openAddGuest(): void {

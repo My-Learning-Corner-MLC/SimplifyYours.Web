@@ -12,6 +12,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { eventTypeLabel as formatEventTypeLabel } from '../../../core/events/event-type-display';
+import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import {
   INVITATION_FIELD_LABELS,
   INVITATION_FIELD_MAX_LENGTHS,
@@ -21,6 +23,11 @@ import {
   fieldsFor,
 } from '../../../core/invitations/invitation-settings.model';
 import { ConfirmDialog } from './confirm-dialog';
+import {
+  templateThumbnailAccent,
+  templateThumbnailBackground,
+  templateThumbnailMotif,
+} from './template-thumbnail-tokens';
 
 /** Fields the organiser may leave blank. Everything else blocks the save. */
 const OPTIONAL_FIELDS: readonly InvitationField[] = ['venueNotes'];
@@ -58,11 +65,16 @@ export interface BasicInfoSaveEvent {
 })
 export class BasicInfoForm {
   readonly settings = input.required<InvitationSettings>();
-  readonly eventName = input.required<string>();
-  readonly templateName = input.required<string>();
+  readonly template = input.required<TemplateCatalogItem>();
   readonly saving = input<boolean>(false);
   /** Server-side messages keyed by field, merged over local validation. */
   readonly serverErrors = input<Readonly<Record<string, readonly string[]>>>({});
+
+  protected readonly templateName = computed(() => this.template().name);
+  protected readonly eventTypeLabel = computed(() => formatEventTypeLabel(this.template().eventType));
+  protected readonly accent = computed(() => templateThumbnailAccent(this.template()));
+  protected readonly faceBackground = computed(() => templateThumbnailBackground(this.template()));
+  protected readonly motif = computed(() => templateThumbnailMotif(this.template()));
 
   readonly save = output<BasicInfoSaveEvent>();
   /** Fired once leaving is confirmed — either nothing was dirty, or Discard was chosen. */
@@ -99,7 +111,7 @@ export class BasicInfoForm {
   protected readonly labels = INVITATION_FIELD_LABELS;
   protected readonly maxLengths = INVITATION_FIELD_MAX_LENGTHS;
 
-  /** Gates the Discard-changes dialog on Cancel / "Back to preview" — untouched forms exit immediately. */
+  /** Gates the Discard-changes dialog on Cancel — untouched forms exit immediately. */
   protected readonly isDirty = computed(() => {
     const current = this.values();
     const initial = this.initialValues();
@@ -210,10 +222,6 @@ export class BasicInfoForm {
   }
 
   protected onCancel(): void {
-    this.requestDismiss();
-  }
-
-  protected onBackToPreview(): void {
     this.requestDismiss();
   }
 

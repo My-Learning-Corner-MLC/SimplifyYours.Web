@@ -31,7 +31,6 @@ describe('TemplateDetail', () => {
 
     fixture = TestBed.createComponent(TemplateDetail);
     fixture.componentRef.setInput('template', TEMPLATE);
-    fixture.componentRef.setInput('eventName', "Amara & Julian's Wedding");
     fixture.componentRef.setInput('eventType', 'wedding');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -46,14 +45,6 @@ describe('TemplateDetail', () => {
     selection = { settings: vi.fn(() => null) };
   });
 
-  it('shows the breadcrumb, event name, and template name', async () => {
-    await render();
-
-    const breadcrumb = fixture.nativeElement.querySelector('.template-detail__breadcrumb');
-    expect(breadcrumb?.textContent).toContain("Amara & Julian's Wedding");
-    expect(breadcrumb?.textContent).toContain('Verona');
-  });
-
   it('shows the template name and event type/tone subtext', async () => {
     await render();
 
@@ -66,29 +57,6 @@ describe('TemplateDetail', () => {
     await render();
 
     expect(fixture.nativeElement.querySelector('.template-detail__thumb-motif svg')).not.toBeNull();
-  });
-
-  it('lists event type, style, and "Not selected" in the facts panel', async () => {
-    await render();
-
-    const facts = fixture.nativeElement.querySelector('.template-detail__facts').textContent;
-    expect(facts).toContain('Event type');
-    expect(facts).toContain('Wedding');
-    expect(facts).toContain('Style');
-    expect(facts).toContain('Classic');
-    const status = fixture.nativeElement.querySelector('.template-detail__fact-status');
-    expect(status.textContent.trim()).toBe('Not selected');
-    expect(status.classList.contains('template-detail__fact--selected')).toBe(false);
-  });
-
-  it('shows "Selected" in the facts panel once this template is the event\'s selection', async () => {
-    selection.settings.mockReturnValue({ templateId: TEMPLATE.id });
-
-    await render();
-
-    const status = fixture.nativeElement.querySelector('.template-detail__fact-status');
-    expect(status.textContent.trim()).toBe('Selected');
-    expect(status.classList.contains('template-detail__fact--selected')).toBe(true);
   });
 
   it('issues a preview token for this template on mount and builds the private preview URL by default', async () => {

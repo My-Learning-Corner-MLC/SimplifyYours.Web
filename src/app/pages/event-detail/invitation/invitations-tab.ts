@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
 import { GuestApiClient } from '../../../core/guests/guest-api-client';
 import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
@@ -57,6 +57,13 @@ export class InvitationsTab {
    */
   readonly templateSelected = output<string>();
 
+  /**
+   * The extra breadcrumb segments (e.g. "Invitations", "Verona", "Basic info") for whatever this
+   * tab is currently showing — `EventDetailPage` appends them to its own "Events › {name}" trail
+   * instead of this tab drawing a second breadcrumb bar of its own.
+   */
+  readonly breadcrumbChange = output<readonly string[]>();
+
   protected readonly view = signal<View>('gallery');
   protected readonly detailTemplate = signal<TemplateCatalogItem | null>(null);
   protected readonly pendingDialog = signal<PendingDialog>(null);
@@ -75,6 +82,16 @@ export class InvitationsTab {
    */
   protected readonly guestCount = signal(0);
 
+  private readonly breadcrumbSegments = computed<readonly string[]>(() => {
+    const template = this.detailTemplate();
+    if (!template) {
+      return ['Invitations'];
+    }
+    return this.view() === 'basic-info'
+      ? ['Invitations', template.name, 'Basic info']
+      : ['Invitations', template.name];
+  });
+
   constructor() {
     effect(() => {
       const eventId = this.eventId();
@@ -84,6 +101,8 @@ export class InvitationsTab {
         error: () => this.guestCount.set(0),
       });
     });
+
+    effect(() => this.breadcrumbChange.emit(this.breadcrumbSegments()));
   }
 
   protected onTemplateChosen(template: TemplateCatalogItem): void {

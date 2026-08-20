@@ -16,8 +16,10 @@ import {
 type TokenState = 'loading' | 'ready' | 'error';
 
 /**
- * One template's detail/preview view: breadcrumb back to the gallery, a live sandboxed preview of
- * the template rendered with sample data, and the guest-link/public-link switch.
+ * One template's detail/preview view: a live sandboxed preview of the template rendered with
+ * sample data, and the guest-link/public-link switch. The breadcrumb trail back to the gallery
+ * lives in the page-level actionbar (`EventDetailPage`), fed via `InvitationsTab`'s
+ * `breadcrumbChange` output — not drawn here.
  *
  * A preview token is issued once per template — not per switch flip — and both link types are
  * built from the same token by varying the render endpoint's `type` query param.
@@ -38,7 +40,6 @@ export class TemplateDetail {
   private readonly selection = inject(InvitationSelectionService);
 
   readonly template = input.required<TemplateCatalogItem>();
-  readonly eventName = input.required<string>();
   readonly eventType = input.required<string>();
 
   readonly back = output<void>();

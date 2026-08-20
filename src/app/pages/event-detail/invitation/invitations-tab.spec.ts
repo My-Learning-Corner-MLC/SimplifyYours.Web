@@ -132,6 +132,41 @@ describe('InvitationsTab', () => {
     expect(fixture.nativeElement.querySelector('app-template-gallery')).not.toBeNull();
   });
 
+  it('emits breadcrumb segments as the organiser moves through gallery, detail, and basic info', async () => {
+    guestApi.listGuests.mockReturnValue(of([]));
+    settingsApi.getSettings.mockReturnValue(of(UNCONFIGURED_SETTINGS));
+
+    await TestBed.configureTestingModule({
+      imports: [InvitationsTab],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: GuestApiClient, useValue: guestApi },
+        { provide: InvitationSettingsApiClient, useValue: settingsApi },
+        { provide: TemplateCatalogApiClient, useValue: catalog },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(InvitationsTab);
+    const emitted: (readonly string[])[] = [];
+    fixture.componentInstance.breadcrumbChange.subscribe((segments) => emitted.push(segments));
+
+    fixture.componentRef.setInput('eventId', 'event-1');
+    fixture.componentRef.setInput('eventType', 'wedding');
+    fixture.componentRef.setInput('eventName', "Amara & Julian's Wedding");
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(emitted.at(-1)).toEqual(['Invitations']);
+
+    await goToDetailAndProceed();
+
+    // goToDetailAndProceed passes through the detail view before basic info.
+    expect(emitted).toContainEqual(['Invitations', 'Verona']);
+    expect(emitted.at(-1)).toEqual(['Invitations', 'Verona', 'Basic info']);
+  });
+
   it('navigates to the detail view when a template is chosen', async () => {
     await render();
 
