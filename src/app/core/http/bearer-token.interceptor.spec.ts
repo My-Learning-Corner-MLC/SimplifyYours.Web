@@ -68,6 +68,28 @@ describe('bearerTokenInterceptor', () => {
     req.flush({});
   });
 
+  it('attaches the bearer token to template-catalog requests', () => {
+    // GET /templates?eventType= requires events.view same as event/guest routes -- browsing
+    // templates is reading event-adjacent data, not anonymous public content.
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.apiBaseUrl}/api/v1/templates?eventType=wedding`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/templates?eventType=wedding`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
+    req.flush([]);
+  });
+
+  it('attaches the bearer token to a single template lookup', () => {
+    tokenStorage.write(bundle);
+
+    http.get(`${environment.apiBaseUrl}/api/v1/templates/tmpl-1`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/templates/tmpl-1`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-123');
+    req.flush({});
+  });
+
   it('leaves the public invitation endpoints untouched even with a token in storage', () => {
     // These live under /api/v1/invitations but are deliberately anonymous. An organiser previewing
     // a guest's link should not ship their access token to an endpoint that has no use for it.

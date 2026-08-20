@@ -13,10 +13,12 @@ import { TokenStorageService } from '../auth/token-storage.service';
  * already clears the session and redirects to sign-in globally, so consumers
  * of event-service calls never need their own unauthorized handling.
  */
-// Event/guest/invitation calls need a bearer token; identity calls (sign-up, sign-in, token
-// exchange) are anonymous. Now that everything shares one origin (the gateway), origin alone can't
-// distinguish them -- use path prefix instead.
-const PROTECTED_PATH_PREFIXES = ['/api/v1/events', '/api/v1/guests', '/api/v1/invitations'];
+// Event/guest/invitation/template calls need a bearer token; identity calls (sign-up, sign-in,
+// token exchange) are anonymous. Now that everything shares one origin (the gateway), origin alone
+// can't distinguish them -- use path prefix instead.
+// `/api/v1/templates` (template-management-service's catalog) requires `events.view` same as
+// events/guests -- browsing templates is reading event-adjacent data, not public content.
+const PROTECTED_PATH_PREFIXES = ['/api/v1/events', '/api/v1/guests', '/api/v1/invitations', '/api/v1/templates'];
 
 // Under /api/v1/invitations, "settings" is the one reserved first-path-segment literal, for the
 // organiser-authenticated routes at /invitations/settings/events/{eventId}/... -- mirroring
