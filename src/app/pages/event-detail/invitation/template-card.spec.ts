@@ -31,19 +31,32 @@ describe('TemplateCard', () => {
     expect(fixture.nativeElement.textContent).toContain('Verona');
   });
 
-  it('builds the card face from the palette when there is no thumbnail field', async () => {
+  it('builds the card face background from the second palette color', async () => {
     await render({ palette: ['#111111', '#222222'] });
 
     const face = fixture.nativeElement.querySelector('.template-card__face') as HTMLElement;
-    expect(face.style.background).toContain('linear-gradient');
-    expect(face.style.background).toContain('rgb(17, 17, 17)');
+    expect(face.style.background).toContain('rgb(34, 34, 34)');
   });
 
-  it('falls back to a default palette when the catalog gives none', async () => {
+  it('falls back to a neutral face background when the catalog gives only one palette color', async () => {
+    await render({ palette: ['#111111'] });
+
+    const face = fixture.nativeElement.querySelector('.template-card__face') as HTMLElement;
+    expect(face.style.background).toContain('rgb(247, 240, 230)');
+  });
+
+  it('falls back to the default palette when the catalog gives none', async () => {
     await render({ palette: null });
 
     const face = fixture.nativeElement.querySelector('.template-card__face') as HTMLElement;
-    expect(face.style.background).toContain('linear-gradient');
+    expect(face.style.background).not.toBe('');
+  });
+
+  it('shows the event type label and a matching motif icon', async () => {
+    await render({ eventType: 'wedding' });
+
+    expect(fixture.nativeElement.querySelector('.template-card__face-label').textContent.trim()).toBe('WEDDING');
+    expect(fixture.nativeElement.querySelector('.template-card__face-motif svg')).not.toBeNull();
   });
 
   it('shows an arrow and no badge when not selected', async () => {

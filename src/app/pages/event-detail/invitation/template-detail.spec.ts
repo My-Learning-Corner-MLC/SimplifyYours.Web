@@ -116,12 +116,12 @@ describe('TemplateDetail', () => {
     expect(fixture.nativeElement.textContent).toContain("couldn't prepare a preview");
   });
 
-  it('emits back when the breadcrumb link is clicked', async () => {
+  it('emits back when "Back to gallery" is clicked', async () => {
     const emitted = vi.fn();
     await render();
     fixture.componentInstance.back.subscribe(emitted);
 
-    (fixture.nativeElement.querySelector('.template-detail__back-link') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('.template-detail__secondary') as HTMLButtonElement).click();
 
     expect(emitted).toHaveBeenCalledTimes(1);
   });

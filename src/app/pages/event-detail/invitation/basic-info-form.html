@@ -1,13 +1,17 @@
 <div class="basic-info-page">
-  <nav class="basic-info-page__breadcrumb" aria-label="Breadcrumb">
-    <span>Events</span>
-    <span aria-hidden="true">›</span>
-    <span>{{ eventName() }}</span>
-    <span aria-hidden="true">›</span>
-    <span>Invitations</span>
-    <span aria-hidden="true">›</span>
-    <span class="basic-info-page__breadcrumb-current">Basic info</span>
-  </nav>
+  <div class="basic-info-page__actionbar">
+    <nav class="basic-info-page__breadcrumb" aria-label="Breadcrumb">
+      <span>Events</span>
+      <span aria-hidden="true">›</span>
+      <span>{{ eventName() }}</span>
+      <span aria-hidden="true">›</span>
+      <span>Invitations</span>
+      <span aria-hidden="true">›</span>
+      <span>{{ templateName() }}</span>
+      <span aria-hidden="true">›</span>
+      <span class="basic-info-page__breadcrumb-current">Basic info</span>
+    </nav>
+  </div>
 
   <button type="button" class="basic-info-page__back-link" (click)="onBackToPreview()">← Back to preview</button>
 

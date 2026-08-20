@@ -1,40 +1,32 @@
 .template-detail {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  max-width: 42rem;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.template-detail__actionbar {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  background: #fffcf5;
+  border: 1px solid #ece2d2;
 }
 
 .template-detail__breadcrumb {
   display: flex;
   gap: 0.4rem;
   align-items: center;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #7a6b6e;
 }
 
 .template-detail__breadcrumb-current {
   color: #2a1f2d;
-}
-
-.template-detail__back-link {
-  appearance: none;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #5a2849;
-  cursor: pointer;
-  padding: 0;
-  margin: 0.3rem 0 0.4rem;
-  align-self: flex-start;
-}
-
-.template-detail__back-link:hover {
-  color: #7a3a25;
 }
 
 .template-detail__header {
@@ -80,7 +72,6 @@
   padding: 3px;
   gap: 2px;
   width: fit-content;
-  margin-top: 1.1rem;
 }
 
 .template-detail__switch-btn {
@@ -131,28 +122,47 @@
   display: flex;
   justify-content: space-between;
   gap: 0.7rem;
-  margin-top: 0.75rem;
 }
 
 .template-detail__primary,
 .template-detail__secondary {
   appearance: none;
   font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.8rem 1.5rem;
-  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out,
+    border-color 160ms ease-out;
 }
 
 .template-detail__primary {
-  border: none;
+  border: 1px solid #5a2849;
   background: #5a2849;
   color: #fffcf5;
 }
 
+.template-detail__primary:hover {
+  background: #4a1f3b;
+  border-color: #4a1f3b;
+}
+
 .template-detail__secondary {
-  border: 1.5px solid #5a2849;
+  border: 1px solid #5a2849;
   background: transparent;
   color: #5a2849;
+}
+
+.template-detail__secondary:hover {
+  background: #5a2849;
+  color: #fffcf5;
+}
+
+.template-detail__primary:focus-visible,
+.template-detail__secondary:focus-visible {
+  outline: 2px solid #5a2849;
+  outline-offset: 2px;
 }

@@ -31,8 +31,7 @@
   aspect-ratio: 5 / 7;
   border-radius: 10px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   border: 1px solid #e6dcc8;
   position: relative;
   overflow: hidden;
@@ -42,11 +41,36 @@
   border: 2px solid #c8a876;
 }
 
-.template-card__watermark {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-style: italic;
-  font-size: 4rem;
-  color: rgba(255, 255, 255, 0.55);
+.template-card__face-frame {
+  position: absolute;
+  inset: 0.875rem;
+  border: 1px solid var(--face-accent, #c8a876);
+  pointer-events: none;
+}
+
+.template-card__face-label {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--face-accent, #9b8a6b);
+  text-align: center;
+  margin-top: 1.625rem;
+  opacity: 0.85;
+}
+
+.template-card__face-motif {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.template-card__face-rule {
+  width: 22px;
+  height: 1px;
+  background: var(--face-accent, #c8a876);
+  margin: 0 auto 1.375rem;
 }
 
 .template-card__badge {

@@ -1,15 +1,15 @@
 <div class="template-detail">
-  <nav class="template-detail__breadcrumb" aria-label="Breadcrumb">
-    <span>Events</span>
-    <span aria-hidden="true">›</span>
-    <span>{{ eventName() }}</span>
-    <span aria-hidden="true">›</span>
-    <span>Invitations</span>
-    <span aria-hidden="true">›</span>
-    <span class="template-detail__breadcrumb-current">{{ template().name }}</span>
-  </nav>
-
-  <button type="button" class="template-detail__back-link" (click)="onBack()">← All templates</button>
+  <div class="template-detail__actionbar">
+    <nav class="template-detail__breadcrumb" aria-label="Breadcrumb">
+      <span>Events</span>
+      <span aria-hidden="true">›</span>
+      <span>{{ eventName() }}</span>
+      <span aria-hidden="true">›</span>
+      <span>Invitations</span>
+      <span aria-hidden="true">›</span>
+      <span class="template-detail__breadcrumb-current">{{ template().name }}</span>
+    </nav>
+  </div>
 
   <header class="template-detail__header">
     <div class="template-detail__title-row">
@@ -57,7 +57,7 @@
     @case ('error') {
       <div class="template-detail__notice" role="alert">
         <p>We couldn't prepare a preview. Try again.</p>
-        <button type="button" (click)="retryToken()">Retry</button>
+        <button type="button" class="template-detail__secondary" (click)="retryToken()">Retry</button>
       </div>
     }
     @default {

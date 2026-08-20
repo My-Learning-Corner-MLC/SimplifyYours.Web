@@ -1,16 +1,26 @@
 .basic-info-page {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  max-width: 34rem;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.basic-info-page__actionbar {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  background: #fffcf5;
+  border: 1px solid #ece2d2;
 }
 
 .basic-info-page__breadcrumb {
   display: flex;
   gap: 0.4rem;
   align-items: center;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #7a6b6e;
 }
@@ -21,16 +31,29 @@
 
 .basic-info-page__back-link {
   appearance: none;
-  border: none;
-  background: transparent;
+  align-self: flex-start;
   font: inherit;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #5a2849;
+  background: transparent;
   color: #5a2849;
   cursor: pointer;
-  padding: 0;
-  margin: 0.3rem 0 0.3rem;
-  align-self: flex-start;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out;
+}
+
+.basic-info-page__back-link:hover {
+  background: #5a2849;
+  color: #fffcf5;
+}
+
+.basic-info-page__back-link:focus-visible {
+  outline: 2px solid #5a2849;
+  outline-offset: 2px;
 }
 
 .basic-info {
@@ -202,27 +225,53 @@
 .basic-info__secondary {
   appearance: none;
   font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.85rem 1.6rem;
-  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out,
+    border-color 160ms ease-out;
 }
 
 .basic-info__primary {
-  border: none;
+  border: 1px solid #5a2849;
   background: #5a2849;
   color: #fffcf5;
 }
 
+.basic-info__primary:hover:not(:disabled) {
+  background: #4a1f3b;
+  border-color: #4a1f3b;
+}
+
 .basic-info__primary:disabled {
+  border-color: #ece2d2;
   background: #ece2d2;
   color: #a89f8c;
   cursor: default;
 }
 
 .basic-info__secondary {
-  border: 1.5px solid #ece2d2;
+  border: 1px solid #ece2d2;
   background: transparent;
   color: #4a4045;
+}
+
+.basic-info__secondary:hover:not(:disabled) {
+  border-color: #5a2849;
+  color: #5a2849;
+}
+
+.basic-info__secondary:disabled {
+  color: #a89f8c;
+  cursor: default;
+}
+
+.basic-info__primary:focus-visible,
+.basic-info__secondary:focus-visible {
+  outline: 2px solid #5a2849;
+  outline-offset: 2px;
 }

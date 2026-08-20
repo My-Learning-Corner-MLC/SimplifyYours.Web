@@ -219,6 +219,7 @@ describe('BasicInfoForm', () => {
 
     const breadcrumb = fixture.nativeElement.querySelector('.basic-info-page__breadcrumb');
     expect(breadcrumb?.textContent).toContain("Amara & Julian's Wedding");
+    expect(breadcrumb?.textContent).toContain('Marigold');
     expect(breadcrumb?.textContent).toContain('Basic info');
     expect(fixture.nativeElement.querySelector('.basic-info__subtitle')?.textContent).toContain('Marigold');
   });

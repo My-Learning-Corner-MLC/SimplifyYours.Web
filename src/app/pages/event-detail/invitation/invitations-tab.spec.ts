@@ -237,7 +237,7 @@ describe('InvitationsTab', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('.template-detail__back-link') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('.template-detail__secondary') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-template-gallery')).not.toBeNull();
