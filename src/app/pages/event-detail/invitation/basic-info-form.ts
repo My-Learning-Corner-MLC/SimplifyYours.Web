@@ -48,6 +48,18 @@ const FIELD_PAIRS: readonly (readonly [InvitationField, InvitationField])[] = [
   ['eventDate', 'eventTime'],
 ];
 
+const STEP_MINUTES = 15;
+
+/**
+ * Rounds up to the next 15-minute mark, matching the time picker's own `stepMinute` — so opening a
+ * fresh picker anchors on an actually-selectable time (9:30) instead of the exact current minute
+ * (9:27), which isn't one of the options.
+ */
+function roundUpToQuarterHour(date: Date): Date {
+  const ms = STEP_MINUTES * 60 * 1000;
+  return new Date(Math.ceil(date.getTime() / ms) * ms);
+}
+
 /** Groups `fields` into rows of one or two, pairing adjacent fields listed in {@link FIELD_PAIRS}. */
 function groupFieldsIntoRows(fields: readonly InvitationField[]): readonly (readonly InvitationField[])[] {
   const remaining = new Set(fields);
@@ -164,6 +176,11 @@ export class BasicInfoForm {
 
   protected readonly labels = INVITATION_FIELD_LABELS;
   protected readonly maxLengths = INVITATION_FIELD_MAX_LENGTHS;
+
+  /** The event date can't be picked in the past — same rule create-event's own date field uses. */
+  protected readonly minEventDate = new Date(new Date().setHours(0, 0, 0, 0));
+  /** Anchors a freshly opened time picker on the next selectable 15-minute mark, not the raw minute. */
+  protected readonly defaultTime = roundUpToQuarterHour(new Date());
 
   /** Gates the Discard-changes dialog on Cancel — untouched forms exit immediately. */
   protected readonly isDirty = computed(() => {

@@ -30,12 +30,6 @@ export class ConfirmDialog implements OnInit, OnDestroy {
   readonly cancelLabel = input<string>('Cancel');
   /** Shows a small warning glyph beside the heading — used by ChangeTemplateConfirmDialog. */
   readonly warning = input<boolean>(false);
-  /**
-   * The primary action destroys something (e.g. "Discard") — styled outlined/coral like
-   * create-event's own discard-and-leave dialog, with Cancel styled solid instead, so the visual
-   * weight nudges toward the reversible choice rather than the destructive one.
-   */
-  readonly danger = input<boolean>(false);
   readonly primaryDisabled = input<boolean>(false);
 
   readonly confirmed = output<void>();

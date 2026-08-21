@@ -287,6 +287,13 @@
   box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08) !important;
 }
 
+// The plain .basic-info__input::placeholder rule further down can't reach this input — it's
+// rendered inside p-datepicker's own template, a different style-encapsulation scope entirely.
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input.basic-info__input::placeholder {
+  color: #a89f8c !important;
+  opacity: 1;
+}
+
 :host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input-icon,
 :host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-clear-icon,
 :host ::ng-deep p-datepicker.basic-info__datepicker .pi {

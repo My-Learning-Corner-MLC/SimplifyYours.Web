@@ -123,6 +123,7 @@
                     [inputId]="'field-' + field"
                     dataType="string"
                     dateFormat="DD, d MM yy"
+                    [minDate]="minEventDate"
                     [placeholder]="defaultFor(field) || 'Select a date'"
                     styleClass="basic-info__datepicker"
                     inputStyleClass="basic-info__input"
@@ -144,6 +145,7 @@
                     hourFormat="24"
                     [stepMinute]="15"
                     [timeOnly]="true"
+                    [defaultDate]="defaultTime"
                     [placeholder]="defaultFor(field) || 'Select a time'"
                     styleClass="basic-info__datepicker"
                     inputStyleClass="basic-info__input"
@@ -219,7 +221,6 @@
       ariaLabel="Discard changes"
       primaryLabel="Discard"
       cancelLabel="Keep editing"
-      [danger]="true"
       (confirmed)="onDiscard()"
       (cancelled)="onKeepEditing()"
     >

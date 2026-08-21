@@ -165,6 +165,25 @@ describe('BasicInfoForm', () => {
     expect(inputFor('eventTime')?.closest('p-datepicker')).not.toBeNull();
   });
 
+  it("won't let the event date be picked in the past", async () => {
+    await render();
+
+    const instance = fixture.componentInstance as unknown as { minEventDate: Date };
+    const today = new Date(new Date().setHours(0, 0, 0, 0));
+    expect(instance.minEventDate.getTime()).toBe(today.getTime());
+  });
+
+  it('anchors a freshly opened time picker on the next 15-minute mark, not the exact current minute', async () => {
+    await render();
+
+    const instance = fixture.componentInstance as unknown as { defaultTime: Date };
+    const anchor = instance.defaultTime;
+    expect(anchor.getMinutes() % 15).toBe(0);
+    expect(anchor.getTime()).toBeGreaterThanOrEqual(Date.now());
+    // Never more than one step ahead of "now".
+    expect(anchor.getTime() - Date.now()).toBeLessThanOrEqual(15 * 60 * 1000);
+  });
+
   it('shows the same facts panel (event type, selection status) as the template detail view', async () => {
     await render();
 
@@ -363,18 +382,6 @@ describe('BasicInfoForm', () => {
 
     expect(dismissed).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('app-confirm-dialog')).not.toBeNull();
-    // Matches create-event's own discard-and-leave dialog: the destructive "Discard" is outlined,
-    // and "Keep editing" is the solid, visually heavier button.
-    expect(
-      fixture.nativeElement
-        .querySelector('.confirm-dialog__primary')
-        ?.classList.contains('confirm-dialog__primary--outline'),
-    ).toBe(true);
-    expect(
-      fixture.nativeElement
-        .querySelector('.confirm-dialog__secondary')
-        ?.classList.contains('confirm-dialog__secondary--solid'),
-    ).toBe(true);
   });
 
   it('"Keep editing" dismisses the discard dialog without leaving', async () => {

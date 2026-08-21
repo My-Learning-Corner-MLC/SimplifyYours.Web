@@ -26,18 +26,10 @@
   </div>
 
   <div class="confirm-dialog__actions">
-    <button
-      type="button"
-      class="confirm-dialog__secondary"
-      [class.confirm-dialog__secondary--solid]="danger()"
-      (click)="onCancel()"
-    >
-      {{ cancelLabel() }}
-    </button>
+    <button type="button" class="confirm-dialog__secondary" (click)="onCancel()">{{ cancelLabel() }}</button>
     <button
       type="button"
       class="confirm-dialog__primary"
-      [class.confirm-dialog__primary--outline]="danger()"
       [disabled]="primaryDisabled()"
       (click)="onConfirm()"
     >

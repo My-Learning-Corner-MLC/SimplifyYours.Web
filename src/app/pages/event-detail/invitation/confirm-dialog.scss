@@ -96,44 +96,21 @@
   cursor: default;
 }
 
+// Matches event-detail-page's own .detail__action--ghost (the "Share invite" button) — same
+// bordered-plum ghost treatment, so every dialog's Cancel/secondary button in this app agrees.
 .confirm-dialog__secondary {
-  border: none;
+  border: 1px solid #5a2849;
   background: transparent;
   color: #5a2849;
 }
 
 .confirm-dialog__secondary:hover {
-  color: #4a1f3b;
-  background: rgba(90, 40, 73, 0.08);
+  background: #5a2849;
+  color: #fffcf5;
 }
 
 .confirm-dialog__primary:focus-visible,
 .confirm-dialog__secondary:focus-visible {
   outline: 2px solid #5a2849;
   outline-offset: 2px;
-}
-
-// Destructive primary actions (e.g. "Discard") follow create-event's own discard-and-leave
-// dialog: the destructive choice is outlined/coral, and Cancel is the solid, visually heavier
-// button — nudging toward the reversible option rather than the one that throws work away.
-.confirm-dialog__primary.confirm-dialog__primary--outline {
-  border: 1px solid #b05540;
-  background: transparent;
-  color: #b05540;
-}
-
-.confirm-dialog__primary.confirm-dialog__primary--outline:hover:not(:disabled) {
-  background: rgba(176, 85, 64, 0.06);
-}
-
-.confirm-dialog__secondary.confirm-dialog__secondary--solid {
-  border: 1px solid #5a2849;
-  background: #5a2849;
-  color: #fffcf5;
-  box-shadow: 0 4px 14px rgba(90, 40, 73, 0.18);
-}
-
-.confirm-dialog__secondary.confirm-dialog__secondary--solid:hover {
-  background: #4a1f3b;
-  color: #fffcf5;
 }
