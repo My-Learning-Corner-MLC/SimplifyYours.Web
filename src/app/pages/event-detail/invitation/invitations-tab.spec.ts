@@ -25,7 +25,9 @@ const UNCONFIGURED_SETTINGS: InvitationSettings = {
   eventType: 'wedding',
   templateId: null,
   templateName: null,
-  fieldValues: {},
+  // eventDate/eventTime mirror what the real backend pre-fills from the event record — shown as a
+  // placeholder in the date/time pickers and submitted as-is unless the organiser picks their own.
+  fieldValues: { eventDate: 'Saturday, 12 September 2026', eventTime: '4:00 PM' },
   isConfigured: false,
   requiredFields: ['brideName', 'groomName', 'eventDate', 'eventTime', 'venueName', 'venueAddress'],
   publicLinkEnabled: false,
@@ -97,7 +99,10 @@ describe('InvitationsTab', () => {
     fixture.detectChanges();
   }
 
-  const REQUIRED_FIELDS = ['brideName', 'groomName', 'eventDate', 'eventTime', 'venueName', 'venueAddress'];
+  // eventDate/eventTime are excluded: they're rendered as PrimeNG date/time pickers now, and
+  // UNCONFIGURED_SETTINGS already gives them a default that submits untouched (see BasicInfoForm's
+  // effectiveValue/placeholder-default fallback) — there's nothing to simulate typing into here.
+  const REQUIRED_FIELDS = ['brideName', 'groomName', 'venueName', 'venueAddress'];
 
   function fillRequiredFields() {
     for (const field of REQUIRED_FIELDS) {

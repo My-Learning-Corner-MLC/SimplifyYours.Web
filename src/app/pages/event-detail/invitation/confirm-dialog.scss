@@ -75,12 +75,19 @@
   padding: 0.75rem 1.4rem;
   border-radius: 10px;
   cursor: pointer;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out;
 }
 
 .confirm-dialog__primary {
   border: none;
   background: #5a2849;
   color: #fffcf5;
+}
+
+.confirm-dialog__primary:hover:not(:disabled) {
+  background: #4a1f3b;
 }
 
 .confirm-dialog__primary:disabled {
@@ -93,4 +100,15 @@
   border: none;
   background: transparent;
   color: #5a2849;
+}
+
+.confirm-dialog__secondary:hover {
+  color: #4a1f3b;
+  background: rgba(90, 40, 73, 0.08);
+}
+
+.confirm-dialog__primary:focus-visible,
+.confirm-dialog__secondary:focus-visible {
+  outline: 2px solid #5a2849;
+  outline-offset: 2px;
 }

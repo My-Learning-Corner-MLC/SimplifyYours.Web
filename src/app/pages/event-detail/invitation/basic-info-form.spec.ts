@@ -107,6 +107,84 @@ describe('BasicInfoForm', () => {
     expect(inputFor('brideName').value).toBe('Amara');
   });
 
+  it('shows event-derived defaults as a placeholder, not a committed value, before anything is saved', async () => {
+    // Couple names have no event-record source — a realistic unconfigured settings response
+    // never includes them (see GetInvitationSettingsQueryHandler.BuildDefaults).
+    await render(
+      settings({ isConfigured: false, fieldValues: { venueName: 'Villa Astoria', venueAddress: 'Lake Como' } }),
+    );
+
+    // Shown as a hint, not something the organiser already confirmed.
+    expect(inputFor('venueName').value).toBe('');
+    expect(inputFor('venueName').placeholder).toBe('Villa Astoria');
+    // Couple names have no event-record source, so there's nothing to show as a placeholder either.
+    expect(inputFor('brideName').value).toBe('');
+    expect(inputFor('brideName').placeholder).toBe('');
+  });
+
+  it('submits the shown default when a placeholder field is left untouched', async () => {
+    const emitted = vi.fn();
+    await render(settings({ isConfigured: false }));
+    fixture.componentInstance.save.subscribe(emitted);
+
+    // Couple names have no default, so they still need to be typed for the submit to be valid.
+    const bride = inputFor('brideName');
+    bride.value = 'Amara';
+    bride.dispatchEvent(new Event('input'));
+    const groom = inputFor('groomName');
+    groom.value = 'Julian';
+    groom.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+
+    expect(emitted).toHaveBeenCalledTimes(1);
+    // venueName was never typed into — only ever shown as a placeholder — yet the default is what
+    // gets submitted, since leaving it as shown is accepting it, not leaving it blank.
+    expect(emitted.mock.calls[0][0]).toMatchObject({
+      fieldValues: expect.objectContaining({ venueName: 'Villa Astoria' }),
+    });
+  });
+
+  it('still blocks submit when a required field has neither a typed value nor a default', async () => {
+    const emitted = vi.fn();
+    await render(settings({ isConfigured: false, fieldValues: { venueName: 'Villa Astoria' } }));
+    fixture.componentInstance.save.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(emitted).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelectorAll('.basic-info__error').length).toBeGreaterThan(0);
+  });
+
+  it('renders Date and Time with the same date/time-picker create-event uses', async () => {
+    await render();
+
+    expect(inputFor('eventDate')?.closest('p-datepicker')).not.toBeNull();
+    expect(inputFor('eventTime')?.closest('p-datepicker')).not.toBeNull();
+  });
+
+  it('shows the same facts panel (event type, selection status) as the template detail view', async () => {
+    await render();
+
+    const facts = fixture.nativeElement.querySelector('.template-detail__facts').textContent;
+    expect(facts).toContain('Event type');
+    expect(facts).toContain('Wedding');
+    // The default fixture's templateId matches TEMPLATE.id.
+    expect(fixture.nativeElement.querySelector('.template-detail__fact-status')?.textContent?.trim()).toBe(
+      'Selected',
+    );
+  });
+
+  it('shows "Not selected" in the facts panel when this isn\'t the event\'s chosen template', async () => {
+    await render(settings({ templateId: 'some-other-template' }));
+
+    expect(fixture.nativeElement.querySelector('.template-detail__fact-status')?.textContent?.trim()).toBe(
+      'Not selected',
+    );
+  });
+
   it('marks only venueNotes optional', async () => {
     await render();
 

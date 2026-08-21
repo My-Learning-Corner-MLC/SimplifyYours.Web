@@ -78,6 +78,36 @@
   color: #7a6b6e;
 }
 
+.template-detail__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 1.25rem 0 0;
+  padding-top: 1.125rem;
+  border-top: 1px solid #ece2d2;
+}
+
+.template-detail__fact {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.template-detail__fact dt {
+  color: #7a766e;
+}
+
+.template-detail__fact dd {
+  margin: 0;
+  color: #2a1f2d;
+  font-weight: 500;
+}
+
+.template-detail__fact--selected {
+  color: #5a2849;
+  font-weight: 600;
+}
+
 .basic-info {
   display: flex;
   flex-direction: column;
@@ -217,6 +247,10 @@
   resize: vertical;
 }
 
+.basic-info__input::placeholder {
+  color: #a89f8c;
+}
+
 .basic-info__input:focus-visible {
   outline: none;
   border-color: #5a2849;
@@ -225,6 +259,41 @@
 
 .basic-info__field--invalid .basic-info__input {
   border-color: #7a3a24;
+}
+
+// The Date/Time fields use PrimeNG's p-datepicker (same control as create-event's own
+// Date/Starts/Ends row) instead of a plain input — re-skinned to match .basic-info__input.
+:host ::ng-deep p-datepicker.basic-info__datepicker {
+  display: block;
+  width: 100%;
+  position: relative;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input.basic-info__input {
+  width: 100%;
+  background: #fffcf5 !important;
+  color: #2a1f2d !important;
+  border-color: #ece2d2 !important;
+  border-radius: 10px !important;
+  padding-right: 2.6rem;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input.basic-info__input:focus {
+  border-color: #5a2849 !important;
+  box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08) !important;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input-icon,
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-clear-icon,
+:host ::ng-deep p-datepicker.basic-info__datepicker .pi {
+  color: #7a6b6e;
+  cursor: pointer;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input-icon:hover,
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-clear-icon:hover,
+:host ::ng-deep p-datepicker.basic-info__datepicker .pi:hover {
+  color: #5a2849;
 }
 
 .basic-info__error {
@@ -274,13 +343,12 @@
 }
 
 .basic-info__secondary {
-  border: 1px solid #ece2d2;
+  border: none;
   background: transparent;
   color: #4a4045;
 }
 
 .basic-info__secondary:hover:not(:disabled) {
-  border-color: #5a2849;
   color: #5a2849;
 }
 

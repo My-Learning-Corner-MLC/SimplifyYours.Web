@@ -13,13 +13,6 @@
   text-align: left;
   position: relative;
   border-radius: 14px;
-  transition: transform 180ms ease;
-}
-
-.template-card:hover,
-.template-card:focus-visible {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 30px rgba(42, 31, 45, 0.2);
 }
 
 .template-card:focus-visible {
@@ -35,6 +28,15 @@
   border: 1px solid #e6dcc8;
   position: relative;
   overflow: hidden;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.template-card:hover .template-card__face,
+.template-card:focus-visible .template-card__face {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 30px rgba(42, 31, 45, 0.2);
 }
 
 .template-card--selected .template-card__face {
@@ -111,13 +113,31 @@
 }
 
 .template-card__arrow {
+  display: inline-block;
   color: #7a6b6e;
-  transition: transform 180ms ease;
 }
 
 .template-card:hover .template-card__arrow,
 .template-card:focus-visible .template-card__arrow {
-  transform: translateX(6px);
+  animation: template-card-arrow-bounce 0.7s ease-in-out infinite;
+}
+
+@keyframes template-card-arrow-bounce {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-card:hover .template-card__arrow,
+  .template-card:focus-visible .template-card__arrow {
+    animation: none;
+    transform: translateX(6px);
+  }
 }
 
 .template-card__selected-label {

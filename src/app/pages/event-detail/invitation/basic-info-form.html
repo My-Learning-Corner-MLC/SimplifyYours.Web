@@ -59,6 +59,19 @@
         <h2 class="template-detail__title" id="basic-info-title">Basic info</h2>
       </div>
       <p class="template-detail__subtitle">{{ templateName() }} · {{ eventTypeLabel() }} template</p>
+
+      <dl class="template-detail__facts">
+        <div class="template-detail__fact">
+          <dt>Event type</dt>
+          <dd>{{ eventTypeLabel() }}</dd>
+        </div>
+        <div class="template-detail__fact">
+          <dt>Status</dt>
+          <dd class="template-detail__fact-status" [class.template-detail__fact--selected]="isSelected()">
+            {{ isSelected() ? 'Selected' : 'Not selected' }}
+          </dd>
+        </div>
+      </dl>
     </div>
 
     <form class="basic-info" (ngSubmit)="onSubmit()" novalidate>
@@ -104,13 +117,58 @@
                   }
                 </label>
 
-                @if (isMultiline(field)) {
+                @if (isDateField(field)) {
+                  <p-datepicker
+                    #fieldInput
+                    [inputId]="'field-' + field"
+                    dataType="string"
+                    dateFormat="DD, d MM yy"
+                    [placeholder]="defaultFor(field) || 'Select a date'"
+                    styleClass="basic-info__datepicker"
+                    inputStyleClass="basic-info__input"
+                    iconDisplay="input"
+                    [showIcon]="true"
+                    [showClear]="true"
+                    [disabled]="saving()"
+                    [attr.aria-invalid]="errorsFor(field).length > 0"
+                    [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                    [ngModel]="valueOf(field)"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onInput(field, $event)"
+                  />
+                } @else if (isTimeField(field)) {
+                  <p-datepicker
+                    #fieldInput
+                    [inputId]="'field-' + field"
+                    dataType="string"
+                    hourFormat="24"
+                    [stepMinute]="15"
+                    [timeOnly]="true"
+                    [placeholder]="defaultFor(field) || 'Select a time'"
+                    styleClass="basic-info__datepicker"
+                    inputStyleClass="basic-info__input"
+                    iconDisplay="input"
+                    [showIcon]="true"
+                    [showClear]="true"
+                    [disabled]="saving()"
+                    [attr.aria-invalid]="errorsFor(field).length > 0"
+                    [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                    [ngModel]="valueOf(field)"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onInput(field, $event)"
+                  >
+                    <ng-template pTemplate="inputicon">
+                      <i class="pi pi-clock"></i>
+                    </ng-template>
+                  </p-datepicker>
+                } @else if (isMultiline(field)) {
                   <textarea
                     #fieldInput
                     class="basic-info__input"
                     [id]="'field-' + field"
                     rows="2"
                     [maxlength]="maxLengths[field]"
+                    [placeholder]="defaultFor(field)"
                     [disabled]="saving()"
                     [attr.aria-invalid]="errorsFor(field).length > 0"
                     [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
@@ -125,6 +183,7 @@
                     type="text"
                     [id]="'field-' + field"
                     [maxlength]="maxLengths[field]"
+                    [placeholder]="defaultFor(field)"
                     [disabled]="saving()"
                     [attr.aria-invalid]="errorsFor(field).length > 0"
                     [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"

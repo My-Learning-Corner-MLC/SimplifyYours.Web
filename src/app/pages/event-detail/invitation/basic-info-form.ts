@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePickerModule } from 'primeng/datepicker';
 
 import { eventTypeLabel as formatEventTypeLabel } from '../../../core/events/event-type-display';
 import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
@@ -34,6 +35,12 @@ const OPTIONAL_FIELDS: readonly InvitationField[] = ['venueNotes'];
 
 /** Rendered as a textarea rather than a single line. */
 const MULTILINE_FIELDS: readonly InvitationField[] = ['venueAddress', 'venueNotes'];
+
+/** Rendered with the same date-picker create-event uses, instead of a plain text input. */
+const DATE_FIELDS: readonly InvitationField[] = ['eventDate'];
+
+/** Rendered with the same time-picker create-event uses, instead of a plain text input. */
+const TIME_FIELDS: readonly InvitationField[] = ['eventTime'];
 
 /** Fields short enough to share a row, paired the way create-event's own Date/Starts/Ends row does. */
 const FIELD_PAIRS: readonly (readonly [InvitationField, InvitationField])[] = [
@@ -90,7 +97,7 @@ export interface BasicInfoSaveEvent {
 @Component({
   selector: 'app-basic-info-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, ConfirmDialog],
+  imports: [FormsModule, ConfirmDialog, DatePickerModule],
   templateUrl: './basic-info-form.html',
   styleUrl: './basic-info-form.scss',
 })
@@ -106,14 +113,29 @@ export class BasicInfoForm {
   protected readonly accent = computed(() => templateThumbnailAccent(this.template()));
   protected readonly faceBackground = computed(() => templateThumbnailBackground(this.template()));
   protected readonly motif = computed(() => templateThumbnailMotif(this.template()));
+  /** Same facts panel as the detail view — `settings` already carries the selection, no separate service needed. */
+  protected readonly isSelected = computed(() => this.settings().templateId === this.template().id);
 
   readonly save = output<BasicInfoSaveEvent>();
   /** Fired once leaving is confirmed — either nothing was dirty, or Discard was chosen. */
   readonly dismissed = output<void>();
 
-  @ViewChildren('fieldInput') private readonly fieldInputs!: QueryList<ElementRef<HTMLElement>>;
+  // `read: ElementRef` so a `#fieldInput` placed on a `p-datepicker` (a component, whose default
+  // export is its own instance) resolves to its host element too, matching the plain input/textarea
+  // fields in the same query.
+  @ViewChildren('fieldInput', { read: ElementRef }) private readonly fieldInputs!: QueryList<
+    ElementRef<HTMLElement>
+  >;
 
   protected readonly values = signal<InvitationFieldValues>({});
+  /**
+   * Event-derived pre-fill text, shown as `placeholder` rather than a committed `value` — so the
+   * organiser sees "here's what we'd use" without it reading as something they already confirmed.
+   * Falls back into the submitted value (see {@link effectiveValue}) if left untouched. Empty once
+   * `settings.isConfigured` — those `fieldValues` are the organiser's own saved answers, not
+   * suggestions, so they render as real values instead (see the seeding effect below).
+   */
+  protected readonly defaults = signal<InvitationFieldValues>({});
   protected readonly publicLinkEnabled = signal(false);
   protected readonly touched = signal<ReadonlySet<InvitationField>>(new Set());
   protected readonly submitAttempted = signal(false);
@@ -157,8 +179,13 @@ export class BasicInfoForm {
     // returned — saved values, or pre-fill defaults — is what the organiser sees.
     effect(() => {
       const settings = this.settings();
-      this.values.set({ ...settings.fieldValues });
-      this.initialValues.set({ ...settings.fieldValues });
+      // Unconfigured settings' fieldValues are event-derived guesses, never confirmed by anyone —
+      // they start life as placeholder hints (see `defaults`), not real input state. Once
+      // configured, fieldValues are the organiser's own saved answers, so they seed real values.
+      const seeded = settings.isConfigured ? { ...settings.fieldValues } : {};
+      this.values.set(seeded);
+      this.initialValues.set(seeded);
+      this.defaults.set(settings.isConfigured ? {} : { ...settings.fieldValues });
       this.publicLinkEnabled.set(settings.publicLinkEnabled);
       this.initialPublicLinkEnabled.set(settings.publicLinkEnabled);
       this.touched.set(new Set());
@@ -175,8 +202,26 @@ export class BasicInfoForm {
     return MULTILINE_FIELDS.includes(field);
   }
 
+  protected isDateField(field: InvitationField): boolean {
+    return DATE_FIELDS.includes(field);
+  }
+
+  protected isTimeField(field: InvitationField): boolean {
+    return TIME_FIELDS.includes(field);
+  }
+
   protected valueOf(field: InvitationField): string {
     return this.values()[field] ?? '';
+  }
+
+  protected defaultFor(field: InvitationField): string {
+    return this.defaults()[field] ?? '';
+  }
+
+  /** What actually gets validated and submitted: the organiser's own typing, or the default if they left it as shown. */
+  protected effectiveValue(field: InvitationField): string {
+    const typed = (this.values()[field] ?? '').trim();
+    return typed || this.defaultFor(field).trim();
   }
 
   protected onInput(field: InvitationField, value: string): void {
@@ -190,7 +235,7 @@ export class BasicInfoForm {
 
   /** Local errors only; server messages are merged in by {@link errorsFor}. */
   protected localError(field: InvitationField): string | null {
-    const value = (this.values()[field] ?? '').trim();
+    const value = this.effectiveValue(field);
 
     if (!this.isOptional(field) && value.length === 0) {
       return 'This field is required.';
@@ -221,7 +266,7 @@ export class BasicInfoForm {
 
   protected readonly isValid = computed(() =>
     this.fields().every((field) => {
-      const value = (this.values()[field] ?? '').trim();
+      const value = this.effectiveValue(field);
 
       if (!OPTIONAL_FIELDS.includes(field) && value.length === 0) {
         return false;
@@ -239,7 +284,14 @@ export class BasicInfoForm {
       return;
     }
 
-    this.save.emit({ fieldValues: { ...this.values() }, publicLinkEnabled: this.publicLinkEnabled() });
+    // A field left showing its placeholder default (never typed into) submits that default
+    // rather than an empty string — accepting what was shown is a legitimate choice, not a no-op.
+    const fieldValues: InvitationFieldValues = {};
+    for (const field of this.fields()) {
+      fieldValues[field] = this.effectiveValue(field) || null;
+    }
+
+    this.save.emit({ fieldValues, publicLinkEnabled: this.publicLinkEnabled() });
   }
 
   /** Moves focus to the first field that fails validation, in field order. */
