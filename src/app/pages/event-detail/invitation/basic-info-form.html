@@ -219,6 +219,7 @@
       ariaLabel="Discard changes"
       primaryLabel="Discard"
       cancelLabel="Keep editing"
+      [danger]="true"
       (confirmed)="onDiscard()"
       (cancelled)="onKeepEditing()"
     >

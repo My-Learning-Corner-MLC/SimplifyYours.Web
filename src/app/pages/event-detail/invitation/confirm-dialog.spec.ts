@@ -13,6 +13,7 @@ import { ConfirmDialog } from './confirm-dialog';
       <app-confirm-dialog
         heading="Use this template?"
         primaryLabel="Use template"
+        [danger]="danger()"
         (confirmed)="confirmed()"
         (cancelled)="close()"
       >
@@ -23,6 +24,7 @@ import { ConfirmDialog } from './confirm-dialog';
 })
 class HostComponent {
   readonly open = signal(false);
+  readonly danger = signal(false);
   readonly onConfirmed = vi.fn();
 
   confirmed(): void {
@@ -107,5 +109,42 @@ describe('ConfirmDialog', () => {
     (fixture.nativeElement.querySelector('.confirm-dialog__primary') as HTMLButtonElement).click();
 
     expect(fixture.componentInstance.onConfirmed).toHaveBeenCalledTimes(1);
+  });
+
+  it('defaults to the solid primary / plain secondary treatment', async () => {
+    const fixture = await render();
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('.confirm-dialog__primary')?.classList.contains(
+        'confirm-dialog__primary--outline',
+      ),
+    ).toBe(false);
+    expect(
+      fixture.nativeElement.querySelector('.confirm-dialog__secondary')?.classList.contains(
+        'confirm-dialog__secondary--solid',
+      ),
+    ).toBe(false);
+  });
+
+  it('swaps to an outlined primary / solid secondary when danger is set, like create-event\'s discard dialog', async () => {
+    const fixture = await render();
+    fixture.componentInstance.danger.set(true);
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('.confirm-dialog__primary')?.classList.contains(
+        'confirm-dialog__primary--outline',
+      ),
+    ).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('.confirm-dialog__secondary')?.classList.contains(
+        'confirm-dialog__secondary--solid',
+      ),
+    ).toBe(true);
   });
 });

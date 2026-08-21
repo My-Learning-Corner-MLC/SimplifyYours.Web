@@ -113,6 +113,10 @@
   flex-direction: column;
   gap: 1.5rem;
   min-width: 0;
+  // Fits the content instead of stretching across the whole 1fr column — same form width as
+  // create-event's own form — and sits centered in the remaining space next to the identity panel.
+  max-width: 40rem;
+  margin: 0 auto;
 }
 
 .basic-info__hint {

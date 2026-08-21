@@ -363,6 +363,18 @@ describe('BasicInfoForm', () => {
 
     expect(dismissed).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('app-confirm-dialog')).not.toBeNull();
+    // Matches create-event's own discard-and-leave dialog: the destructive "Discard" is outlined,
+    // and "Keep editing" is the solid, visually heavier button.
+    expect(
+      fixture.nativeElement
+        .querySelector('.confirm-dialog__primary')
+        ?.classList.contains('confirm-dialog__primary--outline'),
+    ).toBe(true);
+    expect(
+      fixture.nativeElement
+        .querySelector('.confirm-dialog__secondary')
+        ?.classList.contains('confirm-dialog__secondary--solid'),
+    ).toBe(true);
   });
 
   it('"Keep editing" dismisses the discard dialog without leaving', async () => {
