@@ -1,42 +1,88 @@
-<section class="gallery" aria-labelledby="gallery-title">
-  <h2 class="gallery__title" id="gallery-title">Choose a design</h2>
+<div class="template-gallery">
+  @switch (catalogState()) {
+    @case ('loading') {
+      <div class="template-gallery__skeletons" aria-busy="true" aria-live="polite" data-testid="gallery-loading">
+        <span class="sr-only">Loading templates…</span>
+        @for (i of [0, 1, 2]; track i) {
+          <div class="template-gallery__skeleton-card">
+            <div class="template-gallery__skeleton-face"></div>
+            <div class="template-gallery__skeleton-line"></div>
+          </div>
+        }
+      </div>
+    }
 
-  @if (templates().length === 0) {
-    <p class="gallery__empty" role="status">
-      Invitation designs aren't available for this event type yet.
-    </p>
-  } @else {
-    <ul class="gallery__list">
-      @for (template of templates(); track template.id) {
-        <li
-          class="gallery__card"
-          [class.gallery__card--active]="activeId() === template.id"
-          [class.gallery__card--chosen]="isChosen(template)"
-        >
-          <button
-            type="button"
-            class="gallery__preview-button"
-            [attr.aria-pressed]="activeId() === template.id"
-            (click)="onFocus(template)"
-          >
-            <span class="gallery__swatches" aria-hidden="true">
-              @for (colour of template.palette; track colour) {
-                <span class="gallery__swatch" [style.background]="colour"></span>
-              }
-            </span>
-            <span class="gallery__name">{{ template.name }}</span>
-            <span class="gallery__tone">{{ template.tone }}</span>
-          </button>
+    @case ('error') {
+      <div class="template-gallery__notice" role="alert" data-testid="gallery-error">
+        <span class="template-gallery__notice-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B05540" stroke-width="2.4" stroke-linecap="round">
+            <line x1="12" y1="8" x2="12" y2="13"></line>
+            <circle cx="12" cy="16.5" r="0.9" fill="#B05540" stroke="none"></circle>
+            <circle cx="12" cy="12" r="9"></circle>
+          </svg>
+        </span>
+        <p class="template-gallery__notice-text">We couldn't load the templates</p>
+        <p class="template-gallery__notice-hint">
+          Something went wrong fetching the catalog. Your guest list and event details are unaffected.
+        </p>
+        <button type="button" class="template-gallery__retry" (click)="retry()">Retry</button>
+      </div>
+    }
 
-          @if (isChosen(template)) {
-            <p class="gallery__badge">Currently in use</p>
+    @case ('ready') {
+      @if (templates().length === 0) {
+        <div class="template-gallery__empty" data-testid="gallery-empty">
+          <span class="template-gallery__empty-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8A876" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+              <path d="M4 15l4-4 3 3 5-5 4 4"></path>
+            </svg>
+          </span>
+          <p class="template-gallery__empty-text">No templates for {{ eventTypeLabel() }} events — yet</p>
+          <p class="template-gallery__empty-hint">
+            We're still designing invitations for this occasion. Check back once they're ready.
+          </p>
+        </div>
+      } @else {
+        @if (selection.hasTemplate()) {
+          <div class="template-gallery__summary" data-testid="gallery-summary">
+            <div class="template-gallery__summary-info">
+              <span class="template-gallery__summary-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9B8A6B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                  <path d="M3 6l9 6.5L21 6"></path>
+                </svg>
+              </span>
+              <div>
+                <p class="template-gallery__summary-eyebrow">Currently selected</p>
+                <p class="template-gallery__summary-text">{{ selectedTemplateName() }}</p>
+              </div>
+            </div>
+            <div class="template-gallery__summary-actions">
+              <button type="button" class="template-gallery__summary-btn" (click)="onViewDetail()">
+                View detail
+              </button>
+            </div>
+          </div>
+        }
+
+        <header class="template-gallery__heading">
+          <h2 class="template-gallery__title">Choose an invitation template</h2>
+          <p class="template-gallery__subtitle">
+            {{ templates().length }} templates for {{ eventTypeLabel() }} events
+          </p>
+        </header>
+
+        <div class="template-gallery__grid" [style.gridTemplateColumns]="gridColumns()" data-testid="gallery-grid">
+          @for (template of templates(); track trackById($index, template)) {
+            <app-template-card
+              [template]="template"
+              [selected]="template.id === selectedTemplateId()"
+              (chosen)="onChosen($event)"
+            />
           }
-
-          <button type="button" class="gallery__choose" (click)="onChoose(template)">
-            {{ isChosen(template) ? 'Edit details' : 'Choose this design' }}
-          </button>
-        </li>
+        </div>
       }
-    </ul>
+    }
   }
-</section>
+</div>

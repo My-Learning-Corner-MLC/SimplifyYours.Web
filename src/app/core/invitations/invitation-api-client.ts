@@ -33,7 +33,7 @@ export class InvitationApiClient {
   private baseUrl(token: string): string {
     // Tokens are base64url, so nothing here needs escaping — but encoding anyway means a
     // malformed token produces a clean 404 rather than a broken URL.
-    return `${environment.apiBaseUrl}/api/v1/guests/invitations/${encodeURIComponent(token)}`;
+    return `${environment.apiBaseUrl}/api/v1/invitations/${encodeURIComponent(token)}`;
   }
 }
 

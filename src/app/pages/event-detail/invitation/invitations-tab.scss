@@ -1,0 +1,102 @@
+.invitations-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.invitations-tab__error {
+  margin: 0;
+  padding: 0.8rem 0.95rem;
+  background: #fbe9e6;
+  border: 1px solid #e3b6ac;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #8a2f22;
+}
+
+// The basic-info drawer's header — projected into <p-drawer>'s own header slot (pTemplate="header"
+// in the template) rather than drawn by BasicInfoForm, which can't supply a parent overlay's
+// content-projected template. The drawer root itself is themed globally in styles.scss (Drawer
+// has ViewEncapsulation.None and, with appendTo="body", renders outside this component's view).
+.basic-info-drawer__header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #ece2d2;
+  width: 100%;
+}
+
+.basic-info-drawer__thumb {
+  width: 2.125rem;
+  height: 2.75rem;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e6dcc8;
+  position: relative;
+  overflow: hidden;
+  flex: none;
+}
+
+.basic-info-drawer__thumb-frame {
+  position: absolute;
+  inset: 0.3rem;
+  border: 1px solid var(--face-accent, #c8a876);
+  pointer-events: none;
+}
+
+.basic-info-drawer__thumb-motif {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.basic-info-drawer__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.basic-info-drawer__title {
+  margin: 0;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #2a1f2d;
+}
+
+.basic-info-drawer__subtitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.78rem;
+  color: #7a6b6e;
+}
+
+.basic-info-drawer__close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #7a6b6e;
+  font-size: 28px;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+  transition: color 160ms ease-out;
+}
+
+.basic-info-drawer__close:hover {
+  color: #5a2849;
+}
+
+.basic-info-drawer__close:focus-visible {
+  outline: 2px solid #5a2849;
+  outline-offset: 2px;
+}

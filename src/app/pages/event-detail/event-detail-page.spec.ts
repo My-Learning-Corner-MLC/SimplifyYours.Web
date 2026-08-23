@@ -8,6 +8,9 @@ import { EventDetailError } from '../../core/events/event-detail-error.model';
 import { GuestApiClient } from '../../core/guests/guest-api-client';
 import { Guest } from '../../core/guests/guest.model';
 import { ListGuestsError } from '../../core/guests/guest-error.model';
+import { InvitationSettingsApiClient } from '../../core/invitations/invitation-settings-api-client';
+import { InvitationSettings } from '../../core/invitations/invitation-settings.model';
+import { TemplateCatalogApiClient } from '../../core/invitations/template-catalog-api-client';
 import { EventDetailPage } from './event-detail-page';
 
 const makeDetail = (overrides: Partial<EventDetail> = {}): EventDetail => ({
@@ -45,6 +48,29 @@ class ApiStub {
   getEventDetails = vi.fn(() => of(makeDetail()));
 }
 
+const UNCONFIGURED_INVITATION_SETTINGS: InvitationSettings = {
+  eventId: 'e1',
+  eventType: 'wedding',
+  templateId: null,
+  templateName: null,
+  fieldValues: {},
+  isConfigured: false,
+  requiredFields: [],
+  publicLinkEnabled: false,
+  publicEventToken: null,
+};
+
+class InvitationSettingsApiStub {
+  getSettings = vi.fn(() => of(UNCONFIGURED_INVITATION_SETTINGS));
+  saveSettings = vi.fn();
+  rotatePublicToken = vi.fn();
+  issuePreviewToken = vi.fn(() => of({ token: 'preview-tok', expiresAt: '2026-01-01T00:00:00Z' }));
+}
+
+class TemplateCatalogApiStub {
+  listTemplates = vi.fn(() => of([]));
+}
+
 class GuestApiStub {
   listGuests = vi.fn(() => of<Guest[]>([makeGuest()]));
   addGuest = vi.fn(() => of(makeGuest()));
@@ -53,12 +79,19 @@ class GuestApiStub {
   );
 }
 
-function setup(api: ApiStub, guestApi: GuestApiStub = new GuestApiStub(), id: string | null = 'e1') {
+function setup(
+  api: ApiStub,
+  guestApi: GuestApiStub = new GuestApiStub(),
+  id: string | null = 'e1',
+  invitationSettingsApi: InvitationSettingsApiStub = new InvitationSettingsApiStub(),
+) {
   TestBed.configureTestingModule({
     imports: [EventDetailPage],
     providers: [
       { provide: EventApiClient, useValue: api },
       { provide: GuestApiClient, useValue: guestApi },
+      { provide: InvitationSettingsApiClient, useValue: invitationSettingsApi },
+      { provide: TemplateCatalogApiClient, useValue: new TemplateCatalogApiStub() },
       {
         provide: ActivatedRoute,
         useValue: { paramMap: of(convertToParamMap(id === null ? {} : { id })) },
@@ -340,6 +373,88 @@ describe('EventDetailPage', () => {
 
       expect(fixture.componentInstance.copyLinkError()).toContain("couldn't get");
       expect(fixture.componentInstance.copyingLinkFor()).toBeNull();
+    });
+  });
+
+  describe('Invitations tab and the Guests toolbar indicator', () => {
+    it('adds Invitations as a fifth tab', () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+
+      expect(testId(root, 'event-detail-tab-invitations')?.textContent).toContain('Invitations');
+    });
+
+    it('renders the invitations tab panel with the InvitationsTab component', () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+
+      testId(root, 'event-detail-tab-invitations')!.click();
+      fixture.detectChanges();
+
+      expect(root.querySelector('app-invitations-tab')).not.toBeNull();
+    });
+
+    it('the top breadcrumb stays "Events › {name}" on the Invitations tab, same as every other tab', async () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+
+      testId(root, 'event-detail-tab-invitations')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const breadcrumb = root.querySelector('.detail__eyebrow');
+      expect(breadcrumb?.textContent).toContain('The Whitmore – Hayes Wedding');
+      expect(breadcrumb?.textContent).not.toContain('Invitations');
+    });
+
+    it('shows a "Set up invitation" toolbar button when no template is chosen yet', () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+
+      testId(root, 'event-detail-tab-guests')!.click();
+      fixture.detectChanges();
+
+      expect(testId(root, 'event-detail-setup-invitation')?.textContent).toContain('Set up invitation');
+    });
+
+    it('"Set up invitation" switches to the Invitations tab', () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+
+      testId(root, 'event-detail-tab-guests')!.click();
+      fixture.detectChanges();
+      testId(root, 'event-detail-setup-invitation')!.click();
+      fixture.detectChanges();
+
+      expect(testId(root, 'event-detail-invitations')).not.toBeNull();
+    });
+
+    it('hides "Set up invitation" once a template is already chosen', () => {
+      const invitationApi = new InvitationSettingsApiStub();
+      invitationApi.getSettings = vi.fn(() =>
+        of({ ...UNCONFIGURED_INVITATION_SETTINGS, templateId: 'tmpl-1', isConfigured: true }),
+      );
+      const fixture = setup(new ApiStub(), new GuestApiStub(), 'e1', invitationApi);
+      const root = html(fixture);
+
+      testId(root, 'event-detail-tab-guests')!.click();
+      fixture.detectChanges();
+
+      expect(testId(root, 'event-detail-setup-invitation')).toBeNull();
+    });
+
+    it('announces the template choice once via aria-live, driven by InvitationsTab', () => {
+      const fixture = setup(new ApiStub());
+      const root = html(fixture);
+      testId(root, 'event-detail-tab-guests')!.click();
+      fixture.detectChanges();
+
+      fixture.componentInstance.onInvitationTemplateSelected('Verona');
+      fixture.detectChanges();
+
+      const live = testId(root, 'event-detail-guests')!.querySelector('[role="status"][aria-live="polite"]');
+      expect(live?.textContent).toContain('Invitation template set to Verona');
     });
   });
 });

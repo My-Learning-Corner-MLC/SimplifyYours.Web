@@ -35,6 +35,7 @@ interface BridgeMessage {
     <iframe
       #frame
       class="invitation-frame"
+      [class.invitation-frame--embedded]="!fill()"
       title="Invitation"
       sandbox="allow-scripts"
       referrerpolicy="no-referrer"
@@ -56,6 +57,14 @@ interface BridgeMessage {
         height: 100dvh;
         border: 0;
       }
+
+      /* Used when this frame sits inside a bounded panel (e.g. the template detail's live
+         preview) rather than owning the whole page — a fixed height instead of the viewport.
+         Tall enough to fit a real rendered invitation without clipping it — see
+         template-preview-frame.scss's .preview-frame__body, which this height matches. */
+      .invitation-frame--embedded {
+        height: 50rem;
+      }
     `,
   ],
 })
@@ -65,6 +74,9 @@ export class InvitationFrame {
 
   /** Origin the framed document is expected to post from — the API origin serving it. */
   readonly expectedOrigin = input.required<string>();
+
+  /** False when embedded in a bounded panel instead of owning the full page. Defaults to true. */
+  readonly fill = input<boolean>(true);
 
   readonly rsvpRequested = output<void>();
   readonly loaded = output<void>();

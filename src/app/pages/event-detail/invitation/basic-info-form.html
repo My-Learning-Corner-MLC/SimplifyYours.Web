@@ -1,71 +1,141 @@
-<form class="basic-info" (ngSubmit)="onSubmit()" novalidate>
-  <header class="basic-info__header">
-    <p class="basic-info__eyebrow">Invitation details</p>
-    <h2 class="basic-info__title" id="basic-info-title">What should the invitation say?</h2>
+<div class="basic-info-drawer">
+  <div class="basic-info-drawer__body">
     <p class="basic-info__hint">
-      These fill in your chosen template. They apply to
+      A few details for your invitation. Fields vary by template. These apply to
       <strong>this invitation only</strong> &mdash; editing them here does not change the event.
     </p>
-  </header>
 
-  @if (sentInvitationCount() > 0) {
-    <p class="basic-info__warning" role="status">
-      {{ sentInvitationCount() }} guest(s) already have their link. Saving updates what they see
-      straight away.
-    </p>
-  }
+    @if (formLevelErrors().length > 0) {
+      <p class="basic-info__form-error" role="alert">{{ formLevelErrors()[0] }}</p>
+    }
 
-  <div class="basic-info__fields">
-    @for (field of fields(); track field) {
-      <div class="basic-info__field" [class.basic-info__field--invalid]="errorsFor(field).length > 0">
-        <label class="basic-info__label" [attr.for]="'field-' + field">
-          {{ labels[field] }}
-          @if (isOptional(field)) {
-            <span class="basic-info__optional">(optional)</span>
-          }
-        </label>
+    <div class="basic-info__toggle-card">
+      <div>
+        <p class="basic-info__toggle-title">Public invitation link</p>
+        <p class="basic-info__toggle-description">
+          Share one link with everyone instead of individual guest links.
+        </p>
+      </div>
+      <button
+        #autofocusTarget
+        type="button"
+        class="basic-info__toggle-switch"
+        role="switch"
+        [attr.aria-checked]="publicLinkEnabled()"
+        aria-label="Public invitation link"
+        [class.basic-info__toggle-switch--on]="publicLinkEnabled()"
+        [disabled]="saving()"
+        (click)="onTogglePublicLink()"
+      >
+        <span class="basic-info__toggle-knob"></span>
+      </button>
+    </div>
 
-        @if (isMultiline(field)) {
-          <textarea
-            class="basic-info__input"
-            [id]="'field-' + field"
-            rows="2"
-            [maxlength]="maxLengths[field]"
-            [disabled]="saving()"
-            [attr.aria-invalid]="errorsFor(field).length > 0"
-            [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
-            [ngModel]="valueOf(field)"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="onInput(field, $event)"
-          ></textarea>
-        } @else {
-          <input
-            class="basic-info__input"
-            type="text"
-            [id]="'field-' + field"
-            [maxlength]="maxLengths[field]"
-            [disabled]="saving()"
-            [attr.aria-invalid]="errorsFor(field).length > 0"
-            [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
-            [ngModel]="valueOf(field)"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="onInput(field, $event)"
-          />
-        }
+    <form class="basic-info" id="basic-info-form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="basic-info__fields">
+        @for (field of fields(); track field) {
+          <div class="basic-info__field" [class.basic-info__field--invalid]="errorsFor(field).length > 0">
+            <label class="basic-info__label" [attr.for]="'field-' + field">
+              {{ labels[field] }}
+              @if (isOptional(field)) {
+                <span class="basic-info__optional">(optional)</span>
+              }
+            </label>
 
-        @if (errorsFor(field).length > 0) {
-          <p class="basic-info__error" [id]="'error-' + field">{{ errorsFor(field)[0] }}</p>
+            @if (isDateField(field)) {
+              <p-datepicker
+                #fieldInput
+                [inputId]="'field-' + field"
+                dataType="string"
+                dateFormat="DD, d MM yy"
+                [minDate]="minEventDate"
+                placeholder="Select a date"
+                styleClass="basic-info__datepicker"
+                inputStyleClass="basic-info__input"
+                iconDisplay="input"
+                [showIcon]="true"
+                [showClear]="true"
+                appendTo="body"
+                [disabled]="saving()"
+                [attr.aria-invalid]="errorsFor(field).length > 0"
+                [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                [ngModel]="valueOf(field)"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onInput(field, $event)"
+              />
+            } @else if (isTimeField(field)) {
+              <p-datepicker
+                #fieldInput
+                [inputId]="'field-' + field"
+                dataType="string"
+                hourFormat="24"
+                [stepMinute]="15"
+                [timeOnly]="true"
+                [defaultDate]="defaultTime"
+                placeholder="Select a time"
+                styleClass="basic-info__datepicker"
+                inputStyleClass="basic-info__input"
+                iconDisplay="input"
+                [showIcon]="true"
+                [showClear]="true"
+                appendTo="body"
+                [disabled]="saving()"
+                [attr.aria-invalid]="errorsFor(field).length > 0"
+                [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                [ngModel]="valueOf(field)"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onInput(field, $event)"
+              >
+                <ng-template pTemplate="inputicon">
+                  <i class="pi pi-clock"></i>
+                </ng-template>
+              </p-datepicker>
+            } @else if (isMultiline(field)) {
+              <textarea
+                #fieldInput
+                class="basic-info__input"
+                [id]="'field-' + field"
+                rows="2"
+                [maxlength]="maxLengths[field]"
+                [disabled]="saving()"
+                [attr.aria-invalid]="errorsFor(field).length > 0"
+                [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                [ngModel]="valueOf(field)"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onInput(field, $event)"
+              ></textarea>
+            } @else {
+              <input
+                #fieldInput
+                class="basic-info__input"
+                type="text"
+                [id]="'field-' + field"
+                [maxlength]="maxLengths[field]"
+                [disabled]="saving()"
+                [attr.aria-invalid]="errorsFor(field).length > 0"
+                [attr.aria-describedby]="errorsFor(field).length > 0 ? 'error-' + field : null"
+                [ngModel]="valueOf(field)"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onInput(field, $event)"
+              />
+            }
+
+            @if (errorsFor(field).length > 0) {
+              <p class="basic-info__error" [id]="'error-' + field">{{ errorsFor(field)[0] }}</p>
+            }
+          </div>
         }
       </div>
-    }
+
+    </form>
   </div>
 
   <footer class="basic-info__actions">
-    <button type="button" class="basic-info__secondary" [disabled]="saving()" (click)="onDismiss()">
+    <button type="button" class="basic-info__secondary" [disabled]="saving()" (click)="onCancel()">
       Cancel
     </button>
-    <button type="submit" class="basic-info__primary" [disabled]="saving()">
-      {{ saving() ? 'Saving…' : 'Save invitation' }}
+    <button type="submit" form="basic-info-form" class="basic-info__primary" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save' }}
     </button>
   </footer>
-</form>
+</div>

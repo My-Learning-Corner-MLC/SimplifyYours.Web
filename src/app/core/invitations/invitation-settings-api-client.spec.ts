@@ -12,7 +12,7 @@ describe('InvitationSettingsApiClient', () => {
   let client: InvitationSettingsApiClient;
   let httpMock: HttpTestingController;
 
-  const url = `${environment.apiBaseUrl}/api/v1/events/${EVENT_ID}/invitation-settings`;
+  const url = `${environment.apiBaseUrl}/api/v1/invitations/settings/events/${EVENT_ID}`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -36,12 +36,15 @@ describe('InvitationSettingsApiClient', () => {
       eventId: EVENT_ID,
       eventType: 'wedding',
       templateId: 'marigold',
+      templateName: 'Marigold',
       fieldValues: { brideName: 'Amara' },
       isConfigured: true,
       requiredFields: ['brideName'],
+      publicLinkEnabled: false,
+      publicEventToken: null,
     });
 
-    expect(received).toMatchObject({ templateId: 'marigold', isConfigured: true });
+    expect(received).toMatchObject({ templateId: 'marigold', templateName: 'Marigold', isConfigured: true });
   });
 
   it('saves with PUT', () => {
@@ -93,4 +96,36 @@ describe('InvitationSettingsApiClient', () => {
 
     expect((await failure).reason).toBe('network');
   });
+
+  it('saves the public-link enable/disable action inline with the rest of the content', () => {
+    client
+      .saveSettings(EVENT_ID, {
+        templateId: 'marigold',
+        fieldValues: { brideName: 'Amara' },
+        publicLinkEnabled: true,
+      })
+      .subscribe();
+
+    const req = httpMock.expectOne(url);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({
+      templateId: 'marigold',
+      fieldValues: { brideName: 'Amara' },
+      publicLinkEnabled: true,
+    });
+    req.flush({});
+  });
+
+  it('rotates the public token with POST', () => {
+    let received: unknown;
+    client.rotatePublicToken(EVENT_ID).subscribe((status) => (received = status));
+
+    const req = httpMock.expectOne(`${url}/public-token`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ action: 'rotate' });
+    req.flush({ enabled: true, publicEventToken: 'new-token' });
+
+    expect(received).toEqual({ enabled: true, publicEventToken: 'new-token' });
+  });
+
 });

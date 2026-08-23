@@ -6,7 +6,6 @@ import { RsvpForm, formatDeadline } from './rsvp-form';
 function invitation(overrides: Partial<Invitation['rsvp']> = {}): Invitation {
   return {
     guestName: 'Priya',
-    content: { brideName: 'Amara', groomName: 'Julian' },
     rsvp: {
       status: 'NoResponse' as RsvpStatus,
       plusOnesAllowed: 2,

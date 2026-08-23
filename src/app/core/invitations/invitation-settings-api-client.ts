@@ -4,7 +4,11 @@ import { Observable, catchError, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { InvitationError } from './invitation.model';
-import { InvitationSettings, SaveInvitationSettingsRequest } from './invitation-settings.model';
+import {
+  InvitationSettings,
+  PublicTokenStatus,
+  SaveInvitationSettingsRequest,
+} from './invitation-settings.model';
 
 /**
  * The organiser's side of the invitation: which template, and the content that fills it.
@@ -20,14 +24,30 @@ export class InvitationSettingsApiClient {
       .pipe(catchError((error: unknown) => throwError(() => toError(error))));
   }
 
+  /**
+   * Also carries the public-link enable/disable action via the request's `publicLinkEnabled`
+   * field — there is deliberately no separate enable/disable endpoint. Composing content and
+   * turning on the link it's shared through are one organiser action, not two.
+   */
   saveSettings(eventId: string, request: SaveInvitationSettingsRequest): Observable<InvitationSettings> {
     return this.http
       .put<InvitationSettings>(this.url(eventId), request)
       .pipe(catchError((error: unknown) => throwError(() => toError(error))));
   }
 
+  /**
+   * Replaces the public token so the previously shared URL immediately stops resolving, while the
+   * link stays enabled at a new URL. Narrower than enable/disable: "give me a fresh link," not
+   * "turn it on/off" — the backend rejects this if the link isn't already enabled.
+   */
+  rotatePublicToken(eventId: string): Observable<PublicTokenStatus> {
+    return this.http
+      .post<PublicTokenStatus>(`${this.url(eventId)}/public-token`, { action: 'rotate' })
+      .pipe(catchError((error: unknown) => throwError(() => toError(error))));
+  }
+
   private url(eventId: string): string {
-    return `${environment.apiBaseUrl}/api/v1/events/${encodeURIComponent(eventId)}/invitation-settings`;
+    return `${environment.apiBaseUrl}/api/v1/invitations/settings/events/${encodeURIComponent(eventId)}`;
   }
 }
 

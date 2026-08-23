@@ -1,80 +1,167 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Subject, of, throwError } from 'rxjs';
 
+import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
+import { TemplateCatalogApiClient } from '../../../core/invitations/template-catalog-api-client';
+import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { TemplateGallery } from './template-gallery';
+
+const TEMPLATES: TemplateCatalogItem[] = [
+  { id: 't1', name: 'Verona', tone: 'Classic', palette: ['#111', '#222'], eventType: 'wedding', currentVersion: 1 },
+  { id: 't2', name: 'Marigold', tone: 'Warm', palette: ['#333', '#444'], eventType: 'wedding', currentVersion: 1 },
+  { id: 't3', name: 'Noir', tone: 'Bold', palette: ['#000', '#555'], eventType: 'wedding', currentVersion: 1 },
+];
 
 describe('TemplateGallery', () => {
   let fixture: ComponentFixture<TemplateGallery>;
+  let catalog: { listTemplates: ReturnType<typeof vi.fn> };
+  let selection: {
+    hasTemplate: ReturnType<typeof vi.fn>;
+    settings: ReturnType<typeof vi.fn>;
+  };
 
-  async function render(eventType: string, selectedTemplateId: string | null = null) {
-    await TestBed.configureTestingModule({ imports: [TemplateGallery] }).compileComponents();
+  async function render(eventType = 'wedding') {
+    await TestBed.configureTestingModule({
+      imports: [TemplateGallery],
+      providers: [
+        { provide: TemplateCatalogApiClient, useValue: catalog },
+        { provide: InvitationSelectionService, useValue: selection },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TemplateGallery);
-    // Zoneless: inputs go through componentRef so change detection actually runs.
     fixture.componentRef.setInput('eventType', eventType);
-    fixture.componentRef.setInput('selectedTemplateId', selectedTemplateId);
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
   }
 
-  const cards = () => fixture.nativeElement.querySelectorAll('.gallery__card');
-  const chooseButtons = () =>
-    Array.from(fixture.nativeElement.querySelectorAll('.gallery__choose')) as HTMLButtonElement[];
-
-  it('lists the templates for a wedding', async () => {
-    await render('wedding');
-
-    expect(cards().length).toBeGreaterThan(0);
-    expect(fixture.nativeElement.textContent).toContain('Marigold');
+  beforeEach(() => {
+    catalog = { listTemplates: vi.fn() };
+    selection = { hasTemplate: vi.fn(() => false), settings: vi.fn(() => null) };
   });
 
-  it('offers nothing for an event type with no designs yet', async () => {
-    // Better an explicit message than an empty panel that looks broken.
-    await render('launch');
+  it('shows skeleton cards while loading', async () => {
+    // Never emits, so the component stays in the loading state.
+    catalog.listTemplates.mockReturnValue(new Subject<readonly TemplateCatalogItem[]>());
 
-    expect(cards()).toHaveLength(0);
-    expect(fixture.nativeElement.textContent).toContain("aren't available");
+    await render();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="gallery-loading"]')).not.toBeNull();
   });
 
-  it('does not offer wedding designs for a birthday', async () => {
-    await render('birthday');
+  it('shows a retry option on error', async () => {
+    catalog.listTemplates.mockReturnValue(throwError(() => ({ reason: 'network' })));
 
-    expect(fixture.nativeElement.textContent).not.toContain('Marigold');
+    await render();
+
+    const notice = fixture.nativeElement.querySelector('[data-testid="gallery-error"]');
+    expect(notice?.textContent).toContain("We couldn't load the templates");
+    expect(notice?.querySelector('button')?.textContent).toContain('Retry');
   });
 
-  it('marks the saved template as in use', async () => {
-    await render('wedding', 'marigold');
+  it('retries the fetch when Retry is clicked', async () => {
+    catalog.listTemplates.mockReturnValue(throwError(() => ({ reason: 'network' })));
+    await render();
 
-    expect(fixture.nativeElement.textContent).toContain('Currently in use');
-    expect(chooseButtons()[0].textContent?.trim()).toBe('Edit details');
-  });
-
-  it('reads as a fresh choice when nothing is saved', async () => {
-    await render('wedding');
-
-    expect(fixture.nativeElement.textContent).not.toContain('Currently in use');
-    expect(chooseButtons()[0].textContent?.trim()).toBe('Choose this design');
-  });
-
-  it('emits the chosen template rather than saving on its own', async () => {
-    // Choosing opens the basic-info form; template and content are committed together, because a
-    // template with no content renders an invitation full of gaps.
-    const chosen = vi.fn();
-    await render('wedding');
-    fixture.componentInstance.templateChosen.subscribe(chosen);
-
-    chooseButtons()[0].click();
-
-    expect(chosen).toHaveBeenCalledTimes(1);
-    expect(chosen.mock.calls[0][0]).toMatchObject({ id: 'marigold', eventType: 'wedding' });
-  });
-
-  it('highlights a card when it is focused for preview', async () => {
-    await render('wedding');
-
-    const previewButton = fixture.nativeElement.querySelector('.gallery__preview-button') as HTMLButtonElement;
-    previewButton.click();
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES));
+    (fixture.nativeElement.querySelector('[data-testid="gallery-error"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(previewButton.getAttribute('aria-pressed')).toBe('true');
-    expect(cards()[0].classList).toContain('gallery__card--active');
+    expect(fixture.nativeElement.querySelector('[data-testid="gallery-grid"]')).not.toBeNull();
+  });
+
+  it('shows an empty state with no call to action when there are no templates', async () => {
+    catalog.listTemplates.mockReturnValue(of([]));
+
+    await render();
+
+    const empty = fixture.nativeElement.querySelector('[data-testid="gallery-empty"]');
+    expect(empty?.textContent).toContain('No templates for Wedding events — yet');
+    expect(empty?.querySelector('button')).toBeNull();
+  });
+
+  it('shows the populated grid with a count and 3 columns for 3 templates', async () => {
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES));
+
+    await render();
+
+    expect(fixture.nativeElement.textContent).toContain('3 templates for Wedding events');
+    const grid = fixture.nativeElement.querySelector('[data-testid="gallery-grid"]') as HTMLElement;
+    expect(grid.style.gridTemplateColumns).toBe('repeat(3, minmax(0, 300px))');
+    expect(fixture.nativeElement.querySelectorAll('app-template-card')).toHaveLength(3);
+  });
+
+  it('uses a 2-column layout for two templates', async () => {
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES.slice(0, 2)));
+
+    await render();
+
+    const grid = fixture.nativeElement.querySelector('[data-testid="gallery-grid"]') as HTMLElement;
+    expect(grid.style.gridTemplateColumns).toBe('repeat(2, minmax(0, 300px))');
+  });
+
+  it('shows the currently-selected summary bar with only "View detail", not "Edit basic info"', async () => {
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES));
+    selection.hasTemplate.mockReturnValue(true);
+    selection.settings.mockReturnValue({
+      eventId: 'e1',
+      eventType: 'wedding',
+      templateId: 't2',
+      templateName: 'Marigold',
+      fieldValues: {},
+      isConfigured: true,
+      requiredFields: [],
+    });
+
+    await render();
+
+    const summary = fixture.nativeElement.querySelector('[data-testid="gallery-summary"]');
+    expect(summary?.textContent).toContain('Marigold');
+    expect(summary?.textContent).toContain('View detail');
+    expect(summary?.textContent).not.toContain('Edit basic info');
+    expect(summary?.querySelectorAll('button')).toHaveLength(1);
+  });
+
+  it('emits the resolved template when "View detail" is clicked', async () => {
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES));
+    selection.hasTemplate.mockReturnValue(true);
+    selection.settings.mockReturnValue({
+      eventId: 'e1',
+      eventType: 'wedding',
+      templateId: 't2',
+      templateName: 'Marigold',
+      fieldValues: {},
+      isConfigured: true,
+      requiredFields: [],
+    });
+    const emitted = vi.fn();
+    await render();
+    fixture.componentInstance.viewDetail.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('.template-gallery__summary-btn') as HTMLButtonElement).click();
+
+    expect(emitted).toHaveBeenCalledWith(TEMPLATES[1]);
+  });
+
+  it('does not show the summary bar when nothing is selected', async () => {
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES));
+
+    await render();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="gallery-summary"]')).toBeNull();
+  });
+
+  it('emits templateChosen when a card is clicked', async () => {
+    catalog.listTemplates.mockReturnValue(of(TEMPLATES));
+    const emitted = vi.fn();
+    await render();
+    fixture.componentInstance.templateChosen.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('app-template-card button') as HTMLButtonElement).click();
+
+    expect(emitted).toHaveBeenCalledWith(TEMPLATES[0]);
   });
 });

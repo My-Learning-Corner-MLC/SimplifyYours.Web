@@ -1,0 +1,156 @@
+.template-card {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+  max-width: 300px;
+  text-align: left;
+  position: relative;
+  border-radius: 14px;
+}
+
+.template-card:focus-visible {
+  outline: 3px solid #c8a876;
+  outline-offset: 3px;
+}
+
+.template-card__face {
+  aspect-ratio: 5 / 7;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e6dcc8;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.template-card:hover .template-card__face,
+.template-card:focus-visible .template-card__face {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 30px rgba(42, 31, 45, 0.2);
+}
+
+.template-card--selected .template-card__face {
+  border: 2px solid #c8a876;
+}
+
+.template-card__face-frame {
+  position: absolute;
+  inset: 0.875rem;
+  border: 1px solid var(--face-accent, #c8a876);
+  pointer-events: none;
+}
+
+.template-card__face-label {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--face-accent, #9b8a6b);
+  text-align: center;
+  margin-top: 1.625rem;
+  opacity: 0.85;
+}
+
+.template-card__face-motif {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.template-card__face-rule {
+  width: 22px;
+  height: 1px;
+  background: var(--face-accent, #c8a876);
+  margin: 0 auto 1.375rem;
+}
+
+.template-card__badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #5a2849;
+  color: #fffcf5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: transform 180ms ease;
+}
+
+// Matches the lift on .template-card__face (a sibling element in the DOM, though the badge
+// overlaps it visually) on hover/focus, so the badge tracks the card's visible corner as it
+// animates instead of visibly detaching from it mid-animation.
+.template-card:hover .template-card__badge,
+.template-card:focus-visible .template-card__badge {
+  transform: translateY(-6px);
+}
+
+.template-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.template-card__name {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.19rem;
+  color: #2a1f2d;
+  transition:
+    color 180ms ease,
+    font-size 180ms ease;
+}
+
+.template-card:hover .template-card__name,
+.template-card:focus-visible .template-card__name {
+  color: #5a2849;
+  font-size: 1.31rem;
+}
+
+.template-card__arrow {
+  display: inline-block;
+  color: #7a6b6e;
+}
+
+.template-card:hover .template-card__arrow,
+.template-card:focus-visible .template-card__arrow {
+  animation: template-card-arrow-bounce 0.7s ease-in-out infinite;
+}
+
+@keyframes template-card-arrow-bounce {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-card:hover .template-card__arrow,
+  .template-card:focus-visible .template-card__arrow {
+    animation: none;
+    transform: translateX(6px);
+  }
+}
+
+.template-card__selected-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5a2849;
+}

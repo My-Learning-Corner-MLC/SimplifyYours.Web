@@ -10,7 +10,6 @@ const TOKEN = 'tok-abc123';
 
 const INVITATION = {
   guestName: 'Priya',
-  content: { brideName: 'Amara', groomName: 'Julian' },
   rsvp: {
     status: 'NoResponse',
     plusOnesAllowed: 2,
@@ -25,7 +24,7 @@ describe('InvitationPage', () => {
   let fixture: ComponentFixture<InvitationPage>;
   let httpMock: HttpTestingController;
 
-  const jsonUrl = `${environment.apiBaseUrl}/api/v1/guests/invitations/${TOKEN}`;
+  const jsonUrl = `${environment.apiBaseUrl}/api/v1/invitations/${TOKEN}`;
 
   async function render(token: string | null = TOKEN) {
     await TestBed.configureTestingModule({
@@ -73,7 +72,7 @@ describe('InvitationPage', () => {
 
     expect(frame().getAttribute('ng-reflect-src') ?? '').toBeDefined();
     const iframe = fixture.nativeElement.querySelector('iframe') as HTMLIFrameElement;
-    expect(iframe.src).toContain(`/api/v1/guests/invitations/${TOKEN}/render`);
+    expect(iframe.src).toContain(`/api/v1/invitations/${TOKEN}/render`);
   });
 
   it('never mounts the frame for an unknown token', async () => {

@@ -1,0 +1,250 @@
+.template-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.template-detail__body {
+  display: grid;
+  grid-template-columns: 17.5rem 1fr;
+  gap: 2.75rem;
+}
+
+@media (max-width: 640px) {
+  .template-detail__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.template-detail__identity {
+  display: flex;
+  flex-direction: column;
+}
+
+.template-detail__thumb {
+  width: 8.75rem;
+  aspect-ratio: 5 / 7;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e6dcc8;
+  position: relative;
+  overflow: hidden;
+}
+
+.template-detail__thumb-frame {
+  position: absolute;
+  inset: 0.75rem;
+  border: 1px solid var(--face-accent, #c8a876);
+  pointer-events: none;
+}
+
+.template-detail__thumb-motif {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.template-detail__thumb-rule {
+  width: 20px;
+  height: 1px;
+  background: var(--face-accent, #c8a876);
+  margin: 0 auto 1.125rem;
+}
+
+.template-detail__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.125rem;
+}
+
+.template-detail__title {
+  margin: 0;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.875rem;
+  font-weight: 400;
+  color: #2a1f2d;
+}
+
+.template-detail__badge {
+  padding: 0.2rem 0.6rem;
+  background: #f5e6cd;
+  color: #8a6a2f;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.template-detail__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: #7a6b6e;
+}
+
+.template-detail__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 1.25rem 0 0;
+  padding-top: 1.125rem;
+  border-top: 1px solid #ece2d2;
+}
+
+.template-detail__fact {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.template-detail__fact dt {
+  color: #7a766e;
+}
+
+.template-detail__fact dd {
+  margin: 0;
+  color: #2a1f2d;
+  font-weight: 500;
+}
+
+.template-detail__fact--selected {
+  color: #5a2849;
+  font-weight: 600;
+}
+
+.template-detail__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.template-detail__switch {
+  position: relative;
+  display: flex;
+  background: #ece2d2;
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+  width: fit-content;
+}
+
+// Slides between the two options instead of each button toggling its own background —
+// positioned under the buttons (z-index 0). Sized/positioned in px from the actual button
+// widths (see TemplateDetail.updateSwitchThumb) rather than a 50/50 CSS split, since the two
+// options aren't equal width.
+.template-detail__switch-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 7px;
+  background: #fffcf5;
+  box-shadow: 0 1px 2px rgba(90, 40, 73, 0.12);
+  transition: transform 220ms ease, width 220ms ease;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-detail__switch-thumb {
+    transition: none;
+  }
+}
+
+.template-detail__switch-btn {
+  position: relative;
+  z-index: 1;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #7a766e;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 7px 16px;
+  white-space: nowrap;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 220ms ease;
+}
+
+.template-detail__switch-btn--active {
+  color: #2a1f2d;
+  font-weight: 600;
+}
+
+.template-detail__switch-help {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: #a89f8c;
+}
+
+.template-detail__caption {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #7a6b6e;
+}
+
+.template-detail__notice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: #fbe9e6;
+  border: 1px solid #e3b6ac;
+}
+
+.template-detail__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.template-detail__primary,
+.template-detail__secondary {
+  appearance: none;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+
+.template-detail__primary {
+  border: 1px solid #5a2849;
+  background: #5a2849;
+  color: #fffcf5;
+}
+
+.template-detail__primary:hover {
+  background: #4a1f3b;
+  border-color: #4a1f3b;
+}
+
+.template-detail__secondary {
+  border: 1px solid #5a2849;
+  background: transparent;
+  color: #5a2849;
+}
+
+.template-detail__secondary:hover {
+  background: #5a2849;
+  color: #fffcf5;
+}
+
+.template-detail__primary:focus-visible,
+.template-detail__secondary:focus-visible {
+  outline: 2px solid #5a2849;
+  outline-offset: 2px;
+}

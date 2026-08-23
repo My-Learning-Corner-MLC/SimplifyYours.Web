@@ -1,0 +1,168 @@
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  QueryList,
+  ViewChildren,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { environment } from '../../../../environments/environment';
+import { apiOrigin } from '../../../core/invitations/api-origin';
+import { InvitationSelectionService } from '../../../core/invitations/invitation-selection.service';
+import { TemplateCatalogApiClient } from '../../../core/invitations/template-catalog-api-client';
+import { PreviewToken, TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
+import { eventTypeLabel } from '../../../core/events/event-type-display';
+import { PreviewLinkType, TemplatePreviewFrame } from './template-preview-frame';
+import {
+  templateThumbnailAccent,
+  templateThumbnailBackground,
+  templateThumbnailMotif,
+} from './template-thumbnail-tokens';
+
+type TokenState = 'loading' | 'ready' | 'error';
+
+/**
+ * One template's detail/preview view: a live sandboxed preview of the template rendered with
+ * sample data, and the guest-link/public-link switch. The top breadcrumb stays "Events › {name}"
+ * regardless of navigation within this tab, same as every other tab — nothing here contributes to
+ * it.
+ *
+ * A preview token is issued once per template — not per switch flip — and both link types are
+ * built from the same token by varying the render endpoint's `type` query param.
+ * template-management-service owns preview entirely: it is never scoped to this (or any) event,
+ * so previewing works identically whether or not the organiser has chosen this template yet — and
+ * the public-link switch here is always available, regardless of whether the real event has its
+ * public link turned on. Preview never resolves the real event's public-link state at all.
+ */
+@Component({
+  selector: 'app-template-detail',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TemplatePreviewFrame],
+  templateUrl: './template-detail.html',
+  styleUrl: './template-detail.scss',
+})
+export class TemplateDetail implements AfterViewInit {
+  private readonly catalogApi = inject(TemplateCatalogApiClient);
+  private readonly selection = inject(InvitationSelectionService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  @ViewChildren('switchButton', { read: ElementRef }) private readonly switchButtons!: QueryList<
+    ElementRef<HTMLButtonElement>
+  >;
+
+  readonly template = input.required<TemplateCatalogItem>();
+  readonly eventType = input.required<string>();
+
+  readonly back = output<void>();
+  /** Fires for both "Use this template" (not yet selected) and "Edit basic info" (already selected). */
+  readonly useTemplate = output<void>();
+
+  /** Drives the SELECTED badge and swaps the footer's primary action to "Edit basic info". */
+  protected readonly isSelected = computed(() => this.template().id === this.selection.settings()?.templateId);
+
+  protected readonly linkType = signal<PreviewLinkType>('private');
+  protected readonly tokenState = signal<TokenState>('loading');
+  private readonly previewToken = signal<PreviewToken | null>(null);
+
+  // Pixel position of the sliding switch thumb, measured against the actual button widths — the
+  // two options aren't equal width (one-line text, 7px/16px padding each), so a 50/50 CSS split
+  // doesn't track them; same approach as event-detail-page's own tab-indicator.
+  protected readonly switchThumbStyle = signal<{ transform: string; width: string }>({
+    transform: 'translateX(0px)',
+    width: '0px',
+  });
+
+  protected readonly eventTypeLabel = computed(() => eventTypeLabel(this.eventType()));
+  protected readonly apiOrigin = apiOrigin(environment.apiBaseUrl);
+
+  protected readonly accent = computed(() => templateThumbnailAccent(this.template()));
+  protected readonly faceBackground = computed(() => templateThumbnailBackground(this.template()));
+  protected readonly motif = computed(() => templateThumbnailMotif(this.template()));
+
+  protected readonly previewSrc = computed(() => {
+    const token = this.previewToken();
+    return token ? this.catalogApi.previewRenderUrl(token.token, this.linkType()) : null;
+  });
+
+  protected readonly caption = computed(() =>
+    this.linkType() === 'private'
+      ? // The rendered preview reuses the same guest markup as a real invitation, sample name and
+        // all — the RSVP button really is there, it just does nothing here rather than being
+        // hidden outright.
+        'This preview shows exactly what a guest would see, including a sample name. The RSVP button is inert in this preview.'
+      : "This is what anyone with the public link would see — no guest name attached. The RSVP button is inert in this preview.",
+  );
+
+  constructor() {
+    // Keyed on the template's own id, so switching which template this view shows (while the
+    // component stays mounted) re-issues for the right one; issued once per template, not on
+    // every link-type flip — both link types read from the same token.
+    effect(() => this.issueToken(this.template().id));
+
+    effect(() => {
+      this.linkType();
+      queueMicrotask(() => this.updateSwitchThumb());
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.updateSwitchThumb();
+    this.switchButtons.changes.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateSwitchThumb());
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateSwitchThumb();
+  }
+
+  private updateSwitchThumb(): void {
+    const index = this.linkType() === 'private' ? 0 : 1;
+    const button = this.switchButtons?.get(index)?.nativeElement;
+    if (!button) {
+      return;
+    }
+    this.switchThumbStyle.set({
+      transform: `translateX(${button.offsetLeft}px)`,
+      width: `${button.offsetWidth}px`,
+    });
+  }
+
+  private issueToken(templateId: string): void {
+    this.tokenState.set('loading');
+    this.previewToken.set(null);
+
+    this.catalogApi.issuePreviewToken(templateId).subscribe({
+      next: (token) => {
+        this.previewToken.set(token);
+        this.tokenState.set('ready');
+      },
+      error: () => this.tokenState.set('error'),
+    });
+  }
+
+  protected retryToken(): void {
+    this.issueToken(this.template().id);
+  }
+
+  protected setLinkType(type: PreviewLinkType): void {
+    this.linkType.set(type);
+  }
+
+  protected onBack(): void {
+    this.back.emit();
+  }
+
+  protected onUseTemplate(): void {
+    this.useTemplate.emit();
+  }
+}

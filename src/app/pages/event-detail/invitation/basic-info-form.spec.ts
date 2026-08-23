@@ -1,13 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import { InvitationSettings } from '../../../core/invitations/invitation-settings.model';
 import { BasicInfoForm } from './basic-info-form';
+
+const TEMPLATE: TemplateCatalogItem = {
+  id: 'marigold',
+  name: 'Marigold',
+  tone: 'Classic',
+  palette: ['#111', '#222'],
+  eventType: 'wedding',
+  currentVersion: 1,
+};
 
 function settings(overrides: Partial<InvitationSettings> = {}): InvitationSettings {
   return {
     eventId: '6f9b3c2a-6d1e-4f5b-9c3a-2e7d8b1f4a55',
     eventType: 'wedding',
     templateId: 'marigold',
+    templateName: 'Marigold',
     fieldValues: {
       brideName: 'Amara',
       groomName: 'Julian',
@@ -19,6 +30,8 @@ function settings(overrides: Partial<InvitationSettings> = {}): InvitationSettin
     },
     isConfigured: true,
     requiredFields: ['brideName', 'groomName', 'eventDate', 'eventTime', 'venueName', 'venueAddress'],
+    publicLinkEnabled: false,
+    publicEventToken: null,
     ...overrides,
   };
 }
@@ -32,7 +45,7 @@ describe('BasicInfoForm', () => {
     fixture = TestBed.createComponent(BasicInfoForm);
     // Zoneless app: inputs must go through componentRef to trigger change detection.
     fixture.componentRef.setInput('settings', value);
-    fixture.componentRef.setInput('templateId', 'marigold');
+    fixture.componentRef.setInput('template', TEMPLATE);
 
     for (const [key, val] of Object.entries(extra)) {
       fixture.componentRef.setInput(key, val);
@@ -66,6 +79,16 @@ describe('BasicInfoForm', () => {
     expect(text).not.toContain("Bride's name");
   });
 
+  it('gives every field its own row', async () => {
+    await render();
+
+    const fields = Array.from(fixture.nativeElement.querySelectorAll('.basic-info__field')) as HTMLElement[];
+
+    for (const field of fields) {
+      expect(field.querySelectorAll('.basic-info__label')).toHaveLength(1);
+    }
+  });
+
   it('never asks for the guest name', async () => {
     // It is not typed — it belongs to whichever guest's link is being opened.
     await render();
@@ -78,6 +101,93 @@ describe('BasicInfoForm', () => {
 
     expect(inputFor('venueName').value).toBe('Villa Astoria');
     expect(inputFor('brideName').value).toBe('Amara');
+  });
+
+  it('shows event-derived values as committed input, not a placeholder, before anything is saved', async () => {
+    // Couple names have no event-record source — a realistic unconfigured settings response
+    // never includes them (see GetInvitationSettingsQueryHandler.BuildDefaults).
+    await render(
+      settings({ isConfigured: false, fieldValues: { venueName: 'Villa Astoria', venueAddress: 'Lake Como' } }),
+    );
+
+    // Already there as real input the organiser can edit or submit as-is — not a hint they have
+    // to retype to keep, which is what showing it only as a placeholder would have forced.
+    expect(inputFor('venueName').value).toBe('Villa Astoria');
+    expect(inputFor('venueName').placeholder).toBe('');
+    // Couple names still have no event-record source, so there's nothing to pre-fill for them.
+    expect(inputFor('brideName').value).toBe('');
+  });
+
+  it('submits an event-derived value left untouched', async () => {
+    const emitted = vi.fn();
+    await render(
+      settings({
+        isConfigured: false,
+        fieldValues: {
+          venueName: 'Villa Astoria',
+          venueAddress: 'Lake Como',
+          eventDate: 'Saturday, September 12, 2026',
+          eventTime: '4:00 PM',
+        },
+      }),
+    );
+    fixture.componentInstance.save.subscribe(emitted);
+
+    // Couple names have no event-derived value, so they still need to be typed for the submit to be valid.
+    const bride = inputFor('brideName');
+    bride.value = 'Amara';
+    bride.dispatchEvent(new Event('input'));
+    const groom = inputFor('groomName');
+    groom.value = 'Julian';
+    groom.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+
+    expect(emitted).toHaveBeenCalledTimes(1);
+    // venueName was never typed into — it arrived pre-filled and was left as-is — yet it's still
+    // what gets submitted, since leaving a pre-filled value unedited is accepting it.
+    expect(emitted.mock.calls[0][0]).toMatchObject({
+      fieldValues: expect.objectContaining({ venueName: 'Villa Astoria' }),
+    });
+  });
+
+  it('still blocks submit when a required field has no event-derived value and nothing was typed', async () => {
+    const emitted = vi.fn();
+    await render(settings({ isConfigured: false, fieldValues: { venueName: 'Villa Astoria' } }));
+    fixture.componentInstance.save.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(emitted).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelectorAll('.basic-info__error').length).toBeGreaterThan(0);
+  });
+
+  it('renders Date and Time with the same date/time-picker create-event uses', async () => {
+    await render();
+
+    expect(inputFor('eventDate')?.closest('p-datepicker')).not.toBeNull();
+    expect(inputFor('eventTime')?.closest('p-datepicker')).not.toBeNull();
+  });
+
+  it("won't let the event date be picked in the past", async () => {
+    await render();
+
+    const instance = fixture.componentInstance as unknown as { minEventDate: Date };
+    const today = new Date(new Date().setHours(0, 0, 0, 0));
+    expect(instance.minEventDate.getTime()).toBe(today.getTime());
+  });
+
+  it('anchors a freshly opened time picker on the next 15-minute mark, not the exact current minute', async () => {
+    await render();
+
+    const instance = fixture.componentInstance as unknown as { defaultTime: Date };
+    const anchor = instance.defaultTime;
+    expect(anchor.getMinutes() % 15).toBe(0);
+    expect(anchor.getTime()).toBeGreaterThanOrEqual(Date.now());
+    // Never more than one step ahead of "now".
+    expect(anchor.getTime() - Date.now()).toBeLessThanOrEqual(15 * 60 * 1000);
   });
 
   it('marks only venueNotes optional', async () => {
@@ -94,20 +204,6 @@ describe('BasicInfoForm', () => {
     await render();
 
     expect(fixture.nativeElement.textContent).toContain('this invitation only');
-  });
-
-  it('warns when invitations have already been sent', async () => {
-    await render(settings(), { sentInvitationCount: 12 });
-
-    const warning = fixture.nativeElement.querySelector('.basic-info__warning');
-    expect(warning?.textContent).toContain('12');
-    expect(warning?.textContent).toContain('straight away');
-  });
-
-  it('does not warn when nothing has been sent', async () => {
-    await render();
-
-    expect(fixture.nativeElement.querySelector('.basic-info__warning')).toBeNull();
   });
 
   it('does not shout "required" at fields the organiser has not touched', async () => {
@@ -136,7 +232,10 @@ describe('BasicInfoForm', () => {
     (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
 
     expect(emitted).toHaveBeenCalledTimes(1);
-    expect(emitted.mock.calls[0][0]).toMatchObject({ brideName: 'Amara', venueName: 'Villa Astoria' });
+    expect(emitted.mock.calls[0][0]).toMatchObject({
+      fieldValues: { brideName: 'Amara', venueName: 'Villa Astoria' },
+      publicLinkEnabled: false,
+    });
   });
 
   it('submits with venueNotes left blank', async () => {
@@ -185,5 +284,97 @@ describe('BasicInfoForm', () => {
     const input = inputFor('brideName');
     expect(input.getAttribute('aria-invalid')).toBe('true');
     expect(input.getAttribute('aria-describedby')).toBe('error-brideName');
+  });
+
+  it('shows a snapshot failure (keyed on templateId, not a form field) as a form-level banner', async () => {
+    await render(settings(), {
+      serverErrors: { templateId: ['That template failed to parse and cannot be used.'] },
+    });
+
+    const banner = fixture.nativeElement.querySelector('.basic-info__form-error');
+    expect(banner?.textContent).toContain('That template failed to parse');
+  });
+
+  it('moves focus to the first invalid field on a failed submit', async () => {
+    await render(settings({ fieldValues: { brideName: 'Amara' } }));
+
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // groomName is the first empty required field after brideName.
+    expect(document.activeElement).toBe(inputFor('groomName'));
+  });
+
+  // The drawer's header (thumb, title, subtitle, × close) is rendered by InvitationsTab in
+  // <p-drawer>'s own header slot, not by BasicInfoForm — see invitations-tab.spec.ts for that
+  // coverage. What belongs here is that `onCancel` is public and behaves like Cancel, since the
+  // drawer's × button calls it directly through a template reference.
+  it('exposes onCancel publicly, behaving like Cancel, for the drawer\'s × button to call', async () => {
+    const dismissed = vi.fn();
+    await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    fixture.componentInstance.onCancel();
+
+    expect(dismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('defaults the public link toggle off when the event has none enabled', async () => {
+    await render();
+
+    const toggle = fixture.nativeElement.querySelector('.basic-info__toggle-switch');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('seeds the public link toggle from settings when already enabled', async () => {
+    await render(settings({ publicLinkEnabled: true }));
+
+    const toggle = fixture.nativeElement.querySelector('.basic-info__toggle-switch');
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('flips the public link toggle and includes it in the save payload', async () => {
+    const emitted = vi.fn();
+    await render();
+    fixture.componentInstance.save.subscribe(emitted);
+
+    (fixture.nativeElement.querySelector('.basic-info__toggle-switch') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+
+    expect(emitted.mock.calls[0][0]).toMatchObject({ publicLinkEnabled: true });
+  });
+
+  it('discards immediately on Cancel, with unsaved edits, no confirmation asked', async () => {
+    const dismissed = vi.fn();
+    await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
+
+    const input = inputFor('brideName');
+    input.value = 'Edited';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(dismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not leave focus on the eventDate field once the form has rendered', async () => {
+    await render();
+    // The redirect is deferred a macrotask past afterNextRender (see basic-info-form.ts) —
+    // `whenStable()` only tracks Angular-scheduled work, not a bare `setTimeout`, so it must be
+    // flushed explicitly here or the assertions below would run before the focus() call fires.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Whatever put focus somewhere on open, it must not be the date field — landing there with no
+    // visual cue reads as broken, and previously masked a picker that popped open uninvited too.
+    // Caveat: JSDOM has no animation engine or FocusTrap-style browser focus management, so this
+    // only proves the redirect itself fires — it can't reproduce (and therefore can't prove we've
+    // beaten) whatever real, unidentified mechanism sets the initial focus in an actual browser.
+    expect(document.activeElement?.id).not.toBe('field-eventDate');
+    expect(fixture.nativeElement.querySelector('.basic-info__toggle-switch')).toBe(document.activeElement);
   });
 });

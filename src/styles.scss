@@ -28,6 +28,11 @@ $muted: #7a6b6e;
   border-radius: 12px !important;
   box-shadow: 0 8px 24px rgba(42, 31, 45, 0.16) !important;
   padding: 0.9rem !important;
+  // PrimeNG's default overlay z-index (1000) sits below the basic-info drawer's modal z-index
+  // (1100, PrimeNG's default for Drawer) — without this, a date/time picker opened while the
+  // drawer is up would render partly underneath it. `appendTo="body"` on the basic-info form's
+  // pickers moves the panel out of the drawer's own stacking context so this override can reach it.
+  z-index: 1150 !important;
 
   .p-datepicker-header {
     background: transparent !important;
@@ -154,6 +159,27 @@ $muted: #7a6b6e;
       color: $cream !important;
     }
   }
+}
+
+// The basic-info drawer's mask + panel — re-skinned to the palette same as the datepicker/select
+// overlays above. `styleClass="basic-info-drawer"` on <p-drawer> only reaches its own root
+// element (Drawer has ViewEncapsulation.None), so the mask needs its own broad selector.
+.p-drawer-mask {
+  background: rgba(42, 31, 45, 0.45) !important;
+}
+
+.basic-info-drawer.p-drawer {
+  background: $cream !important;
+  box-shadow: -20px 0 50px rgba(42, 31, 45, 0.35) !important;
+  border: none !important;
+}
+
+// Our own header content (projected via pTemplate="header" — see invitations-tab.scss for its
+// styling) supplies its own padding/border, so Aura's default header chrome is zeroed out here
+// rather than stacking with it.
+.basic-info-drawer.p-drawer .p-drawer-header {
+  padding: 0 !important;
+  border-bottom: none !important;
 }
 
 // Timezone option row: city on the left, GMT offset on the right.

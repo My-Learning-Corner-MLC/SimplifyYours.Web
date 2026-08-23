@@ -1,42 +1,109 @@
+// Fills the p-drawer's content area — body scrolls, footer pinned at bottom. `height: 100%`
+// because the drawer's own content wrapper is a flex column of unknown height otherwise
+// (PrimeNG's Drawer sizes its container to the viewport, not to this content). The header itself
+// lives in `<p-drawer>`'s own header slot — see InvitationsTab's SCSS — since a child component's
+// template can't supply a parent overlay's content-projected template.
+.basic-info-drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.basic-info-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 .basic-info {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  max-width: 34rem;
-}
-
-.basic-info__eyebrow {
-  margin: 0;
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #7a6b6e;
-  font-weight: 600;
-}
-
-.basic-info__title {
-  margin: 0.5rem 0 0;
-  font-size: 1.5rem;
-  font-weight: 400;
-  color: #2a1f2d;
+  min-width: 0;
 }
 
 .basic-info__hint {
-  margin: 0.5rem 0 0;
-  font-size: 0.85rem;
+  margin: 0;
+  font-size: 0.8rem;
   line-height: 1.6;
   color: #7a6b6e;
 }
 
-.basic-info__warning {
+.basic-info__toggle-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.2rem;
+  background: #fffcf5;
+  border: 1px solid #ece2d2;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+
+.basic-info__toggle-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2a1f2d;
+}
+
+.basic-info__toggle-description {
+  margin: 0.15rem 0 0;
+  font-size: 0.76rem;
+  color: #7a6b6e;
+}
+
+.basic-info__toggle-switch {
+  appearance: none;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  border: none;
+  background: #ddd3bf;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+}
+
+.basic-info__toggle-switch:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.basic-info__toggle-switch--on {
+  background: #7a8f5a;
+}
+
+.basic-info__toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+
+.basic-info__toggle-switch--on .basic-info__toggle-knob {
+  transform: translateX(16px);
+}
+
+.basic-info__form-error {
   margin: 0;
   padding: 0.8rem 0.95rem;
-  background: #fbf3e3;
-  border: 1px solid #ebd9ae;
+  background: #fbe9e6;
+  border: 1px solid #e3b6ac;
   border-radius: 10px;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 500;
   line-height: 1.55;
-  color: #6b5f42;
+  color: #8a2f22;
 }
 
 .basic-info__fields {
@@ -48,75 +115,153 @@
 .basic-info__label {
   display: block;
   font-size: 0.82rem;
-  font-weight: 600;
-  color: #4a4045;
-  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: #2a1f2d;
 }
 
 .basic-info__optional {
+  color: #7a6b6e;
   font-weight: 400;
-  color: #b8ac96;
+  font-size: 0.72rem;
+  margin-left: 0.25rem;
 }
 
 .basic-info__input {
   width: 100%;
-  padding: 0.8rem 0.9rem;
-  border: 1.5px solid #ece2d2;
+  box-sizing: border-box;
+  margin-top: 0.6rem;
+  padding: 0.8rem 1.1rem;
   border-radius: 10px;
-  font: inherit;
-  font-size: 0.85rem;
+  border: 1px solid #ece2d2;
+  background: #fffcf5;
   color: #2a1f2d;
-  background: #fff;
+  font: inherit;
+  font-size: 0.9rem;
   resize: vertical;
 }
 
+.basic-info__input::placeholder {
+  color: #a89f8c;
+}
+
 .basic-info__input:focus-visible {
-  outline: 3px solid #c8a876;
-  outline-offset: 1px;
+  outline: none;
+  border-color: #5a2849;
+  box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
 }
 
 .basic-info__field--invalid .basic-info__input {
-  border-color: #c1493a;
+  border-color: #7a3a24;
+}
+
+// The Date/Time fields use PrimeNG's p-datepicker (same control as create-event's own
+// Date/Starts/Ends row) instead of a plain input — re-skinned to match .basic-info__input.
+:host ::ng-deep p-datepicker.basic-info__datepicker {
+  display: block;
+  width: 100%;
+  position: relative;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input.basic-info__input {
+  width: 100%;
+  background: #fffcf5 !important;
+  color: #2a1f2d !important;
+  border-color: #ece2d2 !important;
+  border-radius: 10px !important;
+  padding-right: 2.6rem;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input.basic-info__input:focus {
+  border-color: #5a2849 !important;
+  box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08) !important;
+}
+
+// The plain .basic-info__input::placeholder rule further down can't reach this input — it's
+// rendered inside p-datepicker's own template, a different style-encapsulation scope entirely.
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input.basic-info__input::placeholder {
+  color: #a89f8c !important;
+  opacity: 1;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input-icon,
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-clear-icon,
+:host ::ng-deep p-datepicker.basic-info__datepicker .pi {
+  color: #7a6b6e;
+  cursor: pointer;
+}
+
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-input-icon:hover,
+:host ::ng-deep p-datepicker.basic-info__datepicker .p-datepicker-clear-icon:hover,
+:host ::ng-deep p-datepicker.basic-info__datepicker .pi:hover {
+  color: #5a2849;
 }
 
 .basic-info__error {
-  margin: 0.4rem 0 0;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #c1493a;
+  min-height: 1.05rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #7a3a24;
 }
 
 .basic-info__actions {
   display: flex;
   gap: 0.7rem;
   justify-content: flex-end;
+  flex: none;
+  padding: 1.125rem 2rem;
+  border-top: 1px solid #ece2d2;
 }
 
 .basic-info__primary,
 .basic-info__secondary {
   appearance: none;
   font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.85rem 1.6rem;
-  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out,
+    border-color 160ms ease-out;
 }
 
 .basic-info__primary {
-  border: none;
+  border: 1px solid #5a2849;
   background: #5a2849;
   color: #fffcf5;
 }
 
+.basic-info__primary:hover:not(:disabled) {
+  background: #4a1f3b;
+  border-color: #4a1f3b;
+}
+
 .basic-info__primary:disabled {
+  border-color: #ece2d2;
   background: #ece2d2;
   color: #a89f8c;
   cursor: default;
 }
 
 .basic-info__secondary {
-  border: 1.5px solid #ece2d2;
+  border: none;
   background: transparent;
   color: #4a4045;
+}
+
+.basic-info__secondary:hover:not(:disabled) {
+  color: #5a2849;
+}
+
+.basic-info__secondary:disabled {
+  color: #a89f8c;
+  cursor: default;
+}
+
+.basic-info__primary:focus-visible,
+.basic-info__secondary:focus-visible {
+  outline: 2px solid #5a2849;
+  outline-offset: 2px;
 }

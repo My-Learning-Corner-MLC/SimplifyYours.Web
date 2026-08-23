@@ -19,6 +19,8 @@ export interface InvitationSettings {
   readonly eventType: string;
   /** Null until the organiser has chosen one. */
   readonly templateId: string | null;
+  /** The chosen template's display name. Null exactly when `templateId` is null. */
+  readonly templateName: string | null;
   readonly fieldValues: InvitationFieldValues;
   /**
    * False when nothing has been saved and `fieldValues` are pre-fill defaults derived from the
@@ -26,11 +28,26 @@ export interface InvitationSettings {
    */
   readonly isConfigured: boolean;
   readonly requiredFields: readonly InvitationField[];
+  readonly publicLinkEnabled: boolean;
+  /** Null unless `publicLinkEnabled` is true. */
+  readonly publicEventToken: string | null;
 }
 
 export interface SaveInvitationSettingsRequest {
   readonly templateId: string;
   readonly fieldValues: InvitationFieldValues;
+  /**
+   * Omitted (undefined/null) leaves the public link untouched. `true` enables it, minting a token
+   * if none exists. `false` disables it AND revokes the token, so a later re-enable always mints a
+   * fresh one rather than reviving a URL that may already have been shared.
+   */
+  readonly publicLinkEnabled?: boolean | null;
+}
+
+/** Response of `POST .../public-token`. */
+export interface PublicTokenStatus {
+  readonly enabled: boolean;
+  readonly publicEventToken: string | null;
 }
 
 /**
