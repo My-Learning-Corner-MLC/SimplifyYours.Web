@@ -10,7 +10,6 @@ const TOKEN = 'tok-abc123';
 
 const INVITATION = {
   guestName: 'Priya',
-  content: { brideName: 'Amara', groomName: 'Julian' },
   rsvp: {
     status: 'NoResponse',
     plusOnesAllowed: 2,

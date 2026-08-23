@@ -21,12 +21,6 @@ export interface InvitationRsvp {
 
 export interface Invitation {
   readonly guestName: string;
-  /**
-   * The organiser's saved invitation content, keyed by merge token. Shape depends on the event
-   * type — a wedding carries couple names, a birthday an event name — so it is a map rather than
-   * a fixed object.
-   */
-  readonly content: Readonly<Record<string, string | null>>;
   readonly rsvp: InvitationRsvp;
 }
 
