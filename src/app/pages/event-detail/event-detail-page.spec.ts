@@ -394,7 +394,7 @@ describe('EventDetailPage', () => {
       expect(root.querySelector('app-invitations-tab')).not.toBeNull();
     });
 
-    it('extends the top breadcrumb with "Invitations" instead of drawing a second breadcrumb bar', async () => {
+    it('the top breadcrumb stays "Events › {name}" on the Invitations tab, same as every other tab', async () => {
       const fixture = setup(new ApiStub());
       const root = html(fixture);
 
@@ -405,39 +405,16 @@ describe('EventDetailPage', () => {
 
       const breadcrumb = root.querySelector('.detail__eyebrow');
       expect(breadcrumb?.textContent).toContain('The Whitmore – Hayes Wedding');
-      expect(breadcrumb?.textContent).toContain('Invitations');
-      // The tab itself no longer renders its own breadcrumb bar.
-      expect(root.querySelector('app-invitations-tab .template-detail__breadcrumb')).toBeNull();
-    });
-
-    it('drops the extra breadcrumb segments once the organiser leaves the Invitations tab', async () => {
-      const fixture = setup(new ApiStub());
-      const root = html(fixture);
-
-      testId(root, 'event-detail-tab-invitations')!.click();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      expect(root.querySelector('.detail__eyebrow')?.textContent).toContain('Invitations');
-
-      testId(root, 'event-detail-tab-overview')!.click();
-      fixture.detectChanges();
-
-      const breadcrumb = root.querySelector('.detail__eyebrow');
       expect(breadcrumb?.textContent).not.toContain('Invitations');
-      expect(breadcrumb?.textContent).toContain('The Whitmore – Hayes Wedding');
     });
 
-    it('shows a compact "no template" note and a "Set up invitation" toolbar button', () => {
+    it('shows a "Set up invitation" toolbar button when no template is chosen yet', () => {
       const fixture = setup(new ApiStub());
       const root = html(fixture);
 
       testId(root, 'event-detail-tab-guests')!.click();
       fixture.detectChanges();
 
-      const note = testId(root, 'event-detail-invite-note');
-      expect(note?.textContent).toContain('No invitation template chosen yet.');
-      expect(note?.closest('.detail__guests-toolbar')).toBeNull(); // not part of the toolbar/alert
       expect(testId(root, 'event-detail-setup-invitation')?.textContent).toContain('Set up invitation');
     });
 
@@ -453,7 +430,7 @@ describe('EventDetailPage', () => {
       expect(testId(root, 'event-detail-invitations')).not.toBeNull();
     });
 
-    it('shows the template name and a Change link once a template is configured', () => {
+    it('hides "Set up invitation" once a template is already chosen', () => {
       const invitationApi = new InvitationSettingsApiStub();
       invitationApi.getSettings = vi.fn(() =>
         of({ ...UNCONFIGURED_INVITATION_SETTINGS, templateId: 'tmpl-1', isConfigured: true }),
@@ -464,27 +441,7 @@ describe('EventDetailPage', () => {
       testId(root, 'event-detail-tab-guests')!.click();
       fixture.detectChanges();
 
-      const note = testId(root, 'event-detail-invite-note');
-      expect(note?.textContent).toContain('Invitation template selected');
-      expect(note?.querySelector('.detail__invite-note-link')?.textContent).toContain('Change');
-      // No "Set up invitation" once a template is already chosen.
       expect(testId(root, 'event-detail-setup-invitation')).toBeNull();
-    });
-
-    it('the note\'s Change link switches to the Invitations tab', () => {
-      const invitationApi = new InvitationSettingsApiStub();
-      invitationApi.getSettings = vi.fn(() =>
-        of({ ...UNCONFIGURED_INVITATION_SETTINGS, templateId: 'tmpl-1', isConfigured: true }),
-      );
-      const fixture = setup(new ApiStub(), new GuestApiStub(), 'e1', invitationApi);
-      const root = html(fixture);
-
-      testId(root, 'event-detail-tab-guests')!.click();
-      fixture.detectChanges();
-      (root.querySelector('.detail__invite-note-link') as HTMLButtonElement).click();
-      fixture.detectChanges();
-
-      expect(testId(root, 'event-detail-invitations')).not.toBeNull();
     });
 
     it('announces the template choice once via aria-live, driven by InvitationsTab', () => {

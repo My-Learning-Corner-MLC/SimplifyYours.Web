@@ -84,7 +84,14 @@
 
     <div class="template-detail__preview">
       <div class="template-detail__switch" role="group" aria-label="Preview link type">
+        <span
+          class="template-detail__switch-thumb"
+          aria-hidden="true"
+          [style.transform]="switchThumbStyle().transform"
+          [style.width]="switchThumbStyle().width"
+        ></span>
         <button
+          #switchButton
           type="button"
           class="template-detail__switch-btn"
           [class.template-detail__switch-btn--active]="linkType() === 'private'"
@@ -94,6 +101,7 @@
           Guest invitation link
         </button>
         <button
+          #switchButton
           type="button"
           class="template-detail__switch-btn"
           [class.template-detail__switch-btn--active]="linkType() === 'public'"

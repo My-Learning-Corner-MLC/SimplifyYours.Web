@@ -79,18 +79,14 @@ describe('BasicInfoForm', () => {
     expect(text).not.toContain("Bride's name");
   });
 
-  it('pairs Bride\'s/Groom\'s name and Date/Time on the same row, like create-event does', async () => {
+  it('gives every field its own row', async () => {
     await render();
 
-    const rows = Array.from(fixture.nativeElement.querySelectorAll('.basic-info__row')) as HTMLElement[];
-    const rowLabels = rows.map((row) =>
-      Array.from(row.querySelectorAll('.basic-info__label')).map((l) => (l as HTMLElement).textContent?.trim()),
-    );
+    const fields = Array.from(fixture.nativeElement.querySelectorAll('.basic-info__field')) as HTMLElement[];
 
-    expect(rowLabels[0]).toEqual(["Bride's name", "Groom's name"]);
-    expect(rowLabels[1]).toEqual(['Date', 'Time']);
-    // Venue/Address/Venue notes each stay on their own row.
-    expect(rows[2].querySelectorAll('.basic-info__label')).toHaveLength(1);
+    for (const field of fields) {
+      expect(field.querySelectorAll('.basic-info__label')).toHaveLength(1);
+    }
   });
 
   it('never asks for the guest name', async () => {
@@ -107,27 +103,37 @@ describe('BasicInfoForm', () => {
     expect(inputFor('brideName').value).toBe('Amara');
   });
 
-  it('shows event-derived defaults as a placeholder, not a committed value, before anything is saved', async () => {
+  it('shows event-derived values as committed input, not a placeholder, before anything is saved', async () => {
     // Couple names have no event-record source — a realistic unconfigured settings response
     // never includes them (see GetInvitationSettingsQueryHandler.BuildDefaults).
     await render(
       settings({ isConfigured: false, fieldValues: { venueName: 'Villa Astoria', venueAddress: 'Lake Como' } }),
     );
 
-    // Shown as a hint, not something the organiser already confirmed.
-    expect(inputFor('venueName').value).toBe('');
-    expect(inputFor('venueName').placeholder).toBe('Villa Astoria');
-    // Couple names have no event-record source, so there's nothing to show as a placeholder either.
+    // Already there as real input the organiser can edit or submit as-is — not a hint they have
+    // to retype to keep, which is what showing it only as a placeholder would have forced.
+    expect(inputFor('venueName').value).toBe('Villa Astoria');
+    expect(inputFor('venueName').placeholder).toBe('');
+    // Couple names still have no event-record source, so there's nothing to pre-fill for them.
     expect(inputFor('brideName').value).toBe('');
-    expect(inputFor('brideName').placeholder).toBe('');
   });
 
-  it('submits the shown default when a placeholder field is left untouched', async () => {
+  it('submits an event-derived value left untouched', async () => {
     const emitted = vi.fn();
-    await render(settings({ isConfigured: false }));
+    await render(
+      settings({
+        isConfigured: false,
+        fieldValues: {
+          venueName: 'Villa Astoria',
+          venueAddress: 'Lake Como',
+          eventDate: 'Saturday, September 12, 2026',
+          eventTime: '4:00 PM',
+        },
+      }),
+    );
     fixture.componentInstance.save.subscribe(emitted);
 
-    // Couple names have no default, so they still need to be typed for the submit to be valid.
+    // Couple names have no event-derived value, so they still need to be typed for the submit to be valid.
     const bride = inputFor('brideName');
     bride.value = 'Amara';
     bride.dispatchEvent(new Event('input'));
@@ -139,14 +145,14 @@ describe('BasicInfoForm', () => {
     (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
 
     expect(emitted).toHaveBeenCalledTimes(1);
-    // venueName was never typed into — only ever shown as a placeholder — yet the default is what
-    // gets submitted, since leaving it as shown is accepting it, not leaving it blank.
+    // venueName was never typed into — it arrived pre-filled and was left as-is — yet it's still
+    // what gets submitted, since leaving a pre-filled value unedited is accepting it.
     expect(emitted.mock.calls[0][0]).toMatchObject({
       fieldValues: expect.objectContaining({ venueName: 'Villa Astoria' }),
     });
   });
 
-  it('still blocks submit when a required field has neither a typed value nor a default', async () => {
+  it('still blocks submit when a required field has no event-derived value and nothing was typed', async () => {
     const emitted = vi.fn();
     await render(settings({ isConfigured: false, fieldValues: { venueName: 'Villa Astoria' } }));
     fixture.componentInstance.save.subscribe(emitted);
@@ -182,26 +188,6 @@ describe('BasicInfoForm', () => {
     expect(anchor.getTime()).toBeGreaterThanOrEqual(Date.now());
     // Never more than one step ahead of "now".
     expect(anchor.getTime() - Date.now()).toBeLessThanOrEqual(15 * 60 * 1000);
-  });
-
-  it('shows the same facts panel (event type, selection status) as the template detail view', async () => {
-    await render();
-
-    const facts = fixture.nativeElement.querySelector('.template-detail__facts').textContent;
-    expect(facts).toContain('Event type');
-    expect(facts).toContain('Wedding');
-    // The default fixture's templateId matches TEMPLATE.id.
-    expect(fixture.nativeElement.querySelector('.template-detail__fact-status')?.textContent?.trim()).toBe(
-      'Selected',
-    );
-  });
-
-  it('shows "Not selected" in the facts panel when this isn\'t the event\'s chosen template', async () => {
-    await render(settings({ templateId: 'some-other-template' }));
-
-    expect(fixture.nativeElement.querySelector('.template-detail__fact-status')?.textContent?.trim()).toBe(
-      'Not selected',
-    );
   });
 
   it('marks only venueNotes optional', async () => {
@@ -320,14 +306,18 @@ describe('BasicInfoForm', () => {
     expect(document.activeElement).toBe(inputFor('groomName'));
   });
 
-  it('shows the same identity panel as the template detail view, with the page title and template subtitle', async () => {
+  // The drawer's header (thumb, title, subtitle, × close) is rendered by InvitationsTab in
+  // <p-drawer>'s own header slot, not by BasicInfoForm — see invitations-tab.spec.ts for that
+  // coverage. What belongs here is that `onCancel` is public and behaves like Cancel, since the
+  // drawer's × button calls it directly through a template reference.
+  it('exposes onCancel publicly, behaving like Cancel, for the drawer\'s × button to call', async () => {
+    const dismissed = vi.fn();
     await render();
+    fixture.componentInstance.dismissed.subscribe(dismissed);
 
-    expect(fixture.nativeElement.querySelector('.template-detail__title')?.textContent).toContain('Basic info');
-    const subtitle = fixture.nativeElement.querySelector('.template-detail__subtitle')?.textContent;
-    expect(subtitle).toContain('Marigold');
-    expect(subtitle).toContain('Wedding');
-    expect(fixture.nativeElement.querySelector('.template-detail__thumb-motif svg')).not.toBeNull();
+    fixture.componentInstance.onCancel();
+
+    expect(dismissed).toHaveBeenCalledTimes(1);
   });
 
   it('defaults the public link toggle off when the event has none enabled', async () => {
@@ -356,18 +346,7 @@ describe('BasicInfoForm', () => {
     expect(emitted.mock.calls[0][0]).toMatchObject({ publicLinkEnabled: true });
   });
 
-  it('exits immediately on Cancel when nothing has changed', async () => {
-    const dismissed = vi.fn();
-    await render();
-    fixture.componentInstance.dismissed.subscribe(dismissed);
-
-    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
-
-    expect(dismissed).toHaveBeenCalledTimes(1);
-    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).toBeNull();
-  });
-
-  it('shows the discard-changes dialog on Cancel once a field has been edited, rather than exiting', async () => {
+  it('discards immediately on Cancel, with unsaved edits, no confirmation asked', async () => {
     const dismissed = vi.fn();
     await render();
     fixture.componentInstance.dismissed.subscribe(dismissed);
@@ -378,46 +357,24 @@ describe('BasicInfoForm', () => {
     fixture.detectChanges();
 
     (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    expect(dismissed).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).not.toBeNull();
-  });
-
-  it('"Keep editing" dismisses the discard dialog without leaving', async () => {
-    const dismissed = vi.fn();
-    await render();
-    fixture.componentInstance.dismissed.subscribe(dismissed);
-
-    const input = inputFor('brideName');
-    input.value = 'Edited';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    (fixture.nativeElement.querySelector('.confirm-dialog__secondary') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    expect(dismissed).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).toBeNull();
-  });
-
-  it('"Discard" on the dialog emits dismissed', async () => {
-    const dismissed = vi.fn();
-    await render();
-    fixture.componentInstance.dismissed.subscribe(dismissed);
-
-    const input = inputFor('brideName');
-    input.value = 'Edited';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    (fixture.nativeElement.querySelector('.confirm-dialog__primary') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(dismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not leave focus on the eventDate field once the form has rendered', async () => {
+    await render();
+    // The redirect is deferred a macrotask past afterNextRender (see basic-info-form.ts) —
+    // `whenStable()` only tracks Angular-scheduled work, not a bare `setTimeout`, so it must be
+    // flushed explicitly here or the assertions below would run before the focus() call fires.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Whatever put focus somewhere on open, it must not be the date field — landing there with no
+    // visual cue reads as broken, and previously masked a picker that popped open uninvited too.
+    // Caveat: JSDOM has no animation engine or FocusTrap-style browser focus management, so this
+    // only proves the redirect itself fires — it can't reproduce (and therefore can't prove we've
+    // beaten) whatever real, unidentified mechanism sets the initial focus in an actual browser.
+    expect(document.activeElement?.id).not.toBe('field-eventDate');
+    expect(fixture.nativeElement.querySelector('.basic-info__toggle-switch')).toBe(document.activeElement);
   });
 });

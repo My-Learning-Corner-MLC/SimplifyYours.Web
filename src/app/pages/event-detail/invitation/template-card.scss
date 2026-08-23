@@ -89,6 +89,15 @@
   justify-content: center;
   font-size: 0.85rem;
   font-weight: 700;
+  transition: transform 180ms ease;
+}
+
+// Matches the lift on .template-card__face (a sibling element in the DOM, though the badge
+// overlaps it visually) on hover/focus, so the badge tracks the card's visible corner as it
+// animates instead of visibly detaching from it mid-animation.
+.template-card:hover .template-card__badge,
+.template-card:focus-visible .template-card__badge {
+  transform: translateY(-6px);
 }
 
 .template-card__footer {

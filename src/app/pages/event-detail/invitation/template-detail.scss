@@ -123,7 +123,8 @@
 }
 
 .template-detail__switch {
-  display: inline-flex;
+  position: relative;
+  display: flex;
   background: #ece2d2;
   border-radius: 9px;
   padding: 3px;
@@ -131,7 +132,31 @@
   width: fit-content;
 }
 
+// Slides between the two options instead of each button toggling its own background —
+// positioned under the buttons (z-index 0). Sized/positioned in px from the actual button
+// widths (see TemplateDetail.updateSwitchThumb) rather than a 50/50 CSS split, since the two
+// options aren't equal width.
+.template-detail__switch-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 7px;
+  background: #fffcf5;
+  box-shadow: 0 1px 2px rgba(90, 40, 73, 0.12);
+  transition: transform 220ms ease, width 220ms ease;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-detail__switch-thumb {
+    transition: none;
+  }
+}
+
 .template-detail__switch-btn {
+  position: relative;
+  z-index: 1;
   appearance: none;
   border: none;
   background: transparent;
@@ -139,16 +164,16 @@
   font: inherit;
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.44rem 1rem;
+  padding: 7px 16px;
+  white-space: nowrap;
   border-radius: 7px;
   cursor: pointer;
+  transition: color 220ms ease;
 }
 
 .template-detail__switch-btn--active {
-  background: #fffcf5;
   color: #2a1f2d;
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(90, 40, 73, 0.12);
 }
 
 .template-detail__switch-help {

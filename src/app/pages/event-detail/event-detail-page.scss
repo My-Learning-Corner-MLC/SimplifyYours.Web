@@ -638,30 +638,6 @@ $resting-shadow: 0 1px 3px rgba(90, 40, 73, 0.08);
     margin: 0;
   }
 
-  // The Guests tab's compact invitation-status note — a plain line under the heading, not a
-  // banner/alert, so it reads as ambient status rather than something demanding attention.
-  &__invite-note {
-    font-size: 13px;
-    color: $muted;
-    margin: 0;
-    // The organiser flips between "no template" and "Invitation template: X" copy as the shared
-    // selection state resolves — a short cross-fade instead of a jump cut.
-    transition: opacity 200ms ease;
-  }
-
-  &__invite-note-link {
-    appearance: none;
-    border: none;
-    background: transparent;
-    padding: 0;
-    font: inherit;
-    font-size: inherit;
-    font-weight: 600;
-    color: $plum;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-
   &__guests-toolbar {
     display: flex;
     justify-content: space-between;

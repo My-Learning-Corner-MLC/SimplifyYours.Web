@@ -39,15 +39,7 @@
             <nav class="detail__eyebrow" aria-label="Breadcrumb">
               <a routerLink="/dashboard">Events</a>
               <span aria-hidden="true">›</span>
-              @if (invitationBreadcrumb().length > 0) {
-                <span>{{ vm.name }}</span>
-                @for (segment of invitationBreadcrumb(); track segment; let isLast = $last) {
-                  <span aria-hidden="true">›</span>
-                  <span [class.detail__eyebrow-current]="isLast">{{ segment }}</span>
-                }
-              } @else {
-                <span class="detail__eyebrow-current">{{ vm.name }}</span>
-              }
+              <span class="detail__eyebrow-current">{{ vm.name }}</span>
             </nav>
             <div class="detail__actions">
               <button type="button" class="detail__action detail__action--ghost" data-testid="event-detail-share">
@@ -198,23 +190,6 @@
                 <div class="detail__guests" data-testid="event-detail-guests" role="tabpanel">
                   <div class="detail__guests-head">
                     <h2 class="detail__guests-title">Guest list</h2>
-                    <p class="detail__invite-note" data-testid="event-detail-invite-note">
-                      @if (invitationSelection.hasTemplate()) {
-                        @if (invitationSelection.templateName(); as templateName) {
-                          Invitation template: <strong>{{ templateName }}</strong> ·
-                          <button type="button" class="detail__invite-note-link" (click)="setTab('invitations')">
-                            Change
-                          </button>
-                        } @else {
-                          Invitation template selected ·
-                          <button type="button" class="detail__invite-note-link" (click)="setTab('invitations')">
-                            Change
-                          </button>
-                        }
-                      } @else {
-                        No invitation template chosen yet.
-                      }
-                    </p>
                   </div>
 
                   <span class="sr-only" role="status" aria-live="polite">{{ invitationAnnouncement() }}</span>
@@ -362,9 +337,7 @@
                   <app-invitations-tab
                     [eventId]="eventId"
                     [eventType]="eventType()"
-                    [eventName]="vm.name"
                     (templateSelected)="onInvitationTemplateSelected($event)"
-                    (breadcrumbChange)="onInvitationBreadcrumbChange($event)"
                   />
                 </div>
               }

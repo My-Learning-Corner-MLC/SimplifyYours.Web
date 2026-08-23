@@ -3,7 +3,9 @@ import {
   Component,
   ElementRef,
   QueryList,
+  ViewChild,
   ViewChildren,
+  afterNextRender,
   computed,
   effect,
   input,
@@ -13,7 +15,6 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
 
-import { eventTypeLabel as formatEventTypeLabel } from '../../../core/events/event-type-display';
 import { TemplateCatalogItem } from '../../../core/invitations/template-catalog.model';
 import {
   INVITATION_FIELD_LABELS,
@@ -23,12 +24,6 @@ import {
   InvitationSettings,
   fieldsFor,
 } from '../../../core/invitations/invitation-settings.model';
-import { ConfirmDialog } from './confirm-dialog';
-import {
-  templateThumbnailAccent,
-  templateThumbnailBackground,
-  templateThumbnailMotif,
-} from './template-thumbnail-tokens';
 
 /** Fields the organiser may leave blank. Everything else blocks the save. */
 const OPTIONAL_FIELDS: readonly InvitationField[] = ['venueNotes'];
@@ -42,12 +37,6 @@ const DATE_FIELDS: readonly InvitationField[] = ['eventDate'];
 /** Rendered with the same time-picker create-event uses, instead of a plain text input. */
 const TIME_FIELDS: readonly InvitationField[] = ['eventTime'];
 
-/** Fields short enough to share a row, paired the way create-event's own Date/Starts/Ends row does. */
-const FIELD_PAIRS: readonly (readonly [InvitationField, InvitationField])[] = [
-  ['brideName', 'groomName'],
-  ['eventDate', 'eventTime'],
-];
-
 const STEP_MINUTES = 15;
 
 /**
@@ -60,56 +49,32 @@ function roundUpToQuarterHour(date: Date): Date {
   return new Date(Math.ceil(date.getTime() / ms) * ms);
 }
 
-/** Groups `fields` into rows of one or two, pairing adjacent fields listed in {@link FIELD_PAIRS}. */
-function groupFieldsIntoRows(fields: readonly InvitationField[]): readonly (readonly InvitationField[])[] {
-  const remaining = new Set(fields);
-  const rows: InvitationField[][] = [];
-
-  for (const field of fields) {
-    if (!remaining.has(field)) {
-      continue;
-    }
-    remaining.delete(field);
-
-    const pair = FIELD_PAIRS.find(([first]) => first === field);
-    const partner = pair?.[1];
-
-    if (partner && remaining.has(partner)) {
-      remaining.delete(partner);
-      rows.push([field, partner]);
-    } else {
-      rows.push([field]);
-    }
-  }
-
-  return rows;
-}
-
 export interface BasicInfoSaveEvent {
   readonly fieldValues: InvitationFieldValues;
   readonly publicLinkEnabled: boolean;
 }
 
 /**
- * The full "Basic info" page: content that fills the chosen invitation template, plus the public
- * invitation link toggle. Reached via "Use this template" (new selection) or "Edit basic info"
- * (already selected) on {@link TemplateDetail} — there is no separate modal step anymore.
+ * "Basic info": content that fills the chosen invitation template, plus the public invitation
+ * link toggle. Rendered inside a right-side drawer (`InvitationsTab` hosts the `p-drawer`) that
+ * opens over {@link TemplateDetail} — reached via "Use this template" (new selection) or "Edit
+ * basic info" (already selected).
  *
- * Event-derived fields arrive pre-filled and stay editable; couple names have no event-record
- * source and start empty, which is the reason this form exists at all.
+ * Event-derived fields arrive pre-filled as committed, editable values; couple names have no
+ * event-record source and start empty, which is the reason this form exists at all.
  *
  * Edits here change the invitation only — never the event. An organiser may legitimately want a
  * friendly venue line on the invitation and a precise postal address on the event, so the form says
  * so rather than letting the divergence come as a surprise.
  *
  * Saving does not call the API directly — {@link save} hands the validated values up to
- * `InvitationsTab`, which runs the actual save from behind the "Use this template?"/"Change
- * template?" confirm dialog, same as choosing a template does.
+ * `InvitationsTab`, which runs the actual save. Save persists immediately; Cancel (or the
+ * drawer's × close button) discards immediately — neither asks for confirmation first.
  */
 @Component({
   selector: 'app-basic-info-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, ConfirmDialog, DatePickerModule],
+  imports: [FormsModule, DatePickerModule],
   templateUrl: './basic-info-form.html',
   styleUrl: './basic-info-form.scss',
 })
@@ -120,16 +85,8 @@ export class BasicInfoForm {
   /** Server-side messages keyed by field, merged over local validation. */
   readonly serverErrors = input<Readonly<Record<string, readonly string[]>>>({});
 
-  protected readonly templateName = computed(() => this.template().name);
-  protected readonly eventTypeLabel = computed(() => formatEventTypeLabel(this.template().eventType));
-  protected readonly accent = computed(() => templateThumbnailAccent(this.template()));
-  protected readonly faceBackground = computed(() => templateThumbnailBackground(this.template()));
-  protected readonly motif = computed(() => templateThumbnailMotif(this.template()));
-  /** Same facts panel as the detail view — `settings` already carries the selection, no separate service needed. */
-  protected readonly isSelected = computed(() => this.settings().templateId === this.template().id);
-
   readonly save = output<BasicInfoSaveEvent>();
-  /** Fired once leaving is confirmed — either nothing was dirty, or Discard was chosen. */
+  /** Fired immediately on Cancel/× — nothing is asked first, the drawer just closes. */
   readonly dismissed = output<void>();
 
   // `read: ElementRef` so a `#fieldInput` placed on a `p-datepicker` (a component, whose default
@@ -139,22 +96,20 @@ export class BasicInfoForm {
     ElementRef<HTMLElement>
   >;
 
-  protected readonly values = signal<InvitationFieldValues>({});
   /**
-   * Event-derived pre-fill text, shown as `placeholder` rather than a committed `value` — so the
-   * organiser sees "here's what we'd use" without it reading as something they already confirmed.
-   * Falls back into the submitted value (see {@link effectiveValue}) if left untouched. Empty once
-   * `settings.isConfigured` — those `fieldValues` are the organiser's own saved answers, not
-   * suggestions, so they render as real values instead (see the seeding effect below).
+   * The public-link toggle — the first control in the form that isn't a date/time field. Whatever
+   * mechanism lands initial focus somewhere inside a freshly opened drawer (browser-native or
+   * library-driven — nothing in this codebase requests it explicitly), it otherwise lands on the
+   * `eventDate` field, the form's first control, and drops the organiser straight onto a date input
+   * with no visual cue why. Redirecting focus here on open is deliberate and harmless either way.
    */
-  protected readonly defaults = signal<InvitationFieldValues>({});
+  @ViewChild('autofocusTarget', { read: ElementRef })
+  private readonly autofocusTarget?: ElementRef<HTMLButtonElement>;
+
+  protected readonly values = signal<InvitationFieldValues>({});
   protected readonly publicLinkEnabled = signal(false);
   protected readonly touched = signal<ReadonlySet<InvitationField>>(new Set());
   protected readonly submitAttempted = signal(false);
-  protected readonly showDiscardDialog = signal(false);
-
-  private readonly initialValues = signal<InvitationFieldValues>({});
-  private readonly initialPublicLinkEnabled = signal(false);
 
   /**
    * Errors keyed against something other than one of this event type's fields — chiefly
@@ -172,7 +127,6 @@ export class BasicInfoForm {
   });
 
   protected readonly fields = computed(() => fieldsFor(this.settings().eventType));
-  protected readonly fieldRows = computed(() => groupFieldsIntoRows(this.fields()));
 
   protected readonly labels = INVITATION_FIELD_LABELS;
   protected readonly maxLengths = INVITATION_FIELD_MAX_LENGTHS;
@@ -182,33 +136,26 @@ export class BasicInfoForm {
   /** Anchors a freshly opened time picker on the next selectable 15-minute mark, not the raw minute. */
   protected readonly defaultTime = roundUpToQuarterHour(new Date());
 
-  /** Gates the Discard-changes dialog on Cancel — untouched forms exit immediately. */
-  protected readonly isDirty = computed(() => {
-    const current = this.values();
-    const initial = this.initialValues();
-    const fieldsChanged = this.fields().some((field) => (current[field] ?? '') !== (initial[field] ?? ''));
-
-    return fieldsChanged || this.publicLinkEnabled() !== this.initialPublicLinkEnabled();
-  });
-
   constructor() {
     // Seeding from an effect rather than the template keeps re-opening honest: whatever the API
-    // returned — saved values, or pre-fill defaults — is what the organiser sees.
+    // returned — saved values, or event-derived pre-fills — is what the organiser sees, and as a
+    // real value they can edit or accept as-is, not a hint they have to retype to keep.
     effect(() => {
       const settings = this.settings();
-      // Unconfigured settings' fieldValues are event-derived guesses, never confirmed by anyone —
-      // they start life as placeholder hints (see `defaults`), not real input state. Once
-      // configured, fieldValues are the organiser's own saved answers, so they seed real values.
-      const seeded = settings.isConfigured ? { ...settings.fieldValues } : {};
-      this.values.set(seeded);
-      this.initialValues.set(seeded);
-      this.defaults.set(settings.isConfigured ? {} : { ...settings.fieldValues });
+      this.values.set({ ...settings.fieldValues });
       this.publicLinkEnabled.set(settings.publicLinkEnabled);
-      this.initialPublicLinkEnabled.set(settings.publicLinkEnabled);
       this.touched.set(new Set());
       this.submitAttempted.set(false);
-      this.showDiscardDialog.set(false);
     });
+
+    // Runs once after this fresh instance's first render — see autofocusTarget's doc comment.
+    // The focus() call itself is deferred a further macrotask past that (setTimeout 0, not just
+    // afterNextRender alone): the exact mechanism that lands focus on the date field was never
+    // pinned down to a specific PrimeNG call site, so if it turns out to be async — a Drawer/
+    // FocusTrap callback queued via its own timer — afterNextRender alone could still run and lose
+    // to it. Landing after everything else in the macrotask queue is the closest thing to a
+    // guarantee of running last without depending on knowing what we're racing.
+    afterNextRender(() => setTimeout(() => this.autofocusTarget?.nativeElement.focus(), 0));
   }
 
   protected isOptional(field: InvitationField): boolean {
@@ -231,14 +178,9 @@ export class BasicInfoForm {
     return this.values()[field] ?? '';
   }
 
-  protected defaultFor(field: InvitationField): string {
-    return this.defaults()[field] ?? '';
-  }
-
-  /** What actually gets validated and submitted: the organiser's own typing, or the default if they left it as shown. */
+  /** What actually gets validated and submitted: the organiser's own typing/edits. */
   protected effectiveValue(field: InvitationField): string {
-    const typed = (this.values()[field] ?? '').trim();
-    return typed || this.defaultFor(field).trim();
+    return this.valueOf(field).trim();
   }
 
   protected onInput(field: InvitationField, value: string): void {
@@ -301,8 +243,6 @@ export class BasicInfoForm {
       return;
     }
 
-    // A field left showing its placeholder default (never typed into) submits that default
-    // rather than an empty string — accepting what was shown is a legitimate choice, not a no-op.
     const fieldValues: InvitationFieldValues = {};
     for (const field of this.fields()) {
       fieldValues[field] = this.effectiveValue(field) || null;
@@ -322,26 +262,12 @@ export class BasicInfoForm {
     queueMicrotask(() => this.fieldInputs?.get(invalidIndex)?.nativeElement.focus());
   }
 
-  protected onCancel(): void {
-    this.requestDismiss();
-  }
-
-  /** Untouched forms leave immediately; dirty ones are gated behind the Discard-changes dialog. */
-  private requestDismiss(): void {
-    if (this.isDirty()) {
-      this.showDiscardDialog.set(true);
-      return;
-    }
-
-    this.dismissed.emit();
-  }
-
-  protected onKeepEditing(): void {
-    this.showDiscardDialog.set(false);
-  }
-
-  protected onDiscard(): void {
-    this.showDiscardDialog.set(false);
+  /**
+   * Public (not `protected`) because the drawer's × close button lives in `InvitationsTab`'s own
+   * template (`<p-drawer>`'s header slot, via `@ViewChild`) — a sibling component can only call a
+   * member that isn't access-restricted. Discards immediately, no confirmation asked.
+   */
+  onCancel(): void {
     this.dismissed.emit();
   }
 }

@@ -3,8 +3,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { GuestApiClient } from '../../../core/guests/guest-api-client';
-import { Guest } from '../../../core/guests/guest.model';
 import { InvitationSettingsApiClient } from '../../../core/invitations/invitation-settings-api-client';
 import { InvitationSettings } from '../../../core/invitations/invitation-settings.model';
 import { TemplateCatalogApiClient } from '../../../core/invitations/template-catalog-api-client';
@@ -34,25 +32,8 @@ const UNCONFIGURED_SETTINGS: InvitationSettings = {
   publicEventToken: null,
 };
 
-function guest(id: string): Guest {
-  return {
-    id,
-    firstName: 'A',
-    lastName: 'B',
-    emailAddress: null,
-    phoneNumber: '555',
-    eventMetadata: null,
-    deliveryStatus: 'NotSent',
-    rsvpStatus: 'NoResponse',
-    respondedAt: null,
-    plusOnesConfirmed: null,
-    createdAt: '2026-01-01T00:00:00Z',
-  };
-}
-
 describe('InvitationsTab', () => {
   let fixture: ComponentFixture<InvitationsTab>;
-  let guestApi: { listGuests: ReturnType<typeof vi.fn> };
   let settingsApi: {
     saveSettings: ReturnType<typeof vi.fn>;
     getSettings: ReturnType<typeof vi.fn>;
@@ -63,8 +44,7 @@ describe('InvitationsTab', () => {
     previewRenderUrl: ReturnType<typeof vi.fn>;
   };
 
-  async function render(guests: Guest[] = [], settings: InvitationSettings = UNCONFIGURED_SETTINGS) {
-    guestApi.listGuests.mockReturnValue(of(guests));
+  async function render(settings: InvitationSettings = UNCONFIGURED_SETTINGS) {
     settingsApi.getSettings.mockReturnValue(of(settings));
 
     await TestBed.configureTestingModule({
@@ -72,7 +52,6 @@ describe('InvitationsTab', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: GuestApiClient, useValue: guestApi },
         { provide: InvitationSettingsApiClient, useValue: settingsApi },
         { provide: TemplateCatalogApiClient, useValue: catalog },
       ],
@@ -81,7 +60,6 @@ describe('InvitationsTab', () => {
     fixture = TestBed.createComponent(InvitationsTab);
     fixture.componentRef.setInput('eventId', 'event-1');
     fixture.componentRef.setInput('eventType', 'wedding');
-    fixture.componentRef.setInput('eventName', "Amara & Julian's Wedding");
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -119,7 +97,6 @@ describe('InvitationsTab', () => {
   }
 
   beforeEach(() => {
-    guestApi = { listGuests: vi.fn(() => of([])) };
     settingsApi = {
       saveSettings: vi.fn(),
       getSettings: vi.fn(() => of(UNCONFIGURED_SETTINGS)),
@@ -137,41 +114,6 @@ describe('InvitationsTab', () => {
     expect(fixture.nativeElement.querySelector('app-template-gallery')).not.toBeNull();
   });
 
-  it('emits breadcrumb segments as the organiser moves through gallery, detail, and basic info', async () => {
-    guestApi.listGuests.mockReturnValue(of([]));
-    settingsApi.getSettings.mockReturnValue(of(UNCONFIGURED_SETTINGS));
-
-    await TestBed.configureTestingModule({
-      imports: [InvitationsTab],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: GuestApiClient, useValue: guestApi },
-        { provide: InvitationSettingsApiClient, useValue: settingsApi },
-        { provide: TemplateCatalogApiClient, useValue: catalog },
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(InvitationsTab);
-    const emitted: (readonly string[])[] = [];
-    fixture.componentInstance.breadcrumbChange.subscribe((segments) => emitted.push(segments));
-
-    fixture.componentRef.setInput('eventId', 'event-1');
-    fixture.componentRef.setInput('eventType', 'wedding');
-    fixture.componentRef.setInput('eventName', "Amara & Julian's Wedding");
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(emitted.at(-1)).toEqual(['Invitations']);
-
-    await goToDetailAndProceed();
-
-    // goToDetailAndProceed passes through the detail view before basic info.
-    expect(emitted).toContainEqual(['Invitations', 'Verona']);
-    expect(emitted.at(-1)).toEqual(['Invitations', 'Verona', 'Basic info']);
-  });
-
   it('navigates to the detail view when a template is chosen', async () => {
     await render();
 
@@ -184,7 +126,7 @@ describe('InvitationsTab', () => {
   });
 
   it('"Use this template" on the detail view goes straight to basic info, without saving anything yet', async () => {
-    await render([]);
+    await render();
 
     await goToDetailAndProceed();
 
@@ -192,61 +134,68 @@ describe('InvitationsTab', () => {
     expect(settingsApi.saveSettings).not.toHaveBeenCalled();
   });
 
-  it('shows the simple "use template" dialog on Save when no guest has a link yet', async () => {
-    await render([]);
+  it('shows the drawer header (title, template subtitle) in the p-drawer header slot', async () => {
+    await render();
     await goToDetailAndProceed();
 
-    fillRequiredFields();
-    submitBasicInfo();
-
-    expect(fixture.nativeElement.querySelector('app-use-template-confirm-dialog')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-change-template-confirm-dialog')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.basic-info-drawer__title')?.textContent).toContain('Basic info');
+    const subtitle = fixture.nativeElement.querySelector('.basic-info-drawer__subtitle')?.textContent;
+    expect(subtitle).toContain('Verona');
+    expect(subtitle).toContain('Wedding');
   });
 
-  it('shows the change-template warning dialog on Save once a guest already has a link', async () => {
-    await render([guest('g1')]);
+  it('the drawer\'s × close button discards immediately, same as Cancel', async () => {
+    await render();
     await goToDetailAndProceed();
-
     fillRequiredFields();
-    submitBasicInfo();
 
-    expect(fixture.nativeElement.querySelector('app-change-template-confirm-dialog')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-use-template-confirm-dialog')).toBeNull();
+    (fixture.nativeElement.querySelector('.basic-info-drawer__close') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-basic-info-form')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-template-detail')).not.toBeNull();
   });
 
-  it('saves the template and field values together on dialog confirm, then returns to the gallery', async () => {
+  it('Save persists immediately — no confirmation dialog', async () => {
     settingsApi.saveSettings.mockReturnValue(
       of({ ...UNCONFIGURED_SETTINGS, templateId: 'tmpl-1', templateName: 'Verona', isConfigured: true }),
     );
-    await render([]);
+    await render();
     await goToDetailAndProceed();
 
     fillRequiredFields();
     submitBasicInfo();
-
-    (fixture.nativeElement.querySelector('.confirm-dialog__primary') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
 
     expect(settingsApi.saveSettings).toHaveBeenCalledWith('event-1', {
       templateId: 'tmpl-1',
       fieldValues: expect.objectContaining({ brideName: 'brideName-value' }),
       publicLinkEnabled: false,
     });
-    expect(fixture.nativeElement.querySelector('app-template-gallery')).not.toBeNull();
   });
 
-  it('shows an inline error and returns to basic info when saving fails', async () => {
-    settingsApi.saveSettings.mockReturnValue(throwError(() => ({ reason: 'network', fieldErrors: {} })));
-    await render([]);
+  it('returns to the gallery once the save succeeds', async () => {
+    settingsApi.saveSettings.mockReturnValue(
+      of({ ...UNCONFIGURED_SETTINGS, templateId: 'tmpl-1', templateName: 'Verona', isConfigured: true }),
+    );
+    await render();
     await goToDetailAndProceed();
 
     fillRequiredFields();
     submitBasicInfo();
-
-    (fixture.nativeElement.querySelector('.confirm-dialog__primary') as HTMLButtonElement).click();
+    await fixture.whenStable();
     fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-template-gallery')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-basic-info-form')).toBeNull();
+  });
+
+  it('shows an inline error and keeps the drawer open when saving fails', async () => {
+    settingsApi.saveSettings.mockReturnValue(throwError(() => ({ reason: 'network', fieldErrors: {} })));
+    await render();
+    await goToDetailAndProceed();
+
+    fillRequiredFields();
+    submitBasicInfo();
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -256,22 +205,33 @@ describe('InvitationsTab', () => {
     );
   });
 
-  it('cancelling the confirm dialog returns to the basic-info form without saving', async () => {
-    await render([]);
+  it('clears the stale form-error banner once the basic-info drawer is dismissed and reopened', async () => {
+    settingsApi.saveSettings.mockReturnValue(throwError(() => ({ reason: 'network', fieldErrors: {} })));
+    await render();
     await goToDetailAndProceed();
 
     fillRequiredFields();
     submitBasicInfo();
-
-    (fixture.nativeElement.querySelector('.confirm-dialog__secondary') as HTMLButtonElement).click();
+    await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(settingsApi.saveSettings).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('app-basic-info-form')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.basic-info__form-error')).not.toBeNull();
+
+    // Cancel discards immediately — no confirmation asked.
+    (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    // Reopen via "Edit basic info" on the still-mounted detail view.
+    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.basic-info__form-error')).toBeNull();
   });
 
   it('returns to the gallery from the detail view without saving anything', async () => {
-    await render([]);
+    await render();
     (fixture.nativeElement.querySelector('app-template-card button') as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -284,13 +244,16 @@ describe('InvitationsTab', () => {
     expect(settingsApi.saveSettings).not.toHaveBeenCalled();
   });
 
-  it('Cancel on the basic-info form returns to the detail view it was reached from, not the gallery', async () => {
-    await render([]);
+  it('Cancel on the basic-info form discards immediately and returns to the detail view, not the gallery', async () => {
+    await render();
     await goToDetailAndProceed();
+    fillRequiredFields();
 
     (fixture.nativeElement.querySelector('.basic-info__secondary') as HTMLButtonElement).click();
     fixture.detectChanges();
 
+    expect(settingsApi.saveSettings).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('app-basic-info-form')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-template-detail')).not.toBeNull();
   });
 
@@ -302,7 +265,7 @@ describe('InvitationsTab', () => {
       isConfigured: true,
       fieldValues: { brideName: 'Amara' },
     };
-    await render([], configured);
+    await render(configured);
 
     (fixture.nativeElement.querySelector('[data-testid="gallery-summary"] button') as HTMLButtonElement).click();
     fixture.detectChanges();
@@ -319,5 +282,37 @@ describe('InvitationsTab', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-basic-info-form')).not.toBeNull();
+  });
+
+  it('saving "Edit basic info" on an already-selected template closes the drawer onto the detail view, not the gallery', async () => {
+    const configured: InvitationSettings = {
+      ...UNCONFIGURED_SETTINGS,
+      templateId: 'tmpl-1',
+      templateName: 'Verona',
+      isConfigured: true,
+      fieldValues: { ...UNCONFIGURED_SETTINGS.fieldValues, brideName: 'Amara' },
+    };
+    settingsApi.saveSettings.mockReturnValue(of({ ...configured, fieldValues: { brideName: 'Amara V2' } }));
+    await render(configured);
+
+    (fixture.nativeElement.querySelector('[data-testid="gallery-summary"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('.template-detail__primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    fillRequiredFields();
+    submitBasicInfo();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(settingsApi.saveSettings).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('app-basic-info-form')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-template-detail')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-template-gallery')).toBeNull();
   });
 });

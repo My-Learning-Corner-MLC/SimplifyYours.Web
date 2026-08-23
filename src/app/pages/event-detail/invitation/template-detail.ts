@@ -1,4 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  QueryList,
+  ViewChildren,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { environment } from '../../../../environments/environment';
 import { apiOrigin } from '../../../core/invitations/api-origin';
@@ -17,9 +33,9 @@ type TokenState = 'loading' | 'ready' | 'error';
 
 /**
  * One template's detail/preview view: a live sandboxed preview of the template rendered with
- * sample data, and the guest-link/public-link switch. The breadcrumb trail back to the gallery
- * lives in the page-level actionbar (`EventDetailPage`), fed via `InvitationsTab`'s
- * `breadcrumbChange` output — not drawn here.
+ * sample data, and the guest-link/public-link switch. The top breadcrumb stays "Events › {name}"
+ * regardless of navigation within this tab, same as every other tab — nothing here contributes to
+ * it.
  *
  * A preview token is issued once per template — not per switch flip — and both link types are
  * built from the same token by varying the render endpoint's `type` query param.
@@ -35,9 +51,14 @@ type TokenState = 'loading' | 'ready' | 'error';
   templateUrl: './template-detail.html',
   styleUrl: './template-detail.scss',
 })
-export class TemplateDetail {
+export class TemplateDetail implements AfterViewInit {
   private readonly catalogApi = inject(TemplateCatalogApiClient);
   private readonly selection = inject(InvitationSelectionService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  @ViewChildren('switchButton', { read: ElementRef }) private readonly switchButtons!: QueryList<
+    ElementRef<HTMLButtonElement>
+  >;
 
   readonly template = input.required<TemplateCatalogItem>();
   readonly eventType = input.required<string>();
@@ -52,6 +73,14 @@ export class TemplateDetail {
   protected readonly linkType = signal<PreviewLinkType>('private');
   protected readonly tokenState = signal<TokenState>('loading');
   private readonly previewToken = signal<PreviewToken | null>(null);
+
+  // Pixel position of the sliding switch thumb, measured against the actual button widths — the
+  // two options aren't equal width (one-line text, 7px/16px padding each), so a 50/50 CSS split
+  // doesn't track them; same approach as event-detail-page's own tab-indicator.
+  protected readonly switchThumbStyle = signal<{ transform: string; width: string }>({
+    transform: 'translateX(0px)',
+    width: '0px',
+  });
 
   protected readonly eventTypeLabel = computed(() => eventTypeLabel(this.eventType()));
   protected readonly apiOrigin = apiOrigin(environment.apiBaseUrl);
@@ -79,6 +108,33 @@ export class TemplateDetail {
     // component stays mounted) re-issues for the right one; issued once per template, not on
     // every link-type flip — both link types read from the same token.
     effect(() => this.issueToken(this.template().id));
+
+    effect(() => {
+      this.linkType();
+      queueMicrotask(() => this.updateSwitchThumb());
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.updateSwitchThumb();
+    this.switchButtons.changes.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateSwitchThumb());
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateSwitchThumb();
+  }
+
+  private updateSwitchThumb(): void {
+    const index = this.linkType() === 'private' ? 0 : 1;
+    const button = this.switchButtons?.get(index)?.nativeElement;
+    if (!button) {
+      return;
+    }
+    this.switchThumbStyle.set({
+      transform: `translateX(${button.offsetLeft}px)`,
+      width: `${button.offsetWidth}px`,
+    });
   }
 
   private issueToken(templateId: string): void {
