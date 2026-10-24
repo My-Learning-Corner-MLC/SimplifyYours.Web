@@ -18,7 +18,7 @@ import { QueryEventsResponse } from './query-events-response.model';
 describe('EventApiClient', () => {
   let client: EventApiClient;
   let httpMock: HttpTestingController;
-  const url = `${environment.eventBaseUrl}/events`;
+  const url = `${environment.apiBaseUrl}/api/v1/events`;
 
   const validRequest = (): CreateEventRequest => ({
     eventName: 'Mateo turns five',
@@ -136,7 +136,7 @@ describe('EventApiClient', () => {
   });
 
   describe('queryEvents', () => {
-    const queryUrl = `${environment.eventBaseUrl}/events/query`;
+    const queryUrl = `${environment.apiBaseUrl}/api/v1/events/query`;
 
     const pageResponse = (): QueryEventsResponse => ({
       items: [
@@ -218,7 +218,7 @@ describe('EventApiClient', () => {
 
   describe('getEventDetails', () => {
     const eventId = 'e1';
-    const detailUrl = `${environment.eventBaseUrl}/events/${eventId}`;
+    const detailUrl = `${environment.apiBaseUrl}/api/v1/events/${eventId}`;
 
     const detailResponse = (): EventDetail => ({
       id: eventId,
@@ -249,7 +249,7 @@ describe('EventApiClient', () => {
     it('encodes the event id in the URL', () => {
       client.getEventDetails('a b/c').subscribe();
 
-      const req = httpMock.expectOne(`${environment.eventBaseUrl}/events/a%20b%2Fc`);
+      const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/events/a%20b%2Fc`);
       req.flush(detailResponse());
     });
 

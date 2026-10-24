@@ -2,6 +2,17 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.16.
 
+## Run in Docker
+
+This app has a `Dockerfile` for containerized local dev, but it's meant to
+run as part of the application stack — see `code/infra/local-dev` for the
+orchestration compose (identity-service, event-service,
+guest-management-service, api-gateway, frontend, real HTTPS between
+containers). Dockerized, this app is served at
+`https://local.simplifyyours.com` — its own nginx is the single
+browser-facing edge, proxying `/api/*` to api-gateway internally. See that
+repo's README for setup (mkcert, `/etc/hosts`) and run order.
+
 ## Development server
 
 To start a local development server, run:

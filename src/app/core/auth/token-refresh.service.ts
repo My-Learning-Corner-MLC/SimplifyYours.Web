@@ -76,7 +76,7 @@ export class TokenRefreshService {
   private async performRefresh(refreshToken: string): Promise<TokenBundle | null> {
     try {
       const tokens = await exchangeRefreshToken({
-        identityBaseUrl: environment.identityBaseUrl,
+        apiBaseUrl: environment.apiBaseUrl,
         clientId: environment.oidcClientId,
         refreshToken,
       });

@@ -39,7 +39,7 @@ export class AuthCallbackPage implements OnInit {
       }
 
       const tokens = await exchangeAuthorizationCode({
-        identityBaseUrl: environment.identityBaseUrl,
+        apiBaseUrl: environment.apiBaseUrl,
         clientId: environment.oidcClientId,
         redirectUri: environment.oidcRedirectUri,
         code,

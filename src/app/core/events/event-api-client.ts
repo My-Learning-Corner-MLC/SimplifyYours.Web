@@ -35,7 +35,7 @@ export class EventApiClient {
   private readonly http = inject(HttpClient);
 
   createEvent(request: CreateEventRequest): Observable<CreateEventResponse> {
-    const url = `${environment.eventBaseUrl}/events`;
+    const url = `${environment.apiBaseUrl}/api/v1/events`;
     return this.http
       .post<CreateEventResponse>(url, request, { withCredentials: false })
       .pipe(
@@ -46,7 +46,7 @@ export class EventApiClient {
   }
 
   queryEvents(request: QueryEventsRequest): Observable<QueryEventsResponse> {
-    const url = `${environment.eventBaseUrl}/events/query`;
+    const url = `${environment.apiBaseUrl}/api/v1/events/query`;
     return this.http
       .post<QueryEventsResponse>(url, request, { withCredentials: false })
       .pipe(
@@ -57,7 +57,7 @@ export class EventApiClient {
   }
 
   getEventDetails(eventId: string): Observable<EventDetail> {
-    const url = `${environment.eventBaseUrl}/events/${encodeURIComponent(eventId)}`;
+    const url = `${environment.apiBaseUrl}/api/v1/events/${encodeURIComponent(eventId)}`;
     return this.http
       .get<EventDetail>(url, { withCredentials: false })
       .pipe(

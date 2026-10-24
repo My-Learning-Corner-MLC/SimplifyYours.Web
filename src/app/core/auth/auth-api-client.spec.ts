@@ -14,7 +14,7 @@ import { SignUpResponse } from './sign-up-response.model';
 describe('AuthApiClient', () => {
   let client: AuthApiClient;
   let httpMock: HttpTestingController;
-  const url = `${environment.identityBaseUrl}/auth/sign-up`;
+  const url = `${environment.apiBaseUrl}/api/v1/identities/sign-up`;
 
   const validRequest = (): SignUpRequest => ({
     fullName: 'Eleanor Whitmore',
