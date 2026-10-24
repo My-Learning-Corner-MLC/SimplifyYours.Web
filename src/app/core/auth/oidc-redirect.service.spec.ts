@@ -55,7 +55,7 @@ describe('OidcRedirectService', () => {
     expect(target.startsWith(`${environment.identityHostedUiBaseUrl}/auth/sign-in?`)).toBe(true);
 
     const url = new URL(target);
-    expect(url.searchParams.get('client_id')).toBe('simplify-yours-web');
+    expect(url.searchParams.get('client_id')).toBe('simplify-yours-web-local');
     expect(url.searchParams.get('redirect_uri')).toBe('http://localhost:4200/auth/callback');
     expect(url.searchParams.get('response_type')).toBe('code');
     expect(url.searchParams.get('scope')).toBe('openid profile email offline_access');
