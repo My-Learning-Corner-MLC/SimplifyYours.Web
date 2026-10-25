@@ -11,6 +11,29 @@ function setup(configure: (c: EventEmptyTabComponent) => void) {
 }
 
 describe('EventEmptyTabComponent', () => {
+  it('renders the guests empty state', () => {
+    const fixture = setup((c) => {
+      c.variant = 'guests';
+    });
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('[data-testid="event-detail-guests"]')).not.toBeNull();
+    expect(root.textContent).toContain('on the list');
+    expect(root.textContent).toContain('Add first guest');
+  });
+
+  it('emits addGuest when "Add first guest" is clicked', () => {
+    const fixture = setup((c) => {
+      c.variant = 'guests';
+    });
+    const spy = vi.fn();
+    fixture.componentInstance.addGuest.subscribe(spy);
+
+    fixture.nativeElement.querySelector('[data-testid="event-detail-add-first-guest"]').click();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
   it('renders the tables empty state with the confirmed count', () => {
     const fixture = setup((c) => {
       c.variant = 'tables';

@@ -36,6 +36,12 @@ const RELATIONSHIPS: readonly Relationship[] = ['Family', 'Friend', 'Colleague']
 const SIDES: readonly GuestSide[] = ['Bride', 'Groom'];
 const MAX_PLUS_ONES = 20;
 
+// Mirrors GuestManagementService.Domain.Guests.Guest's tag limits — enforced again server-side,
+// but checked here first so the guest gets instant feedback. Applies to every event type.
+const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 32;
+const TAG_SUGGESTIONS: readonly string[] = ['Family', 'Head table', "Groom's coworkers"];
+
 // Matches the .ag-modal-out / .ag-overlay-out CSS animation duration so the
 // component isn't torn down mid-fade.
 const CLOSE_ANIMATION_MS = 300;
@@ -77,12 +83,23 @@ export class AddGuestModalComponent implements OnInit {
 
   readonly relationships = RELATIONSHIPS;
   readonly sides = SIDES;
+  readonly tagSuggestions = TAG_SUGGESTIONS;
+  readonly maxTags = MAX_TAGS;
 
   readonly status = signal<ModalStatus>('editing');
   readonly submitted = signal(false);
   readonly serverError = signal<string | null>(null);
   readonly duplicate = signal(false);
   readonly closing = signal(false);
+  readonly tags = signal<string[]>([]);
+  readonly tagDraft = signal('');
+
+  // Suggestions not already applied to this guest — clicking one adds it.
+  readonly availableSuggestions = computed(() =>
+    this.tagSuggestions.filter(
+      (suggestion) => !this.tags().some((tag) => tag.toLowerCase() === suggestion.toLowerCase()),
+    ),
+  );
 
   // Bumped on every form edit so `invalidCount` (which reads non-signal control
   // validity) recomputes live as the guest fixes fields.
@@ -155,6 +172,37 @@ export class AddGuestModalComponent implements OnInit {
     this.form.get('plusOnes')?.setValue(next);
   }
 
+  setTagDraft(value: string): void {
+    this.tagDraft.set(value);
+  }
+
+  /** Adds the current draft (or an explicit value, e.g. a suggestion chip) as a tag. */
+  addTag(value?: string): void {
+    const raw = (value ?? this.tagDraft()).trim();
+    if (!raw || raw.length > MAX_TAG_LENGTH || this.tags().length >= MAX_TAGS) {
+      return;
+    }
+    if (this.tags().some((tag) => tag.toLowerCase() === raw.toLowerCase())) {
+      this.tagDraft.set('');
+      return;
+    }
+    this.tags.update((tags) => [...tags, raw]);
+    this.tagDraft.set('');
+  }
+
+  removeTag(index: number): void {
+    this.tags.update((tags) => tags.filter((_, i) => i !== index));
+  }
+
+  onTagInputKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      this.addTag();
+    } else if (event.key === 'Backspace' && this.tagDraft().length === 0 && this.tags().length > 0) {
+      this.removeTag(this.tags().length - 1);
+    }
+  }
+
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.cancel();
@@ -210,6 +258,7 @@ export class AddGuestModalComponent implements OnInit {
         lastName: (value.lastName ?? '').trim(),
         phoneNumber: (value.phone ?? '').trim(),
         emailAddress: (value.email ?? '').trim(),
+        tags: this.tags(),
         eventMetadata: Object.keys(eventMetadata).length > 0 ? eventMetadata : null,
       },
     };

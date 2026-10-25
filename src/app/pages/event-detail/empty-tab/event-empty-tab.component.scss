@@ -97,6 +97,77 @@ $hairline: #ece2d2;
     transform-origin: center;
   }
 
+  // Empty-guest-list illustration (dashed card with placeholder rows + "+" badge)
+  &__guestlist-illo {
+    position: relative;
+    width: 280px;
+    margin: 0 auto 28px;
+  }
+
+  &__guestlist-card {
+    background: $linen;
+    border: 1.5px dashed $champagne;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 4px 14px rgba(90, 40, 73, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__guestlist-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__guestlist-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px dashed #d6c8b0;
+    flex: none;
+  }
+
+  &__guestlist-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__guestlist-line {
+    height: 7px;
+    border-radius: 4px;
+    background: #f0e7d6;
+
+    &--wide {
+      width: 65%;
+    }
+
+    &--narrow {
+      width: 40%;
+      height: 6px;
+      background: $parchment;
+    }
+  }
+
+  &__guestlist-badge {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: $plum;
+    color: $linen;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(90, 40, 73, 0.25);
+  }
+
   // Empty-budget illustration (stacked receipts)
   &__receipts {
     position: relative;
@@ -166,6 +237,11 @@ $hairline: #ece2d2;
     color: $plum-ink;
   }
 
+  &__title-italic {
+    font-style: italic;
+    color: $plum;
+  }
+
   &__lede {
     max-width: 520px;
     margin: 14px auto 0;
@@ -204,8 +280,14 @@ $hairline: #ece2d2;
       color: $plum;
       box-shadow: none;
 
-      &:hover {
+      &:hover:not(:disabled) {
         background: rgba(90, 40, 73, 0.06);
+      }
+
+      &:disabled {
+        color: #c7bdae;
+        border-color: #e4dcc8;
+        cursor: default;
       }
     }
 
@@ -240,6 +322,11 @@ $hairline: #ece2d2;
 
     &:hover {
       text-decoration: underline;
+    }
+
+    // Non-interactive rendering (e.g. a <span>) for links with no wired action yet.
+    &--static {
+      cursor: default;
     }
   }
 

@@ -230,15 +230,11 @@
                     }
                     @default {
                       @if (guestRows().length === 0) {
-                        <div class="detail__guests-empty" data-testid="guests-empty">
-                          <div class="detail__guests-empty-title">No guests yet</div>
-                          <p class="detail__guests-empty-text">
-                            Add your first guest by hand — they'll appear here and stay under Awaiting until they RSVP.
-                          </p>
-                          <button type="button" class="detail__action detail__action--primary" (click)="openAddGuest()">
-                            + Add guest
-                          </button>
-                        </div>
+                        <app-event-empty-tab
+                          variant="guests"
+                          data-testid="guests-empty"
+                          (addGuest)="openAddGuest()"
+                        />
                       } @else {
                         <div class="detail__table" role="table" aria-label="Guest list">
                           <div class="detail__table-head" role="row">

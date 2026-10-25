@@ -372,6 +372,92 @@ $err-ink: #8a3a25;
   color: $plum-ink;
 }
 
+// ---- Table tags ----------------------------------------------------------
+.ag-tags-input {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: $linen;
+  border: 1px solid $hairline;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+
+  &:focus-within {
+    border-color: $plum;
+    box-shadow: 0 0 0 3px rgba(90, 40, 73, 0.08);
+  }
+}
+
+.ag-tag-chip {
+  padding: 6px 12px;
+  background: #f0efe2;
+  color: #5a6b3a;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ag-tag-remove {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.ag-tag-field {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  color: $plum-ink;
+  outline: none;
+
+  &::placeholder {
+    color: #b7aca0;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.ag-tag-suggestions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.ag-tag-suggestion {
+  padding: 5px 11px;
+  background: $linen;
+  border: 1px dashed $champagne;
+  border-radius: 99px;
+  font-family: inherit;
+  font-size: 11.5px;
+  color: $plum;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(200, 168, 118, 0.12);
+  }
+}
+
 // ---- Banners -----------------------------------------------------------
 .ag-banner {
   display: flex;

@@ -14,6 +14,7 @@ const makeGuest = (overrides: Partial<Guest> = {}): Guest => ({
   emailAddress: 'ada@example.com',
   phoneNumber: '+15551234567',
   eventMetadata: { relationship: 'Family', side: 'Bride', plusOnes: 1, dietaryNotes: null },
+  tags: [],
   createdAt: '2026-06-02T10:00:00+00:00',
   ...overrides,
 });
@@ -210,5 +211,102 @@ describe('AddGuestModalComponent', () => {
     expect(component.plusOnes).toBe(0);
     component.changePlusOnes(1);
     expect(component.plusOnes).toBe(1);
+  });
+
+  it('shows the Table tag field for wedding events', () => {
+    const { fixture } = setup('wedding');
+    expect(fixture.nativeElement.querySelector('[data-testid="add-guest-tags"]')).not.toBeNull();
+  });
+
+  it('shows the Table tag field for birthday events (tags are guest-level, not per event type)', () => {
+    const { fixture } = setup('birthday');
+    expect(fixture.nativeElement.querySelector('[data-testid="add-guest-tags"]')).not.toBeNull();
+  });
+
+  it('shows the Table tag field for event types with no registered metadata mapper', () => {
+    const { fixture } = setup('launch');
+    expect(fixture.nativeElement.querySelector('[data-testid="add-guest-tags"]')).not.toBeNull();
+  });
+
+  it('adds a tag from the draft input and clears the draft', () => {
+    const { component } = setup('wedding');
+
+    component.setTagDraft('College friends');
+    component.addTag();
+
+    expect(component.tags()).toEqual(['College friends']);
+    expect(component.tagDraft()).toBe('');
+  });
+
+  it('adds a tag from a suggestion chip', () => {
+    const { component } = setup('wedding');
+
+    component.addTag('Family');
+
+    expect(component.tags()).toEqual(['Family']);
+    expect(component.availableSuggestions()).not.toContain('Family');
+  });
+
+  it('deduplicates tags case-insensitively', () => {
+    const { component } = setup('wedding');
+
+    component.addTag('Family');
+    component.addTag('family');
+
+    expect(component.tags()).toEqual(['Family']);
+  });
+
+  it('ignores blank or over-length tags', () => {
+    const { component } = setup('wedding');
+
+    component.addTag('   ');
+    component.addTag('a'.repeat(33));
+
+    expect(component.tags()).toEqual([]);
+  });
+
+  it('removes a tag by index', () => {
+    const { component } = setup('wedding');
+    component.addTag('Family');
+    component.addTag('Head table');
+
+    component.removeTag(0);
+
+    expect(component.tags()).toEqual(['Head table']);
+  });
+
+  it('stops accepting new tags once the max is reached', () => {
+    const { component } = setup('wedding');
+    for (let i = 0; i < component.maxTags; i++) {
+      component.addTag(`Tag ${i}`);
+    }
+
+    component.addTag('One too many');
+
+    expect(component.tags().length).toBe(component.maxTags);
+  });
+
+  it('sends tags at the top level of guestInfo, not inside eventMetadata', () => {
+    const { component, guestApi } = setup('wedding');
+    fill(component, validValues);
+    component.addTag('College friends');
+
+    component.submit();
+
+    const request = guestApi.addGuest.mock.calls[0][0];
+    expect(request.guestInfo.tags).toEqual(['College friends']);
+    expect(request.guestInfo.eventMetadata).not.toHaveProperty('tags');
+  });
+
+  it('sends tags for every event type, including birthday', () => {
+    const { component, guestApi } = setup('birthday');
+    fill(component, validValues);
+    component.addTag('Cake table');
+
+    component.submit();
+
+    const request = guestApi.addGuest.mock.calls[0][0];
+    expect(request.guestInfo.tags).toEqual(['Cake table']);
+    expect(request.guestInfo.eventMetadata).not.toHaveProperty('tags');
   });
 });

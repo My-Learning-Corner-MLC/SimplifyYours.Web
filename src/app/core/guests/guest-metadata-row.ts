@@ -30,7 +30,11 @@ export function describeGuestMetadata(eventType: string, eventMetadata: unknown)
     }
     case 'birthday': {
       const metadata = asBirthdayGuestMetadata(eventMetadata);
-      return { group: '', plusOnes: metadata?.plusOnes ?? 0, dietaryNotes: metadata?.dietaryNotes ?? null };
+      return {
+        group: '',
+        plusOnes: metadata?.plusOnes ?? 0,
+        dietaryNotes: metadata?.dietaryNotes ?? null,
+      };
     }
     default:
       return EMPTY_ROW_INFO;

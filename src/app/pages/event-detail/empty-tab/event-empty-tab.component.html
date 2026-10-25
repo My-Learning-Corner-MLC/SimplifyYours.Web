@@ -3,7 +3,44 @@
   role="tabpanel"
   [attr.data-testid]="'event-detail-' + variant"
 >
-  @if (variant === 'tables') {
+  @if (variant === 'guests') {
+    <span class="blank__glow blank__glow--left" aria-hidden="true"></span>
+    <span class="blank__glow blank__glow--right" aria-hidden="true"></span>
+    <div class="blank__inner">
+      <div class="blank__guestlist-illo" aria-hidden="true">
+        <div class="blank__guestlist-card">
+          @for (row of [0, 1, 2]; track row) {
+            <div class="blank__guestlist-row">
+              <span class="blank__guestlist-avatar"></span>
+              <span class="blank__guestlist-lines">
+                <span class="blank__guestlist-line blank__guestlist-line--wide"></span>
+                <span class="blank__guestlist-line blank__guestlist-line--narrow"></span>
+              </span>
+            </div>
+          }
+        </div>
+        <span class="blank__guestlist-badge">+</span>
+      </div>
+      <span class="blank__eyebrow">Guest list</span>
+      <h2 class="blank__title">Nobody&rsquo;s on the list <span class="blank__title-italic">yet.</span></h2>
+      <p class="blank__lede">
+        Add guests one at a time, or import a spreadsheet to bring everyone over at once —
+        names, emails, and plus-ones included.
+      </p>
+      <div class="blank__actions">
+        <button type="button" class="blank__cta" data-testid="event-detail-add-first-guest" (click)="addGuest.emit()">
+          + Add first guest
+        </button>
+        <button type="button" class="blank__cta blank__cta--ghost" disabled title="Coming soon">
+          Import a guest list
+        </button>
+      </div>
+      <div class="blank__foot">
+        <span>Invites go out once the list has names on it</span>
+        <span class="blank__link blank__link--static">See invitation settings →</span>
+      </div>
+    </div>
+  } @else if (variant === 'tables') {
     <span class="blank__glow blank__glow--left" aria-hidden="true"></span>
     <span class="blank__glow blank__glow--right" aria-hidden="true"></span>
     <div class="blank__inner">
